@@ -1,0 +1,63 @@
+version: '3.8'
+
+x-resources: &default-limits
+  deploy:
+    resources:
+      limits:
+        cpus: '1.0'
+        memory: 512M
+
+services:
+  ironclaw-db:
+    image: pgvector/pgvector:pg15
+    container_name: ironclaw-db
+    environment:
+      POSTGRES_DB: ironclaw
+      POSTGRES_USER: ironclaw
+      POSTGRES_PASSWORD: ironclaw
+    ports:
+      - "5432:5432"
+    volumes:
+      - ironclaw-pg-data:/var/lib/postgresql/data
+    <<: *default-limits
+
+  mem0:
+    image: mem0ai/mem0
+    container_name: mem0
+    ports:
+      - "8080:8000"
+    <<: *default-limits
+
+  khoj:
+    image: ghcr.io/khoj-ai/khoj:latest
+    container_name: khoj
+    ports:
+      - "42110:42110"
+    volumes:
+      - khoj-data:/root/.khoj
+    command: ["--host=0.0.0.0", "--port=42110", "-vv", "--anonymous-mode", "--non-interactive"]
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+
+  llm-proxy:
+    build: ./proxy
+    container_name: llm-proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    ports:
+      - "8001:8001"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+volumes:
+  ironclaw-pg-data:
+  khoj-data:
+  hf-cache:

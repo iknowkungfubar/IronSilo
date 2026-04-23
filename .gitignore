@@ -1,0 +1,15 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+
+# Docker volumes (Safety catch)
+pg-data/
+khoj-data/
+hf-cache/
