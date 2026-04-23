@@ -25,6 +25,21 @@ Open LM Studio (or Ollama/Lemonade) on your computer and start your model. **Not
 Your tools are now natively waiting for you:
 * **To Code (Aider):** Aider runs natively in your terminal. Open your terminal in your project directory and run:
   ```bash
-  export OPENAI_API_BASE="[http://127.0.0.1:8001/v1](http://127.0.0.1:8001/v1)"
+  export OPENAI_API_BASE="http://127.0.0.1:8001/v1"
   export OPENAI_API_KEY="local-sandbox"
   aider
+  ```
+* **To Research (Khoj):** Open your web browser and go to `http://127.0.0.1:42110`. You can upload PDFs and chat with your private documents here.
+* **To Automate (IronClaw):** Open your web browser and go to `http://127.0.0.1:8080`.
+
+## Step 4: Shutting Down
+When you are done for the day:
+* **Windows:** Double-click `Stop_Workspace.bat`
+* **Mac / Linux:** Run `./Stop_Workspace.sh`
+
+Your computer instantly gets its RAM back, and your files wait safely for next time.
+
+## Common Troubleshooting
+* **Aider says "Not a Git Repository":** Aider requires version control to keep your code safe. Open a terminal in your project folder and type `git init` before asking Aider to code.
+* **The "First Prompt" Delay:** The very first time you ask Aider a question, it might freeze for 60 seconds. *Do not panic.* The system is downloading a compression file in the background. Wait a minute, try again, and it will be lightning-fast.
+* **"Model Not Found":** Make sure the model name you type in Aider *exactly* matches the name displayed in LM Studio/Lemonade (including capitalization and dashes).

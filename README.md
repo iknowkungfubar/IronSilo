@@ -3,19 +3,19 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
+  <a href="[https://github.com/iknowkungfubar/IronSilo/blob/main/LICENSE](https://github.com/iknowkungfubar/IronSilo/blob/main/LICENSE)">
+    <img src="[https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)" alt="License: MIT">
   </a>
-  <a href="https://github.com/iknowkungfubar/IronSilo/releases">
-    <img src="https://img.shields.io/badge/Version-1.0.2-success.svg?style=flat-square" alt="Version 1.0.2">
+  <a href="[https://github.com/iknowkungfubar/IronSilo/releases](https://github.com/iknowkungfubar/IronSilo/releases)">
+    <img src="[https://img.shields.io/badge/Version-1.0.2-success.svg?style=flat-square](https://img.shields.io/badge/Version-1.0.2-success.svg?style=flat-square)" alt="Version 1.0.2">
   </a>
-  <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md">
-    <img src="https://img.shields.io/badge/Docs-Simple_Manual-orange.svg?style=flat-square" alt="Simple Manual">
+  <a href="[https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md](https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md)">
+    <img src="[https://img.shields.io/badge/Docs-Simple_Manual-orange.svg?style=flat-square](https://img.shields.io/badge/Docs-Simple_Manual-orange.svg?style=flat-square)" alt="Simple Manual">
   </a>
-  <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/docs/ADVANCED_MANUAL.md">
-    <img src="https://img.shields.io/badge/Docs-Advanced_Architecture-red.svg?style=flat-square" alt="Advanced Architecture">
+  <a href="[https://github.com/iknowkungfubar/IronSilo/blob/main/docs/ADVANCED_MANUAL.md](https://github.com/iknowkungfubar/IronSilo/blob/main/docs/ADVANCED_MANUAL.md)">
+    <img src="[https://img.shields.io/badge/Docs-Advanced_Architecture-red.svg?style=flat-square](https://img.shields.io/badge/Docs-Advanced_Architecture-red.svg?style=flat-square)" alt="Advanced Architecture">
   </a>
-  <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square" alt="Supported Platforms">
+  <img src="[https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square)" alt="Supported Platforms">
 </p>
 
 **Turn your PC into a private, autonomous AI lab, without melting your GPU.**
@@ -79,6 +79,17 @@ Open your AI Host and start a local server. *(By default, our proxy looks for an
 Your tools are securely routed and ready to use natively.
 1. **To Code (Aider):** Open your terminal and start Aider by pointing it to your local proxy:
    ```bash
-   export OPENAI_API_BASE="[http://127.0.0.1:8001/v1](http://127.0.0.1:8001/v1)"
+   export OPENAI_API_BASE="http://127.0.0.1:8001/v1"
    export OPENAI_API_KEY="local-sandbox"
    aider
+   ```
+2. **To Research (Khoj):** Open your web browser and navigate to `http://127.0.0.1:42110` to access your private Wiki UI.
+3. **To Automate (IronClaw):** Navigate to `http://127.0.0.1:8080` in your browser to chat with your WASM agent.
+
+---
+
+## 🛑 Shutting Down
+
+When you are done working, get your computer's RAM back:
+* **Windows:** Double-click `Stop_Workspace.bat`
+* **Mac/Linux:** Run `./Stop_Workspace.sh`
