@@ -29,8 +29,8 @@ services:
       - DATABASE_URL=postgresql://silo_admin:silo_password@ironclaw-db:5432/ironsilo_vault
       - GENESYS_EMBEDDER=local
     ports:
-      # THIS FIXES THE COLLISION (Host Port 8080 -> Container Port 8000)
-      - "8080:8000"
+      # CHANGED: 8002 prevents the collision with IronClaw on 8080
+      - "8002:8000"
     <<: *default-limits
 
   khoj:
