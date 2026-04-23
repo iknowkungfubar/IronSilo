@@ -23,20 +23,33 @@ Right now, you talk to Aider for code, and IronClaw for tasks.
 * **The Goal:** Establish an inter-agent communication bus.
 * **The Benefit:** You could ask IronClaw to "Research the new Stripe API, write a technical spec, and hand it to Aider." IronClaw does the web browsing, dumps the markdown spec into your workspace, and automatically triggers headless Aider to write the code.
 
+### 4. Dynamic Cross-Agent Memory Sharing
+* **The Goal:** Connect the Mem0/pgvector database seamlessly across Aider, IronClaw, and Khoj so they share a unified long-term memory graph.
+* **The Benefit:** If you tell IronClaw about your preferred coding style or architectural preferences, Aider automatically knows it without you having to repeat yourself.
+
 ---
 
-## ⚡ Phase 2: Performance & Architecture
+## 🛡️ Phase 2: Architecture, Security & Performance
 
-### 1. Semantic Model Routing
+### 1. Application-Level Encryption (AES-256)
+Currently, IronSilo relies on host-level OS disk encryption.
+* **The Goal:** Implement native AES-256 encryption for all data at rest within the Postgres and Khoj Docker volumes.
+* **The Benefit:** Ensures that even if the Docker volumes are physically copied or backed up to an insecure location, the vector data and chat histories remain completely impenetrable without the master key.
+
+### 2. Role-Based Access Control (RBAC)
+* **The Goal:** Add a lightweight authentication and permissions layer to the proxy and web dashboard.
+* **The Benefit:** Allows multiple users (or autonomous agents) to have different permission scopes (e.g., "Read-only access to Khoj," "Full execution rights for IronClaw"). This paves the way for secure, team-based local deployments on shared hardware.
+
+### 3. Semantic Model Routing
 Currently, all requests go to a single LLM on port `8000`. This is inefficient for simple tasks.
 * **The Goal:** Upgrade the Python proxy to include a **Semantic Router**.
 * **The Benefit:** The proxy analyzes your prompt *before* sending it. If it's a complex coding task, it routes to `Qwen 2.5 Coder 7B`. If it's a simple grammar check or summary from Khoj, it routes to a lightning-fast, ultra-small model like `Llama-3-8B-Instruct`. This drastically saves compute resources.
 
-### 2. Cross-Session KV Caching
+### 4. Cross-Session KV Caching
 * **The Goal:** Implement persistent KV (Key-Value) cache sharing between the proxy and the host inference engine.
 * **The Benefit:** If you feed a massive 20,000-token codebase to Aider, the LLM processes it once. If you ask a follow-up question 10 minutes later, it doesn't need to re-read the code—it instantly loads the KV cache, reducing "Time to First Token" from 30 seconds to <1 second.
 
-### 3. Multimodal / Vision Support
+### 5. Multimodal / Vision Support
 * **The Goal:** Upgrade the LLMLingua proxy to handle base64 image pass-through.
 * **The Benefit:** You can drag and drop a screenshot of a broken UI into VS Code, and Aider will be able to "see" the image and write the CSS/HTML to fix it.
 

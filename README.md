@@ -1,4 +1,6 @@
-# 🛡️ IronSilo
+<p align="center">
+  <img src="assets/banner.png" alt="IronSilo Architecture Banner" width="100%">
+</p>
 
 **Turn your PC into a private, autonomous AI lab—without melting your GPU.**
 
