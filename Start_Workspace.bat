@@ -21,6 +21,7 @@ echo [SUCCESS] Your AI Workspace is now running in the background!
 echo Your tools are ready.
 echo Open your terminal for Aider, or browser for Khoj/IronClaw.
 echo.
-echo Note: To use the IronClaw agent on Windows, open a WSL terminal and run 'ironclaw start'.
+echo Note: To use the IronClaw agent on Windows, open a WSL terminal, paste this exact command, and press Enter:
+echo export DATABASE_URL="postgres://silo_admin:silo_password@127.0.0.1:5432/ironsilo_vault" ^&^& export OPENAI_API_BASE="http://127.0.0.1:8001/api/v1" ^&^& export OPENAI_API_KEY="local-sandbox" ^&^& ironclaw start
 echo.
 pause
