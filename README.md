@@ -7,7 +7,7 @@
     <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
   </a>
   <a href="https://github.com/iknowkungfubar/IronSilo/releases">
-    <img src="https://img.shields.io/badge/Version-1.0.0-success.svg?style=flat-square" alt="Version 1.0.0">
+    <img src="https://img.shields.io/badge/Version-1.0.2-success.svg?style=flat-square" alt="Version 1.0.2">
   </a>
   <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md">
     <img src="https://img.shields.io/badge/Docs-Simple_Manual-orange.svg?style=flat-square" alt="Simple Manual">
@@ -28,14 +28,14 @@ It runs on low-to-mid spec machines by strictly limiting background RAM to ~4GB,
 
 ## 📦 What's in the Box?
 
-This workspace utilizes a **Hybrid-Sandbox Architecture** to keep you secure without breaking your workflow:
+This workspace abandons brittle IDE extensions in favor of a **Terminal-First, Dual-Agent Swarm**. We split responsibilities between two specialized engines to maximize token efficiency and system security:
 
-**The Action Layer (Runs Locally for File Access):**
-* **Aider (VS Code Extension):** Your AI pair programmer. It runs inside your editor so it can natively read and write to your local project files, but all of its AI traffic is securely tunneled directly into the Sandbox Proxy.
-* **IronClaw (WASM Sandbox):** Your autonomous background agent. It runs natively to avoid lag, but strictly executes all browser and automation tasks inside its own secure WebAssembly (WASM) sandbox.
+**The Action Layer (Runs Locally for File/System Access):**
+* **The Hands (Aider CLI):** Your specialized coding engine. Aider maps your project's Abstract Syntax Tree (AST) to use 4x fewer tokens than standard agents. It runs natively in your terminal to safely execute bash commands, read linter errors, and apply complex line-by-line file diffs.
+* **The Brain (IronClaw PAI):** Your Personal AI and orchestrator. Running natively, it executes web research, schedule management, and background cron jobs strictly inside a zero-trust WebAssembly (WASM) sandbox, ensuring your API keys and host OS are never exposed to malicious LLM outputs.
 
-**The Intelligence Layer (Locked in Docker Container):**
-* **Khoj:** Your private Wiki RAG engine. Drop in PDFs, markdown files, and notes, and ask your AI questions about them.
+**The Intelligence Layer (Locked in 4GB Docker Container):**
+* **Khoj:** Your private Wiki RAG engine. Drop in PDFs, markdown files, and notes, and ask your AI questions about them via its native Web UI.
 * **Genesys & pgvector:** The Long-Term Memory (LTM) database. This utilizes an active causal graph, allowing autonomous agents to remember your preferences and causal reasoning across sessions.
 * **LLMLingua Proxy:** The central hub. It intercepts massive prompts and uses a tiny CPU model to compress the text by up to 40% before sending it to your GPU, saving your VRAM from crashing. It also has the added benefit of Token Optimization.
 
@@ -47,8 +47,7 @@ If you are starting from a fresh computer, you must install these core tools fir
 
 ### 1. The Core Environment
 * **Git:** Aider requires Git to track code changes. Download at [git-scm.com](https://git-scm.com/downloads) (Linux: `sudo apt install git` or `sudo pacman -S git`).
-* **Visual Studio Code:** The editor for this workspace. Download at [code.visualstudio.com](https://code.visualstudio.com/). You can also use vsCodium or Code-OSS.
-(Standalone GUI Application is on RoadMap)
+* **Python / pip:** Required to install Aider natively (`pip install aider-chat`).
 
 ### 2. Docker (The Sandbox Engine)
 You need Docker to run the background databases and proxies safely.
@@ -64,7 +63,7 @@ You need a program running on your computer to host your AI model (we highly rec
 
 ---
 
-## 🟢 Quick Start
+## 🚀 Quick Start
 
 Once your prerequisites are installed, you are ready to go.
 
@@ -77,15 +76,9 @@ Open your AI Host and start a local server. *(By default, our proxy looks for an
 *(Note: The very first time you do this, Docker will download the required tools. It will be instant next time).*
 
 **Step 3: Code!**
-1. Open this repository folder in **VS Code**.
-2. A pop-up will ask you to "Install Recommended Extensions." Click **Yes**.
-3. *That's it.* Our `.vscode` settings automatically wire Aider and Khoj directly into your secure Docker sandbox. Start chatting in the sidebars!
-4. *(Optional)* Navigate to `http://127.0.0.1:8080` in your browser to chat with your IronClaw agent.
-
----
-
-## 🔴 Shutting Down
-
-When you are done working, get your computer's RAM back:
-* **Windows:** Double-click `Stop_Workspace.bat`
-* **Mac/Linux:** Run `./Stop_Workspace
+Your tools are securely routed and ready to use natively.
+1. **To Code (Aider):** Open your terminal and start Aider by pointing it to your local proxy:
+   ```bash
+   export OPENAI_API_BASE="[http://127.0.0.1:8001/v1](http://127.0.0.1:8001/v1)"
+   export OPENAI_API_KEY="local-sandbox"
+   aider

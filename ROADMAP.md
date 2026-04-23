@@ -1,82 +1,61 @@
-# 🗺️ IronSilo: Future Improvements & Roadmap
-
-IronSilo is designed to be the ultimate offline fortress for AI-assisted development. As local LLMs and agentic frameworks evolve rapidly, this roadmap outlines the strategic upgrades planned for future releases. 
+IronSilo is designed to be the ultimate offline fortress for AI-assisted development. As local LLMs and agentic frameworks evolve rapidly, this roadmap outlines our strict commitment to a **Terminal-First, Post-IDE** architecture. 
 
 We welcome pull requests and community discussions on any of the following initiatives!
 
 ---
 
-## 🚀 Phase 1: Enhanced Agent Capabilities
+## 🚀 Phase 1: The Dual-Agent Swarm
 
-### 1. Model Context Protocol (MCP) Integration
-Currently, Khoj, Aider, and IronClaw operate in slight silos, each managing their own toolsets. 
-* **The Goal:** Implement the open-source **Model Context Protocol (MCP)** as a shared middleware layer.
-* **The Benefit:** This allows a single, universal set of local tools (e.g., GitHub issue reading, local database querying, file system access) to be exposed as standard MCP servers. All agents in the Silo can then seamlessly share the exact same tools without redundant configurations.
+### 1. Model Context Protocol (MCP) Integration for IronClaw
+Currently, Khoj and Genesys operate securely in the background. 
+* **The Goal:** Expose the Genesys memory graph and Khoj RAG as standard MCP servers.
+* **The Benefit:** IronClaw (acting as your Personal AI) can seamlessly query your local documents and causal memory graph to make complex autonomous decisions without leaving its zero-trust WASM sandbox.
 
-### 2. Private Web Search (SearxNG)
-Agents frequently hallucinate when they lack real-time information.
-* **The Goal:** Add a lightweight `searxng` container to the `docker-compose.yml` with strict API limits.
-* **The Benefit:** Allows IronClaw and Aider to autonomously browse the live internet for API documentation and bug fixes, completely privately, without leaking queries to Google or Bing.
+### 2. Aider / IronClaw Handoff Pipeline
+Right now, you use IronClaw for secure web research, and Aider for AST-based code editing. 
+* **The Goal:** Establish an inter-agent communication bus (Swarm Orchestration).
+* **The Benefit:** You ask IronClaw to "Research the new Stripe API, write a technical spec, and pass it to the coder." IronClaw safely browses the web, writes the spec, and automatically triggers headless Aider in your terminal to implement the code.
 
-### 3. Multi-Agent "Swarm" Orchestration
-Right now, you talk to Aider for code, and IronClaw for tasks. 
-* **The Goal:** Establish an inter-agent communication bus.
-* **The Benefit:** You could ask IronClaw to "Research the new Stripe API, write a technical spec, and hand it to Aider." IronClaw does the web browsing, dumps the markdown spec into your workspace, and automatically triggers headless Aider to write the code.
-
-### 4. Dynamic Cross-Agent Memory Sharing
-* **The Goal:** Connect the Genesys/pgvector database seamlessly across Aider, IronClaw, and Khoj so they share a unified causal memory graph.
-* **The Benefit:** If you tell IronClaw about your preferred coding style or architectural preferences, Aider automatically knows it without you having to repeat yourself.
+### 3. Private Web Search (SearxNG)
+* **The Goal:** Add a lightweight `searxng` container to the `docker-compose.yml`.
+* **The Benefit:** Allows IronClaw to autonomously browse the live internet for API documentation completely privately, without leaking queries to Google or Bing.
 
 ---
 
 ## 🛡️ Phase 2: Architecture, Security & Performance
 
 ### 1. Application-Level Encryption (AES-256)
-Currently, IronSilo relies on host-level OS disk encryption.
 * **The Goal:** Implement native AES-256 encryption for all data at rest within the Postgres and Khoj Docker volumes.
-* **The Benefit:** Ensures that even if the Docker volumes are physically copied or backed up to an insecure location, the vector data and chat histories remain completely impenetrable without the master key.
+* **The Benefit:** Ensures that even if the Docker volumes are physically copied, the vector data and chat histories remain impenetrable without the master key.
 
-### 2. Role-Based Access Control (RBAC)
-* **The Goal:** Add a lightweight authentication and permissions layer to the proxy and web dashboard.
-* **The Benefit:** Allows multiple users (or autonomous agents) to have different permission scopes (e.g., "Read-only access to Khoj," "Full execution rights for IronClaw"). This paves the way for secure, team-based local deployments on shared hardware.
-
-### 3. Semantic Model Routing
-Currently, all requests go to a single LLM on port `8000`. This is inefficient for simple tasks.
+### 2. Semantic Model Routing
+Currently, all requests go to a single LLM on port `8000`. This is inefficient.
 * **The Goal:** Upgrade the Python proxy to include a **Semantic Router**.
-* **The Benefit:** The proxy analyzes your prompt *before* sending it. If it's a complex coding task, it routes to `Qwen 2.5 Coder 7B`. If it's a simple grammar check or summary from Khoj, it routes to a lightning-fast, ultra-small model like `Llama-3-8B-Instruct`. This drastically saves compute resources.
+* **The Benefit:** If Aider sends a complex code-diff request, it routes to `Qwen 2.5 Coder 7B`. If IronClaw asks a simple logical routing question, it routes to a lightning-fast, ultra-small model like `Llama-3-8B-Instruct`.
 
-### 4. Cross-Session KV Caching
+### 3. Cross-Session KV Caching
 * **The Goal:** Implement persistent KV (Key-Value) cache sharing between the proxy and the host inference engine.
-* **The Benefit:** If you feed a massive 20,000-token codebase to Aider, the LLM processes it once. If you ask a follow-up question 10 minutes later, it doesn't need to re-read the code—it instantly loads the KV cache, reducing "Time to First Token" from 30 seconds to <1 second.
-
-### 5. Multimodal / Vision Support
-* **The Goal:** Upgrade the LLMLingua proxy to handle base64 image pass-through.
-* **The Benefit:** You can drag and drop a screenshot of a broken UI into VS Code, and Aider will be able to "see" the image and write the CSS/HTML to fix it.
+* **The Benefit:** If you feed a massive 20,000-token codebase to Aider, the LLM processes it once. Follow-up questions load instantly from the KV cache, reducing "Time to First Token" to <1 second.
 
 ---
 
-## 🖥️ Phase 3: Developer Experience (DX) & UI
+## 🖥️ Phase 3: The Post-IDE Developer Experience (DX)
 
-### 1. The IronSilo Studio (Standalone GUI Application)
-Not everyone wants to use VS Code. We need a dedicated frontend for the entire stack.
-* **The Goal:** Build a native Desktop app (Tauri/Electron) or a unified Web UI that completely replaces the need for third-party text editors.
-* **The Benefit:** A beautiful, consumer-friendly workspace where users can chat with Aider, browse Khoj documents, and delegate tasks to IronClaw all from a single window. It transforms IronSilo from a "developer tool" into a universal, standalone AI workstation for writers, researchers, and creators.
-
-### 2. Unified Web Dashboard (The Control Center)
-Command line interfaces are great, but managing databases visually is the gold standard.
-* **The Goal:** Build a lightweight, local administrative web application accessible at `localhost:3000`.
-* **The Benefit:** A single pane of glass where developers can visually browse Long-Term Memories (Genesys), track LLMLingua's token compression savings on live graphs, and toggle proxy routing between LM Studio, Ollama, and Lemonade.
-
-### 3. IronSilo Terminal Dashboard (TUI)
-For developers who refuse to leave the terminal.
+### 1. IronSilo Terminal Dashboard (TUI)
+We are abandoning the IDE. Serious agents live in the shell.
 * **The Goal:** Build a Terminal User Interface (TUI) using a tool like Textual (Python) or Gum (Go).
-* **The Benefit:** Typing `ironsilo monitor` will open a sleek terminal dashboard showing real-time RAM usage, container health, and proxy traffic logs without needing a browser.
+* **The Benefit:** Typing `ironsilo monitor` opens a sleek terminal dashboard showing real-time RAM usage, container health, and proxy traffic logs without needing a browser or VS Code.
 
-### 4. Interactive Setup Wizard
+### 2. Interactive Setup Wizard
 * **The Goal:** Replace the manual `.env` port configurations with an interactive CLI setup script.
-* **The Benefit:** When a user runs the start script for the first time, it prompts them: *"Which LLM runner are you using? [1] LM Studio [2] Ollama [3] Lemonade"*, and automatically configures the ports and networking for them.
+* **The Benefit:** When a user runs the start script, it prompts: *"Which LLM runner are you using? [1] LM Studio [2] Ollama [3] Lemonade"*, and automatically configures the ports.
 
----
+### 3. IronSilo Studio: Desktop Command Center (GUI)
+While agents thrive in the terminal, managing the underlying infrastructure shouldn't require juggling Docker CLI commands or multiple browser tabs.
+* **The Goal:** Build a lightweight, native Desktop application (using frameworks like Tauri or Electron) to serve as a unified control center.
+* **The Benefit:** A single pane of glass to visually manage your local AI fortress. You can effortlessly browse the Genesys causal memory graph, track token compression savings via live charts, monitor strict 4GB container health, and toggle LLM host endpoints—all from one beautiful desktop dashboard.
 
-## 🤝 How to Contribute
-If any of these sound exciting to you, please check out our Issues page or submit a Pull Request! IronSilo is built on the philosophy that AI should remain local, private, and incredibly efficient. Let's build the future of local development together.
+### 4. IronSilo Command Center: The Shell Dashboard (TUI)
+For power users who refuse to leave the command line but still require deep system visibility and interactive orchestration tracking.
+* **The Goal:** Expand the baseline monitoring TUI into a fully-featured command center using advanced terminal-native frameworks.
+* **The Benefit:** A single pane of glass directly in your shell. Beyond just monitoring, this allows you to trigger Swarm task handoffs between IronClaw and Aider, manage memory states, and view logs simultaneously. It is completely keyboard-navigable, ensuring you never have to touch a mouse to control your AI sandbox.

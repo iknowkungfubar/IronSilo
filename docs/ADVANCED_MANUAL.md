@@ -6,8 +6,8 @@ To deploy this stack on a bare-metal machine, ensure the host environment is pro
 ### 1. Container Engine
 The workspace requires Docker Compose V2.
 * **Windows / macOS:** Install Docker Desktop. Ensure the WSL2 backend is enabled on Windows.
-* **Debian / Ubuntu:** `sudo apt update && sudo apt install docker.io docker-compose-v2 git code`
-* **Arch / CachyOS:** `sudo pacman -S docker docker-compose git code` (Ensure daemon is enabled: `sudo systemctl enable --now docker`)
+* **Debian / Ubuntu:** `sudo apt update && sudo apt install docker.io docker-compose-v2 git`
+* **Arch / CachyOS:** `sudo pacman -S docker docker-compose git` (Ensure daemon is enabled: `sudo systemctl enable --now docker`)
 
 ### 2. Inference Backend
 Deploy an OpenAI-compatible inference server on the host machine.
@@ -28,7 +28,7 @@ The backend services (Memory, RAG, and Proxy) run inside strictly enforced Docke
 
 ### 2. The Action Layer (Host & WASM)
 UI and file-editing tools are intentionally kept out of Docker to prevent workflow friction.
-* **Aider (Code Editing):** Operates as a VS Code extension. Containerizing Aider would require dynamic bind-mounting of every user workspace, breaking the seamless editor experience. Aider acts locally but is hard-routed to the Docker proxy for intelligence.
+* **Aider (Code Editing):** Operates natively via the host's command line interface (CLI). Containerizing Aider would require dynamic bind-mounting of every user workspace, breaking the seamless editor experience. Aider acts locally but is hard-routed to the Docker proxy for intelligence via environment variables.
 * **IronClaw (WebAssembly):** IronClaw executes natively on the host to avoid "nested containerization" (running a WASM engine inside a Linux Docker VM), which degrades performance. Its execution environment remains strictly isolated via its native WebAssembly runtime.
 
 ## Network Bridging (`host.docker.internal`)

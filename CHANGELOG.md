@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-04-23
+### Changed
+- **Removed VS Code Extension Dependencies:** Deprecated the `.vscode` auto-configuration folder. IronSilo now strictly advocates using Aider via the native CLI and Khoj via its native Docker Web UI. This eliminates security risks from unmaintained 3rd-party wrappers (like `lee2py.aider-composer`) and future-proofs the RAG engine against Khoj's cloud deprecation.
+
 ## [1.0.1] - 2026-04-23
 ### Changed
 - **Memory Architecture Pivot:** Replaced the Mem0 container with **Genesys**. This eliminates Docker manifest (`linux/amd64`) compatibility issues on Linux/CachyOS while upgrading the local stack from standard vector storage to an advanced causal graph memory system.

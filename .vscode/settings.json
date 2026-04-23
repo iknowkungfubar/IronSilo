@@ -1,5 +1,0 @@
-{
-  "khoj.serverUrl": "[http://127.0.0.1:42110](http://127.0.0.1:42110)",
-  "aider.openaiApiBase": "[http://127.0.0.1:8001/api/v1](http://127.0.0.1:8001/api/v1)",
-  "aider.openaiApiKey": "local-sandbox"
-}

@@ -17,6 +17,6 @@ fi
 
 echo ""
 echo "✅ [SUCCESS] Your AI Workspace is now running in the background!"
-echo "You can now open this folder in VS Code."
+echo "Your tools are ready. Open your terminal for Aider, or browser for Khoj/IronClaw."
 echo ""
 read -p "Press Enter to close this window..."

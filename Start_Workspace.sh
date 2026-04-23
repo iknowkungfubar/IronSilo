@@ -29,5 +29,5 @@ fi
 
 echo ""
 echo "✅ [SUCCESS] Your AI Workspace is now running!"
-echo "You can now open this folder in VS Code."
+echo "Your tools are ready. Open your terminal for Aider, or browser for Khoj/IronClaw."
 echo ""
