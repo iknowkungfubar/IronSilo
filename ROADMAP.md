@@ -1,3 +1,5 @@
+# 🗺️ IronSilo: Future Improvements & Roadmap
+
 IronSilo is designed to be the ultimate offline fortress for AI-assisted development. As local LLMs and agentic frameworks evolve rapidly, this roadmap outlines our strict commitment to a **Terminal-First, Post-IDE** architecture. 
 
 We welcome pull requests and community discussions on any of the following initiatives!
