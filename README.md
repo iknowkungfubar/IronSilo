@@ -1,20 +1,68 @@
-# 🚀 Universal Local AI Workspace
+# 🛡️ IronSilo
 
-A completely local, cross-platform (Windows, macOS, Linux) AI development sandbox optimized for low-to-mid spec machines. 
+**Turn your PC into a private, autonomous AI lab—without melting your GPU.**
 
-This stack runs a memory layer, a wiki RAG engine, and a token-compression proxy in an isolated Docker network. It is strictly capped to ~4GB of RAM to leave plenty of room for your host-level LLM and VS Code.
+IronSilo is a completely local, cross-platform (Windows, macOS, Linux) AI development sandbox. It packages a state-of-the-art coding assistant, a wiki RAG engine, an autonomous WebAssembly agent, and a context-compression proxy into a single, resource-capped environment. 
 
-## 🛠 Prerequisites
-1. **Docker Desktop** (Make sure it is open and running!)
-2. **Local AI Host**: You must have LM Studio, Ollama, or Lemonade running locally, hosting a model, and serving an API on port `8000`.
-3. **VS Code** you can also use VSCodium or Code-OSS
+It runs on low-to-mid spec machines by strictly limiting background RAM to ~4GB, dedicating 100% of your GPU to your actual AI model.
 
-## 🟢 How to Use
-1. **Double-click** `Start_Workspace` (use the `.bat` for Windows or `.command` for Mac).
-2. Open this folder in **VS Code**. 
-3. Click "Install Recommended Extensions" when prompted.
-   *(VS Code will automatically wire your extensions directly to the running Sandbox).*
-4. Start chatting with Aider and Khoj!
+---
+
+## 📦 What's in the Box?
+
+This workspace automatically wires together the best open-source AI tools:
+* **Aider (Host/VS Code):** Your AI pair programmer. It reads your code, writes features, and submits git commits directly in your editor.
+* **IronClaw (Host/Web UI):** Your autonomous background agent. Give it a broad research or automation task, and it works securely in a WebAssembly sandbox.
+* **Khoj (Sandbox):** Your private Wiki. Drop in PDFs, markdown files, and notes, and ask your AI questions about them.
+* **Mem0 & pgvector (Sandbox):** The Long-Term Memory (LTM) database. This allows autonomous agents to remember your preferences across sessions.
+* **LLMLingua Proxy (Sandbox):** A magical middle-layer. It intercepts massive prompts and uses a tiny CPU model to compress the text by up to 40% before sending it to your GPU, saving your VRAM from crashing.
+
+---
+
+## 🛠️ Step 0: Install Prerequisites
+
+If you are starting from a fresh computer, you must install these core tools first:
+
+### 1. The Core Environment
+* **Git:** Aider requires Git to track code changes. Download at [git-scm.com](https://git-scm.com/downloads) (Linux: `sudo apt install git` or `sudo pacman -S git`).
+* **Visual Studio Code:** The editor for this workspace. Download at [code.visualstudio.com](https://code.visualstudio.com/).
+
+### 2. Docker (The Sandbox Engine)
+You need Docker to run the background databases and proxies safely.
+* **Windows & macOS:** Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/). *Windows users: Ensure WSL2 is enabled during installation.* Open the app and make sure it is running in your system tray.
+* **Linux (Ubuntu/Debian):** Run `sudo apt install docker.io docker-compose-v2` and start the daemon with `sudo systemctl enable --now docker`.
+* **Linux (Arch/CachyOS):** Run `sudo pacman -S docker docker-compose` and start the daemon with `sudo systemctl enable --now docker`.
+
+### 3. A Local AI Host (The Brain)
+You need a program running on your computer to host your AI model (we highly recommend downloading the **Qwen 2.5 Coder 7B** model). Install one of the following:
+* **[LM Studio](https://lmstudio.ai/):** Best for Windows/Mac beginners. Features a great UI.
+* **[Ollama](https://ollama.com/):** Best for command-line users. (Run `ollama run qwen2.5-coder`).
+* **Lemonade:** Best for Arch Linux/AMD GPU users seeking maximum ROCm performance. (Arch users: `yay -S lemonade-bin`).
+
+---
+
+## 🟢 Quick Start
+
+Once your prerequisites are installed, you are ready to go.
+
+**Step 1: Start your AI Model**
+Open your AI Host and start a local server. *(By default, our proxy looks for an AI running on port `8000`. See the 'Documentation' section below if using Ollama, which uses port `11434`).*
+
+**Step 2: Boot the Workspace**
+* **Windows:** Double-click `Start_Workspace.bat`
+* **Mac/Linux:** Open a terminal in this folder and run `./Start_Workspace.sh`
+*(Note: The very first time you do this, Docker will download the required tools. It will be instant next time).*
+
+**Step 3: Code!**
+1. Open this repository folder in **VS Code**.
+2. A pop-up will ask you to "Install Recommended Extensions." Click **Yes**.
+3. *That's it.* Our `.vscode` settings automatically wire Aider and Khoj directly into your secure Docker sandbox. Start chatting in the sidebars!
+4. *(Optional)* Navigate to `http://127.0.0.1:8080` in your browser to chat with your IronClaw agent.
+
+---
 
 ## 🔴 Shutting Down
-When you are done, **double-click** `Stop_Workspace`. This safely turns off the background containers and instantly frees up your computer's RAM. Your data is safely saved for next time.
+
+When you are done working, get your computer's RAM back:
+* **Windows:** Double-click `Stop_Workspace.bat`
+* **Mac/Linux:** Run `./Stop_Workspace
