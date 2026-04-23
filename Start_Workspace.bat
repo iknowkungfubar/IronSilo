@@ -18,7 +18,8 @@ if %errorlevel% neq 0 (
 
 echo.
 echo [SUCCESS] Your AI Workspace is now running in the background!
-echo Your tools are ready. Open your terminal for Aider, or browser for Khoj/IronClaw.
+echo Your tools are ready.
+echo Open your terminal for Aider, or browser for Khoj/IronClaw.
 echo.
 echo Note: To use the IronClaw agent on Windows, open a WSL terminal and run 'ironclaw start'.
 echo.
