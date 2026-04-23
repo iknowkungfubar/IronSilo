@@ -3,16 +3,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/your-username/IronSilo/blob/main/LICENSE">
+  <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
   </a>
-  <a href="https://github.com/your-username/IronSilo/releases">
+  <a href="https://github.com/iknowkungfubar/IronSilo/releases">
     <img src="https://img.shields.io/badge/Version-1.0.0-success.svg?style=flat-square" alt="Version 1.0.0">
   </a>
-  <a href="https://github.com/your-username/IronSilo/blob/main/docs/SIMPLE_MANUAL.md">
+  <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md">
     <img src="https://img.shields.io/badge/Docs-Simple_Manual-orange.svg?style=flat-square" alt="Simple Manual">
   </a>
-  <a href="https://github.com/your-username/IronSilo/blob/main/docs/ADVANCED_MANUAL.md">
+  <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/docs/ADVANCED_MANUAL.md">
     <img src="https://img.shields.io/badge/Docs-Advanced_Architecture-red.svg?style=flat-square" alt="Advanced Architecture">
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square" alt="Supported Platforms">
