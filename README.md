@@ -18,7 +18,7 @@
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square" alt="Supported Platforms">
 </p>
 
-**Turn your PC into a private, autonomous AI lab—without melting your GPU.**
+**Turn your PC into a private, autonomous AI lab, without melting your GPU.**
 
 IronSilo is a completely local, cross-platform (Windows, macOS, Linux) AI development sandbox. It packages a state-of-the-art coding assistant, a wiki RAG engine, an autonomous WebAssembly agent, and a context-compression proxy into a single, resource-capped environment. 
 
@@ -43,7 +43,8 @@ If you are starting from a fresh computer, you must install these core tools fir
 
 ### 1. The Core Environment
 * **Git:** Aider requires Git to track code changes. Download at [git-scm.com](https://git-scm.com/downloads) (Linux: `sudo apt install git` or `sudo pacman -S git`).
-* **Visual Studio Code:** The editor for this workspace. Download at [code.visualstudio.com](https://code.visualstudio.com/).
+* **Visual Studio Code:** The editor for this workspace. Download at [code.visualstudio.com](https://code.visualstudio.com/). You can also use vsCodium or Code-OSS.
+(Standalone GUI Application is on RoadMap)
 
 ### 2. Docker (The Sandbox Engine)
 You need Docker to run the background databases and proxies safely.
