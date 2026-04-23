@@ -12,7 +12,7 @@ The workspace requires Docker Compose V2.
 ### 2. Inference Backend
 Deploy an OpenAI-compatible inference server on the host machine.
 * **Lemonade:** Ideal for AMD ROCm via Arch (`yay -S lemonade-bin`). Bind to `0.0.0.0:8000`.
-* **Ollama:** `curl -fsSL https://ollama.com/install.sh | sh`. Override the proxy endpoint via `.env` file in the `proxy/` directory: `LLM_ENDPOINT="http://host.docker.internal:11434/v1/chat/completions"`.
+* **Ollama:** `curl -fsSL https://ollama.com/install.sh | sh`. Override the proxy endpoint via a `.env` file in the root directory: `LLM_ENDPOINT="http://host.docker.internal:11434/v1/chat/completions"`.
 * **LM Studio:** Configure local server port to `8000`.
 
 ## Architectural Pivot: The Hybrid-Sandbox

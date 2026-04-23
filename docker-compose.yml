@@ -29,7 +29,6 @@ services:
       - DATABASE_URL=postgresql://silo_admin:silo_password@ironclaw-db:5432/ironsilo_vault
       - GENESYS_EMBEDDER=local
     ports:
-      # CHANGED: 8002 prevents the collision with IronClaw on 8080
       - "8002:8000"
     <<: *default-limits
 
@@ -52,6 +51,9 @@ services:
     container_name: llm-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    environment:
+      # This allows a root .env file to dynamically override the LLM endpoint
+      - LLM_ENDPOINT=${LLM_ENDPOINT:-http://host.docker.internal:8000/v1/chat/completions}
     volumes:
       - hf-cache:/root/.cache/huggingface
     ports:

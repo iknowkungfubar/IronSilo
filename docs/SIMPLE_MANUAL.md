@@ -14,7 +14,7 @@ If you have a brand-new computer, you must install four standard tools before st
 Open LM Studio (or Ollama/Lemonade) on your computer and start your model. **Nothing else works unless your local AI is running.**
 
 * **LM Studio Users:** Go to the "Local Server" tab on the left. Change the port on the right side of the screen from `1234` to `8000`. Click the green "Start" button.
-* **Ollama Users:** Create a file named `.env` in the `proxy/` folder of this workspace and add this exact line: `LLM_ENDPOINT="http://host.docker.internal:11434/v1/chat/completions"`
+* **Ollama Users:** Create a file named `.env` in the root folder of this workspace (next to `docker-compose.yml`) and add this exact line: `LLM_ENDPOINT="http://host.docker.internal:11434/v1/chat/completions"`
 
 ## Step 2: Start the Background Sandbox
 * **Windows:** Double-click `Start_Workspace.bat` in the project folder.
@@ -25,7 +25,7 @@ Open LM Studio (or Ollama/Lemonade) on your computer and start your model. **Not
 Your tools are now natively waiting for you:
 * **To Code (Aider):** Aider runs natively in your terminal. Open your terminal in your project directory and run:
   ```bash
-  export OPENAI_API_BASE="http://127.0.0.1:8001/v1"
+  export OPENAI_API_BASE="[http://127.0.0.1:8001/api/v1](http://127.0.0.1:8001/api/v1)"
   export OPENAI_API_KEY="local-sandbox"
   aider
   ```
