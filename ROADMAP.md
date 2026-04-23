@@ -24,7 +24,7 @@ Right now, you talk to Aider for code, and IronClaw for tasks.
 * **The Benefit:** You could ask IronClaw to "Research the new Stripe API, write a technical spec, and hand it to Aider." IronClaw does the web browsing, dumps the markdown spec into your workspace, and automatically triggers headless Aider to write the code.
 
 ### 4. Dynamic Cross-Agent Memory Sharing
-* **The Goal:** Connect the Mem0/pgvector database seamlessly across Aider, IronClaw, and Khoj so they share a unified long-term memory graph.
+* **The Goal:** Connect the Genesys/pgvector database seamlessly across Aider, IronClaw, and Khoj so they share a unified causal memory graph.
 * **The Benefit:** If you tell IronClaw about your preferred coding style or architectural preferences, Aider automatically knows it without you having to repeat yourself.
 
 ---
@@ -65,7 +65,7 @@ Not everyone wants to use VS Code. We need a dedicated frontend for the entire s
 ### 2. Unified Web Dashboard (The Control Center)
 Command line interfaces are great, but managing databases visually is the gold standard.
 * **The Goal:** Build a lightweight, local administrative web application accessible at `localhost:3000`.
-* **The Benefit:** A single pane of glass where developers can visually browse Long-Term Memories (Mem0), track LLMLingua's token compression savings on live graphs, and toggle proxy routing between LM Studio, Ollama, and Lemonade.
+* **The Benefit:** A single pane of glass where developers can visually browse Long-Term Memories (Genesys), track LLMLingua's token compression savings on live graphs, and toggle proxy routing between LM Studio, Ollama, and Lemonade.
 
 ### 3. IronSilo Terminal Dashboard (TUI)
 For developers who refuse to leave the terminal.

@@ -1,5 +1,3 @@
-# Obsolete 'version' attribute removed for Docker V2 compatibility
-
 x-resources: &default-limits
   deploy:
     resources:
@@ -12,28 +10,26 @@ services:
     image: pgvector/pgvector:pg15
     container_name: ironclaw-db
     environment:
-      POSTGRES_DB: mem0_db
-      POSTGRES_USER: mem0_user
-      POSTGRES_PASSWORD: mem0_password
+      POSTGRES_DB: ironsilo_vault
+      POSTGRES_USER: silo_admin
+      POSTGRES_PASSWORD: silo_password
     ports:
       - "5432:5432"
     volumes:
       - ironclaw-pg-data:/var/lib/postgresql/data
     <<: *default-limits
 
-  mem0:
-    # CORRECTED: Using the verified API server image
-    image: mem0/mem0-api-server:latest
-    container_name: mem0
+  genesys-memory:
+    build: ./genesys
+    container_name: genesys-memory
     depends_on:
       - ironclaw-db
     environment:
-      # Directing Mem0 to use our internal Postgres and LLM Proxy
-      - DATABASE_URL=postgresql://mem0_user:mem0_password@ironclaw-db:5432/mem0_db
-      - OPENAI_API_KEY=local-sandbox
-      - OPENAI_API_BASE=http://llm-proxy:8001/v1
+      - GENESYS_BACKEND=postgres
+      - DATABASE_URL=postgresql://silo_admin:silo_password@ironclaw-db:5432/ironsilo_vault
+      - GENESYS_EMBEDDER=local
     ports:
-      - "8080:8000"
+      - "8000:8000"
     <<: *default-limits
 
   khoj:

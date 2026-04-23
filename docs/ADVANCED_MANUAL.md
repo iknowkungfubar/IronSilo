@@ -15,15 +15,21 @@ Deploy an OpenAI-compatible inference server on the host machine.
 * **Ollama:** `curl -fsSL https://ollama.com/install.sh | sh`. Override the proxy endpoint via `.env` file in the `proxy/` directory: `LLM_ENDPOINT="http://host.docker.internal:11434/v1/chat/completions"`.
 * **LM Studio:** Configure local server port to `8000`.
 
-## Architectural Pivot: Universal Containerization
-To support Windows (WSL2), macOS (Hypervisor), and Linux uniformly, the stack utilizes Docker Compose. This normalizes namespace mapping and network bridging across OS architectures while enforcing strict cgroup resource caps.
+## Architectural Pivot: The Hybrid-Sandbox
+To support Windows, macOS, and Linux uniformly while maintaining security and performance, IronSilo utilizes a split architecture.
 
-### Resource Quotas (Strict Enforcement):
-- **Total Sandbox RAM Ceiling:** ~4.0 GB
-- **PostgreSQL (pgvector):** 512 MB
-- **Mem0 API:** 512 MB
-- **Khoj RAG Engine:** 1.0 GB
-- **LLMLingua Proxy:** 2.0 GB (CPU-Bound PyTorch)
+### 1. The Intelligence Sandbox (Docker Compose)
+The backend services (Memory, RAG, and Proxy) run inside strictly enforced Docker containers. This normalizes namespace mapping and network bridging across OS architectures while enforcing strict cgroup resource caps.
+* **Total Sandbox RAM Ceiling:** ~4.0 GB
+* **PostgreSQL (pgvector):** 512 MB
+* **Genesys Memory API:** 512 MB
+* **Khoj RAG Engine:** 1.0 GB
+* **LLMLingua Proxy:** 2.0 GB (CPU-Bound PyTorch)
+
+### 2. The Action Layer (Host & WASM)
+UI and file-editing tools are intentionally kept out of Docker to prevent workflow friction.
+* **Aider (Code Editing):** Operates as a VS Code extension. Containerizing Aider would require dynamic bind-mounting of every user workspace, breaking the seamless editor experience. Aider acts locally but is hard-routed to the Docker proxy for intelligence.
+* **IronClaw (WebAssembly):** IronClaw executes natively on the host to avoid "nested containerization" (running a WASM engine inside a Linux Docker VM), which degrades performance. Its execution environment remains strictly isolated via its native WebAssembly runtime.
 
 ## Network Bridging (`host.docker.internal`)
 Running a local LLM on the host while the proxy resides in a container creates a routing paradigm issue. Docker Desktop operates inside a hidden Linux VM, meaning `localhost` inside the container resolves to the container itself.

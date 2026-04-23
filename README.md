@@ -28,12 +28,16 @@ It runs on low-to-mid spec machines by strictly limiting background RAM to ~4GB,
 
 ## 📦 What's in the Box?
 
-This workspace automatically wires together the best open-source AI tools:
-* **Aider (Host/VS Code):** Your AI pair programmer. It reads your code, writes features, and submits git commits directly in your editor.
-* **IronClaw (Host/Web UI):** Your autonomous background agent. Give it a broad research or automation task, and it works securely in a WebAssembly sandbox.
-* **Khoj (Sandbox):** Your private Wiki. Drop in PDFs, markdown files, and notes, and ask your AI questions about them.
-* **Mem0 & pgvector (Sandbox):** The Long-Term Memory (LTM) database. This allows autonomous agents to remember your preferences across sessions.
-* **LLMLingua Proxy (Sandbox):** A magical middle-layer. It intercepts massive prompts and uses a tiny CPU model to compress the text by up to 40% before sending it to your GPU, saving your VRAM from crashing.
+This workspace utilizes a **Hybrid-Sandbox Architecture** to keep you secure without breaking your workflow:
+
+**The Action Layer (Runs Locally for File Access):**
+* **Aider (VS Code Extension):** Your AI pair programmer. It runs inside your editor so it can natively read and write to your local project files, but all of its AI traffic is securely tunneled directly into the Sandbox Proxy.
+* **IronClaw (WASM Sandbox):** Your autonomous background agent. It runs natively to avoid lag, but strictly executes all browser and automation tasks inside its own secure WebAssembly (WASM) sandbox.
+
+**The Intelligence Layer (Locked in Docker Container):**
+* **Khoj:** Your private Wiki RAG engine. Drop in PDFs, markdown files, and notes, and ask your AI questions about them.
+* **Genesys & pgvector:** The Long-Term Memory (LTM) database. This utilizes an active causal graph, allowing autonomous agents to remember your preferences and causal reasoning across sessions.
+* **LLMLingua Proxy:** The central hub. It intercepts massive prompts and uses a tiny CPU model to compress the text by up to 40% before sending it to your GPU, saving your VRAM from crashing. It also has the added benefit of Token Optimization.
 
 ---
 
