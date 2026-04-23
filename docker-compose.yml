@@ -1,4 +1,4 @@
-version: '3.8'
+# Removed 'version' line to satisfy Docker V2 standards
 
 x-resources: &default-limits
   deploy:
@@ -22,7 +22,8 @@ services:
     <<: *default-limits
 
   mem0:
-    image: mem0ai/mem0
+    # UPDATED IMAGE PATH: Using the verified community build
+    image: mem0ai/mem0:latest
     container_name: mem0
     ports:
       - "8080:8000"
