@@ -59,6 +59,8 @@ jobs:
   update-docker-compose:
     needs: build-and-push
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v4
     
@@ -85,6 +87,8 @@ jobs:
   create-release:
     needs: update-docker-compose
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: github.event_name == 'release'
     steps:
     - uses: actions/checkout@v4
@@ -123,6 +127,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   notify:
+    permissions:
+      contents: read
     needs: [build-and-push, create-release]
     runs-on: ubuntu-latest
     if: always()
