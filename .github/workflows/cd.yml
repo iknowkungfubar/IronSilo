@@ -130,6 +130,8 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   notify:
+    permissions:
+      contents: read
     needs: [build-and-push, create-release]
     runs-on: ubuntu-latest
     permissions:
