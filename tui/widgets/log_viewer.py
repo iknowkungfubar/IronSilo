@@ -103,7 +103,7 @@ class LogViewerWidget(Static):
             timestamp = base_time.replace(microsecond=i * 100000)
             self._logs.append(LogEntry(timestamp, level, container, message))
     
-    async def refresh(self) -> None:
+    async def refresh_data(self) -> None:
         """Refresh log data."""
         try:
             # In production, this would fetch new logs from containers

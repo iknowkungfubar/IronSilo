@@ -37,9 +37,9 @@ class ContainerStatusWidget(Static):
         """Called when widget is mounted."""
         table = self.query_one("#container-table", DataTable)
         table.add_columns("Container", "Status", "Health", "CPU", "Memory", "Uptime")
-        self.refresh()
+        self.refresh_data()
     
-    async def refresh(self) -> None:
+    async def refresh_data(self) -> None:
         """Refresh container status data."""
         try:
             self._containers = await self._get_container_status()

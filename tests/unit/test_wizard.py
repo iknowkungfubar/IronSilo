@@ -232,3 +232,242 @@ class TestSetupWizard:
             
             captured = capsys.readouterr()
             assert "Review" in captured.out or "Configuration" in captured.out
+
+
+class TestWizardMissingCoverage:
+    """Tests for missing coverage in wizard.py."""
+    
+    def test_select_option_non_numeric_input(self, capsys):
+        """Test select_option with non-numeric input then valid."""
+        options = ["Option A", "Option B"]
+        
+        with patch("builtins.input", side_effect=["abc", "1"]):
+            result = select_option("Pick:", options, default=0)
+            assert result == 0
+        
+        captured = capsys.readouterr()
+        assert "Please enter a number" in captured.out
+    
+    def test_step_detect_hosts_with_detected_hosts(self, capsys):
+        """Test _step_detect_hosts with detected hosts."""
+        from setup.detector import HostInfo, LLMHost
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            
+            mock_hosts = [
+                HostInfo(
+                    host_type=LLMHost.LM_STUDIO,
+                    name="LM Studio",
+                    default_port=1234,
+                    api_path="/v1/chat/completions",
+                    description="Test",
+                    detected=True,
+                    port=1234,
+                ),
+                HostInfo(
+                    host_type=LLMHost.OLLAMA,
+                    name="Ollama",
+                    default_port=11434,
+                    api_path="/v1/chat/completions",
+                    description="Test",
+                    detected=False,
+                ),
+            ]
+            
+            with patch("setup.wizard.detect_llm_hosts", return_value=mock_hosts):
+                wizard._step_detect_hosts()
+            
+            captured = capsys.readouterr()
+            assert "LM Studio detected" in captured.out
+            assert "Ollama not detected" in captured.out
+            assert len(wizard.detected_hosts) == 2
+    
+    def test_step_select_host_with_detected_hosts(self):
+        """Test _step_select_host with detected hosts."""
+        from setup.detector import HostInfo, LLMHost
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            
+            mock_hosts = [
+                HostInfo(
+                    host_type=LLMHost.LM_STUDIO,
+                    name="LM Studio",
+                    default_port=1234,
+                    api_path="/v1/chat/completions",
+                    description="Test",
+                    detected=True,
+                    port=1234,
+                ),
+            ]
+            wizard.detected_hosts = mock_hosts
+            
+            with patch("builtins.input", return_value="1"):
+                wizard._step_select_host()
+            
+            assert wizard.config.llm_host == LLMHost.LM_STUDIO
+            assert "1234" in wizard.config.llm_endpoint
+    
+    def test_step_select_host_invalid_then_valid_endpoint(self):
+        """Test _step_select_host with invalid then valid custom endpoint."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            wizard.detected_hosts = []
+            
+            with patch("setup.wizard.get_input", side_effect=["invalid", "http://localhost:8000/v1/chat/completions"]):
+                with patch("setup.wizard.validate_endpoint", side_effect=[(False, "bad url"), (True, "")]):
+                    wizard._step_select_host()
+            
+            assert "localhost" in wizard.config.llm_endpoint
+    
+    def test_step_configure_resources_invalid_input(self, capsys):
+        """Test _step_configure_resources with invalid number input."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            
+            with patch("setup.wizard.get_input", side_effect=["not_a_number", "2.5"]):
+                wizard._step_configure_resources()
+            
+            captured = capsys.readouterr()
+            assert "Invalid number" in captured.out or "Memory limit" in captured.out
+    
+    def test_step_configure_security_short_password(self, capsys):
+        """Test _step_configure_security with short password warning."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            
+            with patch("setup.wizard.get_input", side_effect=["user", "short"]):
+                wizard._step_configure_security()
+            
+            captured = capsys.readouterr()
+            assert "short" in captured.out.lower()
+    
+    def test_step_review_and_save_with_validation_errors(self, capsys):
+        """Test _step_review_and_save with validation errors."""
+        from setup.configurator import Configurator
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            wizard.config.llm_endpoint = ""  # Invalid config
+            
+            mock_configurator = MagicMock(spec=Configurator)
+            mock_configurator.validate_config.return_value = ["LLM endpoint is required"]
+            
+            with patch("setup.wizard.get_yes_no", return_value=True):
+                with patch("setup.wizard.Configurator", return_value=mock_configurator):
+                    wizard._step_review_and_save()
+            
+            captured = capsys.readouterr()
+            assert "errors" in captured.out.lower()
+    
+    def test_full_wizard_run(self, capsys):
+        """Test complete wizard run flow."""
+        from setup.detector import HostInfo, LLMHost
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            
+            mock_hosts = [
+                HostInfo(
+                    host_type=LLMHost.LM_STUDIO,
+                    name="LM Studio",
+                    default_port=1234,
+                    api_path="/v1/chat/completions",
+                    description="Test",
+                    detected=True,
+                    port=1234,
+                ),
+            ]
+            
+            # Mock all the input calls for the wizard
+            input_responses = [
+                "1",  # select host
+                "y",  # enable ironclaw
+                "y",  # enable searxng
+                "4096",  # memory limit
+                "2.0",  # cpu limit
+                "testuser",  # db user
+                "password123",  # db password
+                "y",  # save config
+            ]
+            
+            with patch("setup.wizard.detect_llm_hosts", return_value=mock_hosts):
+                with patch("builtins.input", side_effect=input_responses):
+                    config = wizard.run()
+            
+            assert config.llm_host == LLMHost.LM_STUDIO
+            assert config.enable_ironclaw is True
+            assert config.memory_limit_mb == 4096
+    
+    def test_main_with_non_interactive(self, capsys):
+        """Test main function with --non-interactive flag."""
+        import sys
+        from setup.wizard import main
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with patch.object(sys, "argv", ["ironsilo-setup", "--non-interactive", "--workspace", tmpdir]):
+                main()
+            
+            captured = capsys.readouterr()
+            assert "configuration" in captured.out.lower() or "written" in captured.out.lower()
+    
+    def test_main_interactive_mode(self):
+        """Test main function in interactive mode."""
+        import sys
+        from setup.wizard import main
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            mock_wizard = MagicMock()
+            mock_wizard.run.return_value = MagicMock()
+            
+            with patch.object(sys, "argv", ["ironsilo-setup", "--workspace", tmpdir]):
+                with patch("setup.wizard.SetupWizard", return_value=mock_wizard):
+                    main()
+            
+            mock_wizard.run.assert_called_once()
+    
+    def test_get_input_no_default(self):
+        """Test get_input without default value."""
+        with patch("builtins.input", return_value="user_value"):
+            result = get_input("Enter something", default=None)
+            assert result == "user_value"
+    
+    def test_get_input_empty_no_default(self):
+        """Test get_input with empty input and no default."""
+        with patch("builtins.input", return_value=""):
+            result = get_input("Enter something", default=None)
+            assert result == ""
+    
+    def test_step_configure_resources_cpu_invalid(self, capsys):
+        """Test _step_configure_resources with invalid CPU input."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            
+            with patch("setup.wizard.get_input", side_effect=["4096", "invalid_cpu"]):
+                wizard._step_configure_resources()
+            
+            captured = capsys.readouterr()
+            assert "Invalid number" in captured.out
+    
+    def test_step_review_and_save_windows_platform(self, capsys):
+        """Test _step_review_and_save on Windows platform."""
+        import sys as sys_module
+        
+        with tempfile.TemporaryDirectory() as tmpdir:
+            wizard = SetupWizard(workspace_dir=Path(tmpdir))
+            wizard.config.llm_endpoint = "http://localhost:8000/v1/chat/completions"
+            
+            mock_configurator = MagicMock()
+            mock_configurator.validate_config.return_value = []
+            mock_configurator.write_env_file.return_value = Path(tmpdir) / ".env"
+            
+            original_platform = sys_module.platform
+            
+            with patch("setup.wizard.get_yes_no", return_value=True):
+                with patch("setup.wizard.Configurator", return_value=mock_configurator):
+                    with patch.object(sys_module, "platform", "win32"):
+                        wizard._step_review_and_save()
+            
+            captured = capsys.readouterr()
+            assert "Start_Workspace.bat" in captured.out

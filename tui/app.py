@@ -155,9 +155,9 @@ class IronSiloTUI(App):
             log_viewer = self.query_one("#log-viewer", LogViewerWidget)
             
             await asyncio.gather(
-                container_status.refresh(),
-                resource_monitor.refresh(),
-                log_viewer.refresh(),
+                container_status.refresh_data(),
+                resource_monitor.refresh_data(),
+                log_viewer.refresh_data(),
                 return_exceptions=True,
             )
             

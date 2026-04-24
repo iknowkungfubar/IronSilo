@@ -83,9 +83,9 @@ class ResourceMonitorWidget(Static):
     
     def on_mount(self) -> None:
         """Called when widget is mounted."""
-        self.refresh()
+        self.refresh_data()
     
-    async def refresh(self) -> None:
+    async def refresh_data(self) -> None:
         """Refresh resource metrics."""
         try:
             # In production, this would read actual system metrics

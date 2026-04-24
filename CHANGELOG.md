@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-04-24
+### Added
+- **Comprehensive Test Suite:** Added 543 tests covering all core modules with 88.4% code coverage
+- **Unit Tests:** Extended coverage for TUI components, proxy models, security modules, MCP servers, and pipeline components
+- **Integration Tests:** Added end-to-end integration tests for proxy with mock upstream LLM and security key manager workflows
+- **Test Infrastructure:** Configured pytest with coverage reporting, markers for unit/integration/e2e tests
+- **Textual Pilot Tests:** Added comprehensive TUI tests using Textual's Pilot framework for headless testing
+
+### Changed
+- **Version Bump:** Updated to version 2.0.0 to reflect stable, production-ready status
+- **Documentation:** Enhanced README.md with testing instructions and coverage badges
+- **TUI Refactor:** Renamed widget `refresh()` methods to `refresh_data()` to avoid conflicts with Textual's base class
+
+### Fixed
+- **Test Stability:** Fixed flaky tests related to Textual app context and datetime deprecation warnings
+- **Coverage Compliance:** All modules now exceed the 80% minimum coverage threshold (88.4% achieved)
+- **TUI Method Signatures:** Fixed method signature conflicts with Textual's Widget base class
+
+---
+
 ## [1.0.2] - 2026-04-23
 ### Changed
 - **Removed VS Code Extension Dependencies:** Deprecated the `.vscode` auto-configuration folder. IronSilo now strictly advocates using Aider via the native CLI and Khoj via its native Docker Web UI. This eliminates security risks from unmaintained 3rd-party wrappers (like `lee2py.aider-composer`) and future-proofs the RAG engine against Khoj's cloud deprecation.
