@@ -1,5 +1,8 @@
 name: IronSilo CD
 
+permissions:
+  contents: read
+
 on:
   release:
     types: [published]
@@ -59,6 +62,8 @@ jobs:
   update-docker-compose:
     needs: build-and-push
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v4
     
@@ -85,6 +90,8 @@ jobs:
   create-release:
     needs: update-docker-compose
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: github.event_name == 'release'
     steps:
     - uses: actions/checkout@v4
@@ -125,6 +132,8 @@ jobs:
   notify:
     needs: [build-and-push, create-release]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: always()
     steps:
     - name: Notify on failure
