@@ -13,3 +13,4 @@ __pycache__/
 pg-data/
 khoj-data/
 hf-cache/
+.aider*
