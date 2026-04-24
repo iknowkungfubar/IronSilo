@@ -444,6 +444,141 @@ class TestKeyRotation:
             # inactive keys that are still tracked
             # Just verify we have keys
             assert status["total_keys"] >= 1
+    
+    def test_key_rotation_with_expiring_keys(self):
+        """Test key status with expiring keys."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = KeyManager(key_dir=Path(tmpdir), key_rotation_days=7)
+            manager.initialize()
+            
+            # Generate a key that expires in 3 days
+            key_id, _ = manager.generate_key(expires_in_days=3)
+            
+            status = manager.get_key_status()
+            
+            # Should have expiring_soon list
+            assert "expiring_soon" in status
+            # The key should be in expiring_soon
+            expiring_ids = [k["id"] for k in status["expiring_soon"]]
+            assert key_id in expiring_ids
+    
+    def test_load_keystore_encrypted(self):
+        """Test loading encrypted keystore."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            key_dir = Path(tmpdir) / "keys"
+            master_key = AESEncryptor.generate_key()
+            
+            # Create manager with encryption
+            manager1 = KeyManager(key_dir=key_dir, master_key=master_key)
+            manager1.initialize()
+            key_id, original_key = manager1.generate_key()
+            
+            # Create new manager with same master key
+            manager2 = KeyManager(key_dir=key_dir, master_key=master_key)
+            manager2.initialize()
+            
+            # The keystore should be loaded with the key info
+            assert manager2._keystore is not None
+            # Find the key info
+            key_info = None
+            for ki in manager2._keystore.keys:
+                if ki.id == key_id:
+                    key_info = ki
+                    break
+            assert key_info is not None
+            assert key_info.fingerprint is not None
+    
+    def test_load_keystore_invalid_password(self):
+        """Test loading keystore with wrong password."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            key_dir = Path(tmpdir) / "keys"
+            
+            # Create manager with password
+            manager1 = KeyManager(key_dir=key_dir, master_key=AESEncryptor.generate_key())
+            manager1.initialize()
+            
+            # Try to load with different master key
+            manager2 = KeyManager(key_dir=key_dir, master_key=AESEncryptor.generate_key())
+            
+            with pytest.raises(KeyError):
+                manager2.initialize()
+    
+    def test_backup_keys_no_keystore(self):
+        """Test backup when keystore not initialized."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = KeyManager(key_dir=Path(tmpdir))
+            # Don't initialize
+            
+            with pytest.raises(KeyError):
+                manager.backup_keys(Path(tmpdir) / "backup.json")
+    
+    def test_restore_keys_invalid_backup(self):
+        """Test restore with invalid backup file."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = KeyManager(key_dir=Path(tmpdir))
+            manager.initialize()
+            
+            # Create invalid backup
+            invalid_backup = Path(tmpdir) / "invalid.json"
+            invalid_backup.write_text("invalid json")
+            
+            with pytest.raises(KeyError):
+                manager.restore_keys(invalid_backup)
+    
+    def test_get_key_status_not_initialized(self):
+        """Test getting key status when not initialized."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = KeyManager(key_dir=Path(tmpdir))
+            # Don't initialize
+            
+            status = manager.get_key_status()
+            
+            assert status["status"] == "not_initialized"
+    
+    def test_generate_key_without_keystore(self):
+        """Test generating key without initialized keystore."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = KeyManager(key_dir=Path(tmpdir))
+            # Don't initialize
+            
+            with pytest.raises(KeyError):
+                manager.generate_key()
+    
+    def test_rotate_key_without_keystore(self):
+        """Test rotating key without initialized keystore."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = KeyManager(key_dir=Path(tmpdir))
+            # Don't initialize
+            
+            with pytest.raises(KeyError):
+                manager.rotate_key()
+    
+    def test_get_primary_key_no_primary(self):
+        """Test getting primary key when none exists."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = KeyManager(key_dir=Path(tmpdir))
+            manager.initialize()
+            
+            # Generate a non-primary key
+            manager.generate_key(is_primary=False)
+            
+            # Demote any existing primary
+            if manager._keystore:
+                for key in manager._keystore.keys:
+                    key.is_primary = False
+            
+            result = manager.get_primary_key()
+            
+            assert result is None
+    
+    def test_save_keystore_without_initialization(self):
+        """Test saving keystore without initialization."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            manager = KeyManager(key_dir=Path(tmpdir))
+            # Don't initialize
+            
+            with pytest.raises(KeyError):
+                manager._save_keystore()
 
 
 class TestEncryptedField:

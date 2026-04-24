@@ -111,7 +111,6 @@ class IronSiloTUI(App):
     
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self.theme = IRONSILO_THEME
         self._refresh_interval = 5  # seconds
         self._last_refresh = time.time()
     

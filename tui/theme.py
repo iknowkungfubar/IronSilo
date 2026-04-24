@@ -18,10 +18,11 @@ IRONSILO_THEME = Theme(
     surface="#16213e",  # Darker blue
     panel="#0f3460",  # Deep blue
     boost="#ffffff",
-    dark_surface="#1a1a2e",
-    dark_foreground="#ffffff",
-    dark_background="#0d0d1a",
+    dark=True,
 )
+
+# Theme name constant for use with App.theme
+IRONSILO_THEME_NAME = "ironsilo"
 
 
 DEFAULT_THEME = Theme(
@@ -37,7 +38,5 @@ DEFAULT_THEME = Theme(
     surface="#f3f4f6",
     panel="#e5e7eb",
     boost="#ffffff",
-    dark_surface="#374151",
-    dark_foreground="#f9fafb",
-    dark_background="#111827",
+    dark=False,
 )
