@@ -1,5 +1,5 @@
 # Development dependencies for IronSilo
-pytest==7.4.3
+pytest==9.0.3
 pytest-asyncio==0.23.2
 pytest-cov==4.1.0
 pytest-mock==3.12.0
@@ -7,7 +7,7 @@ pytest-xdist==3.5.0
 pytest-timeout==2.2.0
 
 # Code quality
-black==23.12.1
+black==26.3.1
 isort==5.13.2
 flake8==7.0.0
 mypy==1.8.0
@@ -43,7 +43,7 @@ mkdocstrings[python]==0.24.0
 
 # Development server
 watchdog==3.0.0
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 
 # Pre-commit
 pre-commit==3.6.0
