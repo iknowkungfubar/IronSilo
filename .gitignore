@@ -8,6 +8,20 @@ __pycache__/
 *.py[cod]
 *$py.class
 .env
+.venv/
+
+# Coverage
+.coverage
+coverage.xml
+htmlcov/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Local databases
+tasks.db
 
 # Docker volumes (Safety catch)
 pg-data/

@@ -1,0 +1,178 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ironsilo"
+version = "2.0.0"
+description = "A local-first, cross-platform AI development sandbox"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "IronSilo Contributors", email = "dev@ironsilo.dev"}
+]
+keywords = ["ai", "local", "sandbox", "docker", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Clustering",
+]
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "httpx>=0.25.0",
+    "llmlingua>=0.2.0",
+    "torch>=2.1.0",
+    "torchvision>=0.16.0",
+    "torchaudio>=2.1.0",
+    "cryptography>=41.0.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.0",
+    "alembic>=1.13.0",
+    "mcp>=1.0.0",
+    "textual>=0.46.0",
+    "rich>=13.7.0",
+    "watchdog>=3.0.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.0",
+    "structlog>=23.2.0",
+    "prometheus-client>=0.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "black>=23.12.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+    "mypy>=1.8.0",
+    "bandit>=1.7.0",
+    "safety>=2.3.0",
+    "pre-commit>=3.6.0",
+    "coverage>=7.4.0",
+    "factory-boy>=3.3.0",
+    "faker>=22.0.0",
+    "httpx>=0.25.0",
+    "testing-postgresql>=1.3.0",
+    "testcontainers>=3.7.0",
+]
+
+tui = [
+    "textual>=0.46.0",
+    "rich>=13.7.0",
+]
+
+cache = [
+    "redis>=5.0.0",
+    "diskcache>=5.6.0",
+]
+
+search = [
+    "searxng-client>=0.3.0",
+]
+
+security = [
+    "cryptography>=41.0.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.0",
+    "python-multipart>=0.0.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/iknowkungfubar/IronSilo"
+Documentation = "https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md"
+Repository = "https://github.com/iknowkungfubar/IronSilo"
+Issues = "https://github.com/iknowkungfubar/IronSilo/issues"
+Changelog = "https://github.com/iknowkungfubar/IronSilo/blob/main/CHANGELOG.md"
+
+[project.scripts]
+ironsilo = "tui.cli:main"
+ironsilo-monitor = "tui.cli:monitor"
+ironsilo-setup = "setup.wizard:main"
+
+[tool.setuptools.packages.find]
+include = ["proxy*", "genesys*", "mcp*", "pipeline*", "security*", "cache*", "tui*", "setup*", "search*"]
+
+[tool.black]
+line-length = 120
+target-version = ['py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+line_length = 120
+known_first_party = ["proxy", "genesys", "mcp", "pipeline", "security", "cache", "tui", "setup", "search"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "-v",
+    "--tb=short",
+    "--color=yes",
+    "--cov=.",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+markers = [
+    "unit: Unit tests (fast, no external dependencies)",
+    "integration: Integration tests (may require Docker)",
+    "e2e: End-to-end tests (full stack)",
+    "security: Security tests",
+    "slow: Slow tests (>1s execution time)",
+]
+
+[tool.coverage.run]
+source = ["."]
+omit = [
+    "tests/*",
+    "docs/*",
+    ".git/*",
+    "__pycache__/*",
+    "*.py[cod]",
+    "*$py.class",
+]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+show_missing = true
+skip_covered = true
+fail_under = 80
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"

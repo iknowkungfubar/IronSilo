@@ -64,7 +64,79 @@ services:
           cpus: '2.0'
           memory: 3G
 
+  mcp-genesys:
+    build:
+      context: ./mcp
+      dockerfile: Dockerfile
+    container_name: mcp-genesys
+    environment:
+      - MCP_SERVER_TYPE=genesys
+      - GENESYS_API_URL=http://genesys-memory:8000
+    depends_on:
+      - genesys-memory
+      - ironclaw-db
+    ports:
+      - "8003:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  mcp-khoj:
+    build:
+      context: ./mcp
+      dockerfile: Dockerfile
+    container_name: mcp-khoj
+    environment:
+      - MCP_SERVER_TYPE=khoj
+      - KHOJ_API_URL=http://khoj:42110
+    depends_on:
+      - khoj
+    ports:
+      - "8004:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    volumes:
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
+      - searxng-data:/etc/searxng
+    ports:
+      - "8888:8080"
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8888/
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 volumes:
   ironclaw-pg-data:
   khoj-data:
   hf-cache:
+  searxng-data:

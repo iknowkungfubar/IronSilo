@@ -1,0 +1,72 @@
+# IronSilo Model Router Configuration
+# This file configures semantic routing for different LLM models
+
+models:
+  code:
+    name: "qwen2.5-coder-7b"
+    endpoint: "http://host.docker.internal:8000/v1/chat/completions"
+    description: "Code generation and editing model"
+    priority: 1
+    max_tokens: 4096
+    temperature: 0.7
+  
+  fast:
+    name: "llama-3-8b-instruct"
+    endpoint: "http://host.docker.internal:8002/v1/chat/completions"
+    description: "Fast inference for simple queries"
+    priority: 2
+    max_tokens: 2048
+    temperature: 0.5
+  
+  complex:
+    name: "claude-3.5-sonnet"
+    endpoint: "http://host.docker.internal:8003/v1/chat/completions"
+    description: "Complex reasoning and analysis"
+    priority: 3
+    max_tokens: 8192
+    temperature: 0.8
+
+routing:
+  default_model: "code"
+  fallback_model: "fast"
+  timeout_ms: 30000
+  retry_count: 2
+  
+  # Classification thresholds
+  classification:
+    code_threshold: 0.7
+    simple_max_words: 25
+    complex_min_words: 50
+
+  # Health checking
+  health_check:
+    enabled: true
+    interval_seconds: 60
+    timeout_seconds: 5
+    failure_threshold: 3
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "json"
+  include_classification: true
+  include_metrics: true
+
+# Cache configuration (for KV caching)
+cache:
+  enabled: false
+  max_size: 1000
+  ttl_seconds: 3600
+  
+# Compression settings
+compression:
+  enabled: true
+  min_tokens: 1000
+  rate: 0.6
+  force_tokens:
+    - "system"
+    - "user"
+    - "assistant"
+    - "```"
+    - "def"
+    - "class"

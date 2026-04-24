@@ -1,0 +1,141 @@
+name: IronSilo CD
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.3)'
+        required: true
+        type: string
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    strategy:
+      matrix:
+        service: [proxy, genesys, mcp]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}-${{ matrix.service }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./${{ matrix.service }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  update-docker-compose:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Update docker-compose.yml
+      run: |
+        VERSION=${{ github.event.release.tag_name || inputs.version }}
+        if [ -z "$VERSION" ]; then
+          VERSION="latest"
+        fi
+        
+        # Update image tags in docker-compose.yml
+        sed -i "s|image: ghcr.io/${{ github.repository }}-proxy:.*|image: ghcr.io/${{ github.repository }}-proxy:$VERSION|g" docker-compose.yml
+        sed -i "s|image: ghcr.io/${{ github.repository }}-genesys:.*|image: ghcr.io/${{ github.repository }}-genesys:$VERSION|g" docker-compose.yml
+        sed -i "s|image: ghcr.io/${{ github.repository }}-mcp:.*|image: ghcr.io/${{ github.repository }}-mcp:$VERSION|g" docker-compose.yml
+    
+    - name: Commit updated docker-compose.yml
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add docker-compose.yml
+        git commit -m "chore: update docker image versions to ${{ github.event.release.tag_name || inputs.version }}" || exit 0
+        git push
+
+  create-release:
+    needs: update-docker-compose
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Extract changelog for this version
+        VERSION=${{ github.event.release.tag_name }}
+        CHANGELOG=$(sed -n "/^## \[${VERSION}\]/,/^## \[/p" CHANGELOG.md | head -n -1)
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Update release notes
+      uses: softprops/action-gh-release@v1
+      with:
+        body: |
+          ## IronSilo ${{ github.event.release.tag_name }}
+          
+          ### 🚀 New Features
+          ${{ steps.changelog.outputs.changelog }}
+          
+          ### 📦 Installation
+          ```bash
+          git clone https://github.com/${{ github.repository }}.git
+          cd IronSilo
+          ./Start_Workspace.sh
+          ```
+          
+          ### 📚 Documentation
+          - [Simple Manual](https://github.com/${{ github.repository }}/blob/main/docs/SIMPLE_MANUAL.md)
+          - [Advanced Manual](https://github.com/${{ github.repository }}/blob/main/docs/ADVANCED_MANUAL.md)
+          - [System Design](https://github.com/${{ github.repository }}/blob/main/docs/SYSTEM_DESIGN.md)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    needs: [build-and-push, create-release]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+    - name: Notify on failure
+      if: needs.build-and-push.result == 'failure' || needs.create-release.result == 'failure'
+      run: |
+        echo "CD pipeline failed!"
+        # Add Slack/Discord notification here if needed
+        exit 1
+    
+    - name: Notify on success
+      if: needs.build-and-push.result == 'success' && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
+      run: |
+        echo "CD pipeline completed successfully!"
+        # Add Slack/Discord notification here if needed

@@ -1,0 +1,203 @@
+# SearxNG Settings for IronSilo
+# Privacy-focused search configuration
+
+use_default_settings: true
+
+# General settings
+general:
+  debug: false
+  instance_name: "IronSilo Search"
+  privacypolicy_url: false
+  donation_url: false
+  contact_url: false
+  enable_metrics: true
+
+# Branding
+brand:
+  name: "IronSilo"
+  url: "https://github.com/iknowkungfubar/IronSilo"
+  img_url: ""
+  favicon: ""
+
+# Server configuration
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "ultrasecretkey"  # Change this in production
+  limiter: false
+  image_proxy: true
+  # Public URL for the instance
+  public_instance: false
+
+# UI configuration
+ui:
+  static_use_hash: true
+  default_theme: "simple"
+  center_alignment: true
+  default_locale: "en"
+  query_in_title: true
+  infinite_scroll: true
+  # Available themes: simple, dark, oscar, pepys
+
+# Search configuration
+search:
+  safe_search: 0  # 0: off, 1: moderate, 2: strict
+  autocomplete: "google"
+  default_lang: "auto"
+  ban_time_on_fail: 5
+  max_ban_time_on_fail: 120
+  formats:
+    - html
+    - json
+
+# Outgoing requests configuration
+outgoing:
+  request_timeout: 5.0
+  max_request_timeout: 15.0
+  pool_connections: 100
+  pool_maxsize: 20
+  enable_http2: true
+  # Using Tor for enhanced privacy (optional)
+  using_tor_proxy: false
+  extra_proxy_timeout: 10.0
+  # uncomment to set proxies
+  # proxies:
+  #   all://:
+  #     - socks5h://tor:9050
+  # uncomment to enable proxy for specific engines
+  # using_tor_proxy: true
+  # tor_proxy:
+  #   all://:
+  #     - socks5h://tor:9050
+
+# Engine configuration
+# Enable only privacy-respecting engines
+engines:
+  # Disable tracking-heavy engines
+  - name: google
+    disabled: true
+    use_mobile_ui: false
+    
+  - name: google images
+    disabled: true
+    
+  - name: google news
+    disabled: true
+    
+  - name: google scholar
+    disabled: true
+    
+  - name: bing
+    disabled: true
+    
+  - name: yahoo
+    disabled: true
+    
+  # Enable privacy-respecting alternatives
+  - name: duckduckgo
+    disabled: false
+    weight: 1.5
+    
+  - name: startpage
+    disabled: false
+    weight: 1.2
+    
+  - name: qwant
+    disabled: false
+    weight: 1.0
+    
+  # Enable useful specialized engines
+  - name: wikipedia
+    disabled: false
+    weight: 1.0
+    shortcut: wp
+    
+  - name: wikidata
+    disabled: false
+    weight: 0.8
+    shortcut: wd
+    
+  - name: arxiv
+    disabled: false
+    weight: 1.0
+    shortcut: arx
+    
+  - name: github
+    disabled: false
+    weight: 1.0
+    shortcut: gh
+    
+  - name: stackoverflow
+    disabled: false
+    weight: 1.2
+    shortcut: st
+    
+  - name: mdn web docs
+    disabled: false
+    weight: 1.0
+    shortcut: mdn
+    
+  # Programming-related engines
+  - name: pypi
+    disabled: false
+    weight: 0.8
+    shortcut: pypi
+    
+  - name: npm
+    disabled: false
+    weight: 0.8
+    shortcut: npm
+    
+  - name: crates
+    disabled: false
+    weight: 0.8
+    shortcut: crates
+    
+  # Disable social media engines (privacy concern)
+  - name: twitter
+    disabled: true
+    
+  - name: facebook
+    disabled: true
+    
+  - name: instagram
+    disabled: true
+    
+  - name: reddit
+    disabled: false
+    weight: 0.6
+    shortcut: r
+    
+  # News engines
+  - name: hackernews
+    disabled: false
+    weight: 1.0
+    shortcut: hn
+    
+  - name: lobsters
+    disabled: false
+    weight: 0.8
+    shortcut: lb
+    
+  # Documentation engines
+  - name:包管理 PyPI
+    engine: pypi
+    shortcut: pypi
+    disabled: false
+    
+  - name: readthedocs
+    disabled: false
+    weight: 0.8
+    shortcut: rtd
+
+# plugins
+plugins:
+  - name: 'HashbangPlugin'
+  - name: 'TrackerURLRemoverPlugin'
+  - name: 'OpenAccessDOIRefreshPlugin'
+
+# Server side keys
+server_names:
+  - "localhost"
+  - "127.0.0.1"
+  - "::1"
