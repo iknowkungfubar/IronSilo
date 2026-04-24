@@ -1,16 +1,16 @@
 # Core dependencies for IronSilo
-fastapi>=0.104.0
+fastapi>=0.104.1
 uvicorn[standard]>=0.24.0
 httpx>=0.26.0
 llmlingua>=0.2.0
 torch>=2.1.0
 torchvision>=0.16.0
 torchaudio>=2.1.0
-cryptography>=41.0.0
-pydantic>=2.5.0
+cryptography>=42.0.0
+pydantic>=2.5.3
 pydantic-settings>=2.1.0
-sqlalchemy>=2.0.0
-psycopg2-binary>=2.9.0
+sqlalchemy>=2.0.23
+psycopg2-binary>=2.9.9
 alembic>=1.13.2
 
 # MCP dependencies
@@ -24,6 +24,9 @@ diskcache>=5.6.0
 textual>=0.46.0
 rich>=13.7.0
 
+# Search dependencies
+searxng-client>=0.3.0
+
 # Security
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
@@ -35,11 +38,11 @@ structlog>=23.2.0
 
 # Configuration
 python-dotenv>=1.2.2
-pyyaml>=6.0.0
+pyyaml>=6.0.1
 
 # File watching
 watchdog>=3.0.0
 
 # Date/typing utilities
-python-dateutil>=2.8.0
+python-dateutil>=2.8.2
 typing-extensions>=4.9.0
