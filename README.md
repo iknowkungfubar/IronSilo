@@ -16,8 +16,8 @@
     <img src="https://img.shields.io/badge/Docs-Advanced_Architecture-red.svg?style=flat-square" alt="Advanced Architecture">
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square" alt="Supported Platforms">
-  <img src="https://img.shields.io/badge/Tests-543%20passed-brightgreen.svg?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/Coverage-88.4%25-brightgreen.svg?style=flat-square" alt="Coverage">
+  <img src="https://img.shields.io/badge/Tests-644%20passed-brightgreen.svg?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/Coverage-92.8%25-brightgreen.svg?style=flat-square" alt="Coverage">
 </p>
 
 **Turn your PC into a private, autonomous AI lab, without melting your GPU.**
@@ -126,12 +126,22 @@ pytest tests/unit/test_proxy_proxy.py -v
 
 ### Test Coverage
 
-- **Total Tests:** 479 tests (all passing)
-- **Code Coverage:** 81.5%
+- **Total Tests:** 644 tests (all passing)
+- **Code Coverage:** 92.8%
 - **Test Types:**
   - Unit tests for all core modules
   - Integration tests for proxy and security
   - Mock-based testing for external dependencies
+  - TUI Pilot tests for headless interface testing
+
+### Security
+
+IronSilo includes a comprehensive security framework:
+- **AES-256-GCM encryption** for data at rest
+- **PBKDF2 key derivation** with 100,000 iterations
+- **Secure key management** with rotation support
+- **Input validation** via Pydantic models
+- See [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md) for full security assessment
 
 ### Contributing to Tests
 
@@ -148,6 +158,7 @@ When adding new features:
 - [Advanced Architecture](docs/ADVANCED_MANUAL.md) - Technical deep dive
 - [Roadmap](ROADMAP.md) - Future improvements
 - [Architecture](ARCHITECTURE.md) - System design overview
+- [Security Audit Report](SECURITY_AUDIT_REPORT.md) - Enterprise security assessment
 
 ---
 
