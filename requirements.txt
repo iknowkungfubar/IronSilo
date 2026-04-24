@@ -1,7 +1,7 @@
 # Core dependencies for IronSilo
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
-httpx>=0.25.0
+httpx>=0.26.0
 llmlingua>=0.2.0
 torch>=2.1.0
 torchvision>=0.16.0
@@ -11,7 +11,7 @@ pydantic>=2.5.0
 pydantic-settings>=2.1.0
 sqlalchemy>=2.0.0
 psycopg2-binary>=2.9.0
-alembic>=1.13.0
+alembic>=1.13.2
 
 # MCP dependencies
 mcp>=1.0.0
@@ -29,7 +29,7 @@ searxng-client>=0.3.0
 
 # Security
 python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.0
+passlib[bcrypt]>=1.7.4
 python-multipart>=0.0.6
 
 # Monitoring
@@ -37,7 +37,7 @@ prometheus-client>=0.19.0
 structlog>=23.2.0
 
 # Configuration
-python-dotenv>=1.0.0
+python-dotenv>=1.2.2
 pyyaml>=6.0.0
 
 # File watching
