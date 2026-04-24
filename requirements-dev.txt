@@ -21,7 +21,7 @@ types-PyYAML==6.0.12.12
 # Mocking
 factory-boy==3.3.1
 faker==24.0.0
-httpx==0.26.0
+httpx>=0.26.0
 
 # Testing utilities
 coverage==7.4.0
