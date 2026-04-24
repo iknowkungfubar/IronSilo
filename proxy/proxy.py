@@ -30,15 +30,27 @@ import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
 
-from .models import (
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    Choice,
-    ErrorResponse,
-    HealthResponse,
-    Message,
-    ResponseMessage,
-)
+# Import models - handle both package and standalone execution
+try:
+    from .models import (
+        ChatCompletionRequest,
+        ChatCompletionResponse,
+        Choice,
+        ErrorResponse,
+        HealthResponse,
+        Message,
+        ResponseMessage,
+    )
+except ImportError:
+    from models import (
+        ChatCompletionRequest,
+        ChatCompletionResponse,
+        Choice,
+        ErrorResponse,
+        HealthResponse,
+        Message,
+        ResponseMessage,
+    )
 
 # Configure structured logging
 structlog.configure(
@@ -178,7 +190,10 @@ def _process_messages(messages: list[Message]) -> list[Dict[str, Any]]:
     Returns:
         List of message dicts ready for upstream
     """
-    from .models import Role
+    try:
+        from .models import Role
+    except ImportError:
+        from models import Role
     
     processed = []
     

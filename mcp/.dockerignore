@@ -1,0 +1,13 @@
+# Docker context
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.env
+.pytest_cache/
+.mypy_cache/
+tests/
+htmlcov/
+coverage.xml
