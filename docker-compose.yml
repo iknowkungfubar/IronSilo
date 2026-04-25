@@ -10,11 +10,11 @@ services:
     image: pgvector/pgvector:pg15
     container_name: ironclaw-db
     environment:
-      POSTGRES_DB: ironsilo_vault
-      POSTGRES_USER: silo_admin
-      POSTGRES_PASSWORD: silo_password
+      POSTGRES_DB: ${POSTGRES_DB:-ironsilo_vault}
+      POSTGRES_USER: ${POSTGRES_USER:-silo_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD must be set in .env file}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"  # Bind to localhost only for security
     volumes:
       - ironclaw-pg-data:/var/lib/postgresql/data
     <<: *default-limits
@@ -26,10 +26,10 @@ services:
       - ironclaw-db
     environment:
       - GENESYS_BACKEND=postgres
-      - DATABASE_URL=postgresql://silo_admin:silo_password@ironclaw-db:5432/ironsilo_vault
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-silo_admin}:${POSTGRES_PASSWORD}@ironclaw-db:5432/${POSTGRES_DB:-ironsilo_vault}
       - GENESYS_EMBEDDER=local
     ports:
-      - "8005:8000"  # Changed from 8002 to avoid conflict
+      - "8005:8000"
     <<: *default-limits
 
   khoj:
@@ -52,8 +52,11 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
-      # This allows a root .env file to dynamically override the LLM endpoint
       - LLM_ENDPOINT=${LLM_ENDPOINT:-http://host.docker.internal:8000/v1/chat/completions}
+      - IRONSILO_API_KEY=${IRONSILO_API_KEY:-}
+      - RATE_LIMIT_REQUESTS=${RATE_LIMIT_REQUESTS:-60}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
     volumes:
       - hf-cache:/root/.cache/huggingface
     ports:
@@ -72,6 +75,7 @@ services:
     environment:
       - MCP_SERVER_TYPE=genesys
       - GENESYS_API_URL=http://genesys-memory:8000
+      - IRONSILO_API_KEY=${IRONSILO_API_KEY:-}
     depends_on:
       - genesys-memory
       - ironclaw-db
@@ -98,6 +102,7 @@ services:
     environment:
       - MCP_SERVER_TYPE=khoj
       - KHOJ_API_URL=http://khoj:42110
+      - IRONSILO_API_KEY=${IRONSILO_API_KEY:-}
     depends_on:
       - khoj
     ports:

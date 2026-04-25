@@ -16,6 +16,11 @@ Features:
     - Health check endpoint
     - Structured logging
     - Request/response validation with Pydantic
+    - API key authentication
+    - Rate limiting
+    - Request size limits
+    - CORS configuration
+    - Error sanitization
 """
 
 from __future__ import annotations
@@ -52,6 +57,26 @@ except ImportError:
         ResponseMessage,
     )
 
+# Import security middleware
+try:
+    from ..security.middleware import (
+        sanitize_error_message,
+        setup_security_middleware,
+    )
+except ImportError:
+    try:
+        from security.middleware import (
+            sanitize_error_message,
+            setup_security_middleware,
+        )
+    except ImportError:
+        # Fallback if security module not available
+        def sanitize_error_message(error: Exception) -> str:
+            return "Internal server error"
+        
+        def setup_security_middleware(app: FastAPI) -> None:
+            pass
+
 # Configure structured logging
 structlog.configure(
     processors=[
@@ -72,11 +97,6 @@ COMPRESSION_THRESHOLD = int(os.getenv("COMPRESSION_THRESHOLD", "1000"))
 COMPRESSION_RATE = float(os.getenv("COMPRESSION_RATE", "0.6"))
 PROXY_VERSION = os.getenv("PROXY_VERSION", "2.0.0")
 
-# Global state for health checks
-_start_time: float = 0.0
-_compressor: Optional[Any] = None
-_compression_enabled: bool = False
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -86,9 +106,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Handles initialization of LLMLingua compressor on startup
     and cleanup on shutdown.
     """
-    global _start_time, _compressor, _compression_enabled
-    
-    _start_time = time.time()
+    # Store state in app.state instead of globals
+    app.state.start_time = time.time()
+    app.state.compressor = None
+    app.state.compression_enabled = False
     
     logger.info("proxy_starting", llm_endpoint=LLM_ENDPOINT)
     
@@ -98,22 +119,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         
         logger.info("loading_llmlingua", model="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank")
         
-        _compressor = PromptCompressor(
+        app.state.compressor = PromptCompressor(
             model_name="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
             use_llmlingua2=True,
             device_map="cpu",
         )
-        _compression_enabled = True
+        app.state.compression_enabled = True
         
         logger.info("llmlingua_loaded", compression_enabled=True)
         
     except ImportError as e:
         logger.warning("llmlingua_not_available", error=str(e), compression_enabled=False)
-        _compression_enabled = False
+        app.state.compression_enabled = False
         
     except Exception as e:
         logger.error("llmlingua_load_failed", error=str(e), exc_info=True)
-        _compression_enabled = False
+        app.state.compression_enabled = False
     
     logger.info("proxy_started", version=PROXY_VERSION)
     
@@ -121,6 +142,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     
     # Cleanup
     logger.info("proxy_shutting_down")
+    app.state.compressor = None
 
 
 # Create FastAPI application
@@ -133,18 +155,23 @@ app = FastAPI(
     redoc_url=None,  # Disable ReDoc in production
 )
 
+# Apply security middleware
+setup_security_middleware(app)
 
-def _compress_content(content: str) -> str:
+
+def _compress_content(content: str, compressor: Any = None, enabled: bool = False) -> str:
     """
     Compress content using LLMLingua if available.
     
     Args:
         content: Original content to compress
+        compressor: LLMLingua compressor instance
+        enabled: Whether compression is enabled
         
     Returns:
         Compressed content, or original if compression fails/disabled
     """
-    if not _compression_enabled or not _compressor:
+    if not enabled or not compressor:
         return content
     
     if len(content) <= COMPRESSION_THRESHOLD:
@@ -153,7 +180,7 @@ def _compress_content(content: str) -> str:
     try:
         start_time = time.time()
         
-        result = _compressor.compress_prompt(
+        result = compressor.compress_prompt(
             content,
             rate=COMPRESSION_RATE,
             force_tokens=["system", "user", "assistant", "```", "def", "class"],
@@ -180,12 +207,14 @@ def _compress_content(content: str) -> str:
         return content
 
 
-def _process_messages(messages: list[Message]) -> list[Dict[str, Any]]:
+def _process_messages(messages: list[Message], compressor: Any = None, enabled: bool = False) -> list[Dict[str, Any]]:
     """
     Process messages, applying compression where needed.
     
     Args:
         messages: List of validated Message objects
+        compressor: LLMLingua compressor instance
+        enabled: Whether compression is enabled
         
     Returns:
         List of message dicts ready for upstream
@@ -210,7 +239,7 @@ def _process_messages(messages: list[Message]) -> list[Dict[str, Any]]:
         
         # Compress content if present and long enough
         if msg_dict.get("content") and len(msg_dict["content"]) > COMPRESSION_THRESHOLD:
-            msg_dict["content"] = _compress_content(msg_dict["content"])
+            msg_dict["content"] = _compress_content(msg_dict["content"], compressor, enabled)
         
         processed.append(msg_dict)
     
@@ -225,12 +254,12 @@ async def health_check() -> HealthResponse:
     Returns:
         Health status including compression availability and uptime
     """
-    uptime = time.time() - _start_time
+    uptime = time.time() - app.state.start_time
     
     return HealthResponse(
-        status="healthy" if _compression_enabled else "degraded",
+        status="healthy" if app.state.compression_enabled else "degraded",
         version=PROXY_VERSION,
-        compression_enabled=_compression_enabled,
+        compression_enabled=app.state.compression_enabled,
         llm_endpoint=LLM_ENDPOINT,
         uptime_seconds=uptime,
     )
@@ -269,14 +298,14 @@ async def chat_completions(request: Request):
             return JSONResponse(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 content=ErrorResponse.create(
-                    message=f"Invalid request: {e}",
+                    message="Invalid request data",  # Sanitized
                     type="invalid_request_error",
                 ).model_dump(),
             )
         
         # Build upstream request payload
         upstream_payload: Dict[str, Any] = {
-            "messages": _process_messages(req.messages),
+            "messages": _process_messages(req.messages, app.state.compressor, app.state.compression_enabled),
             "stream": req.stream,
         }
         
@@ -332,10 +361,11 @@ async def chat_completions(request: Request):
             
     except Exception as e:
         logger.error("request_failed", request_id=request_id, error=str(e), exc_info=True)
+        safe_message = sanitize_error_message(e)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=ErrorResponse.create(
-                message=f"Internal server error: {e}",
+                message=safe_message,  # Sanitized error message
                 type="api_error",
                 code="internal_error",
             ).model_dump(),
@@ -395,11 +425,12 @@ async def _stream_generator(
                     
     except httpx.TimeoutException as e:
         logger.error("stream_timeout", request_id=request_id, error=str(e))
-        yield f"data: {ErrorResponse.create(message='Upstream timeout', type='api_error').model_dump_json()}\n\n".encode()
+        yield f"data: {ErrorResponse.create(message='Request timed out', type='api_error').model_dump_json()}\n\n".encode()
         
     except Exception as e:
         logger.error("stream_error", request_id=request_id, error=str(e), exc_info=True)
-        yield f"data: {ErrorResponse.create(message=str(e), type='api_error').model_dump_json()}\n\n".encode()
+        safe_message = sanitize_error_message(e)
+        yield f"data: {ErrorResponse.create(message=safe_message, type='api_error').model_dump_json()}\n\n".encode()
 
 
 # Re-export for testing

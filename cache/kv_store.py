@@ -3,6 +3,9 @@ Cross-session KV caching for LLM responses.
 
 This module provides in-memory caching with LRU eviction and
 persistence to disk for surviving container restarts.
+
+SECURITY: Uses JSON serialization instead of pickle to prevent
+arbitrary code execution vulnerabilities.
 """
 
 from __future__ import annotations
@@ -10,7 +13,6 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
-import pickle
 import time
 from collections import OrderedDict
 from pathlib import Path
@@ -77,7 +79,7 @@ class LRUCache:
     - Size limits
     - Thread-safe operations
     - Statistics tracking
-    - Optional persistence to disk
+    - JSON persistence to disk (safe from code injection)
     """
     
     def __init__(
@@ -258,7 +260,11 @@ class LRUCache:
             )
     
     def _calculate_size(self, value: Any) -> int:
-        """Calculate approximate size of value in bytes."""
+        """
+        Calculate approximate size of value in bytes.
+        
+        Uses JSON serialization for safety.
+        """
         try:
             if isinstance(value, str):
                 return len(value.encode('utf-8'))
@@ -271,9 +277,15 @@ class LRUCache:
                     self._calculate_size(k) + self._calculate_size(v)
                     for k, v in value.items()
                 )
+            elif isinstance(value, bytes):
+                return len(value)
             else:
-                # Use pickle for complex objects
-                return len(pickle.dumps(value))
+                # For complex objects, try JSON serialization
+                try:
+                    return len(json.dumps(value, default=str).encode('utf-8'))
+                except (TypeError, ValueError):
+                    # Fallback estimate
+                    return 1024
         except Exception:
             # Fallback estimate
             return 1024
@@ -283,13 +295,19 @@ class LRUCache:
         return self._stats.model_copy()
     
     async def persist(self) -> None:
-        """Persist cache to disk."""
+        """
+        Persist cache to disk using JSON.
+        
+        SECURITY: Uses JSON instead of pickle to prevent
+        arbitrary code execution if cache file is tampered with.
+        """
         if not self.persist_path:
             return
         
         async with self._lock:
             try:
                 data = {
+                    "version": 2,  # Version for future compatibility
                     "entries": {
                         key: {
                             "key": entry.key,
@@ -309,12 +327,12 @@ class LRUCache:
                 # Ensure directory exists
                 self.persist_path.parent.mkdir(parents=True, exist_ok=True)
                 
-                # Write to file
-                with open(self.persist_path, 'wb') as f:
-                    pickle.dump(data, f)
+                # Write to file as JSON (safe from code injection)
+                with open(self.persist_path, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, default=str)
                 
                 logger.info(
-                    "Cache persisted to disk",
+                    "Cache persisted to disk (JSON)",
                     path=str(self.persist_path),
                     entries=len(data["entries"]),
                 )
@@ -323,13 +341,24 @@ class LRUCache:
                 logger.error("Failed to persist cache", error=str(e))
     
     def _load_from_disk(self) -> None:
-        """Load cache from disk."""
+        """
+        Load cache from disk.
+        
+        SECURITY: Uses JSON instead of pickle to prevent
+        arbitrary code execution from tampered cache files.
+        """
         try:
-            with open(self.persist_path, 'rb') as f:
-                data = pickle.load(f)
+            # Try JSON first (new format)
+            if self.persist_path.suffix == '.json':
+                with open(self.persist_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            else:
+                # Try to read as JSON even without .json extension
+                with open(self.persist_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
             
             # Restore entries
-            for key, entry_data in data["entries"].items():
+            for key, entry_data in data.get("entries", {}).items():
                 entry = CacheEntry(**entry_data)
                 
                 # Skip expired entries
@@ -343,11 +372,15 @@ class LRUCache:
                 self._stats = CacheStats(**data["stats"])
             
             logger.info(
-                "Cache loaded from disk",
+                "Cache loaded from disk (JSON)",
                 path=str(self.persist_path),
                 entries=len(self._cache),
             )
             
+        except (json.JSONDecodeError, KeyError, ValueError) as e:
+            logger.warning("Failed to load cache from disk (invalid format)", error=str(e))
+        except FileNotFoundError:
+            logger.debug("No existing cache file found")
         except Exception as e:
             logger.warning("Failed to load cache from disk", error=str(e))
 
@@ -550,7 +583,8 @@ def create_kv_cache(
     """
     persist_path = None
     if persist_dir:
-        persist_path = persist_dir / "llm_cache.pkl"
+        # Use .json extension for safe JSON persistence
+        persist_path = persist_dir / "llm_cache.json"
     
     return KVCache(
         max_size=max_size,
