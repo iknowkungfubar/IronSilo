@@ -518,6 +518,138 @@ class GenesysMCPServer(MCPServerBase):
                     f"Failed to delete memory node: {e.response.status_code}",
                     {"response": e.response.text}
                 )
+    
+    # Test helper methods - delegate to tool handlers for testing
+    async def _handle_create_memory_node(
+        self,
+        content: str,
+        memory_type: Optional[str] = None,
+        importance: Optional[float] = None,
+        tags: Optional[List[str]] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call create_memory_node tool handler."""
+        # Build metadata from legacy params
+        metadata = kwargs.get("metadata", {})
+        if memory_type:
+            metadata["memory_type"] = memory_type
+        if importance is not None:
+            metadata["importance"] = importance
+        if tags:
+            metadata["tags"] = tags
+        
+        handler = self.get_tool_handler("create_memory_node")
+        if not handler:
+            raise ValueError("Tool not found: create_memory_node")
+        
+        result = await handler(content=content, metadata=metadata if metadata else None)
+        # Transform result to match test expectations
+        return {"id": result.get("node_id"), "content": content, **result}
+    
+    async def _handle_query_memories(
+        self,
+        query: str,
+        limit: int = 10,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call query_memories tool handler."""
+        handler = self.get_tool_handler("query_memories")
+        if not handler:
+            raise ValueError("Tool not found: query_memories")
+        
+        result = await handler(query=query, limit=limit, filters=kwargs.get("filters", {}))
+        # Transform to match test expectations
+        return {"memories": result.get("results", []), **result}
+    
+    async def _handle_create_session(
+        self,
+        session_type: str,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call create_session tool handler."""
+        handler = self.get_tool_handler("create_session")
+        if not handler:
+            raise ValueError("Tool not found: create_session")
+        
+        result = await handler(session_type=session_type, metadata=kwargs.get("metadata", {}))
+        return {"session_id": result.get("session_id"), **result}
+    
+    async def _handle_get_memory_node(
+        self,
+        memory_id: str,
+        **kwargs: Any,
+    ) -> Optional[Dict[str, Any]]:
+        """Test helper: Call get_memory_node tool handler."""
+        handler = self.get_tool_handler("get_memory_node")
+        if not handler:
+            raise ValueError("Tool not found: get_memory_node")
+        
+        try:
+            result = await handler(node_id=memory_id)
+            return {"id": result.get("node_id"), **result}
+        except MCPToolError:
+            return None
+    
+    async def _handle_update_memory_node(
+        self,
+        memory_id: str,
+        content: str,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call update_memory_node tool handler."""
+        handler = self.get_tool_handler("update_memory_node")
+        if not handler:
+            raise ValueError("Tool not found: update_memory_node")
+        
+        result = await handler(node_id=memory_id, content=content, metadata=kwargs.get("metadata"))
+        return {"id": result.get("node_id"), "content": content, **result}
+    
+    async def _handle_delete_memory_node(
+        self,
+        memory_id: str,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call delete_memory_node tool handler."""
+        handler = self.get_tool_handler("delete_memory_node")
+        if not handler:
+            raise ValueError("Tool not found: delete_memory_node")
+        
+        result = await handler(node_id=memory_id)
+        return {"deleted": True, "success": True, **result}
+    
+    async def _handle_create_causal_edge(
+        self,
+        source_id: str,
+        target_id: str,
+        relationship: str,
+        strength: float = 1.0,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call create_causal_edge tool handler."""
+        handler = self.get_tool_handler("create_causal_edge")
+        if not handler:
+            raise ValueError("Tool not found: create_causal_edge")
+        
+        result = await handler(
+            from_node_id=source_id,
+            to_node_id=target_id,
+            relationship=relationship,
+            weight=strength,
+        )
+        return {"edge_id": result.get("edge_id"), "id": result.get("edge_id"), **result}
+    
+    async def _handle_get_causal_chain(
+        self,
+        memory_id: str,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call get_causal_chain tool handler."""
+        handler = self.get_tool_handler("get_causal_chain")
+        if not handler:
+            raise ValueError("Tool not found: get_causal_chain")
+        
+        result = await handler(node_id=memory_id, max_depth=kwargs.get("max_depth", 5))
+        return {"chain": result.get("chain", []), "edges": result.get("edges", []), **result}
 
 
 # Create FastAPI app

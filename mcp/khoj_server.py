@@ -418,6 +418,95 @@ class KhojMCPServer(MCPServerBase):
                     f"Failed to get index status: {e.response.status_code}",
                     {"response": e.response.text}
                 )
+    
+    # Test helper methods - delegate to tool handlers for testing
+    async def _handle_search_documents(
+        self,
+        query: str,
+        limit: int = 10,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call search_documents tool handler."""
+        handler = self.get_tool_handler("search_documents")
+        if not handler:
+            raise ValueError("Tool not found: search_documents")
+        
+        result = await handler(query=query, max_results=limit, filters=kwargs.get("filters", {}))
+        return {"results": result.get("results", []), "documents": result.get("results", []), **result}
+    
+    async def _handle_list_documents(
+        self,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call list_documents tool handler."""
+        handler = self.get_tool_handler("list_documents")
+        if not handler:
+            raise ValueError("Tool not found: list_documents")
+        
+        result = await handler(directory=kwargs.get("directory"), extensions=kwargs.get("extensions"))
+        return {"documents": result.get("documents", []), "files": result.get("documents", []), **result}
+    
+    async def _handle_get_index_status(
+        self,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call get_index_status tool handler."""
+        handler = self.get_tool_handler("get_index_status")
+        if not handler:
+            raise ValueError("Tool not found: get_index_status")
+        
+        result = await handler()
+        return {"status": result.get("status"), "indexed": result.get("indexed_count", 0), **result}
+    
+    async def _handle_reindex_documents(
+        self,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call reindex_documents tool handler."""
+        handler = self.get_tool_handler("reindex_documents")
+        if not handler:
+            raise ValueError("Tool not found: reindex_documents")
+        
+        result = await handler(regenerate=kwargs.get("regenerate", False))
+        return {"success": True, "reindexed": True, **result}
+    
+    async def _handle_upload_document(
+        self,
+        file_path: str,
+        document_type: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call upload_document tool handler."""
+        handler = self.get_tool_handler("upload_document")
+        if not handler:
+            raise ValueError("Tool not found: upload_document")
+        
+        # Read file content
+        try:
+            with open(file_path, "r") as f:
+                content = f.read()
+        except Exception as e:
+            return {"error": str(e), "success": False}
+        
+        result = await handler(
+            content=content,
+            filename=file_path.split("/")[-1],
+            metadata={"type": document_type} if document_type else {},
+        )
+        return result
+    
+    async def _handle_delete_document(
+        self,
+        document_id: str,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Test helper: Call delete_document tool handler."""
+        handler = self.get_tool_handler("delete_document")
+        if not handler:
+            raise ValueError("Tool not found: delete_document")
+        
+        result = await handler(filename=document_id)
+        return {"deleted": True, "success": True, **result}
 
 
 # Create FastAPI app

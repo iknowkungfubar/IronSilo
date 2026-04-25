@@ -58,12 +58,17 @@ class TestLRUCacheEdgeCases:
         """Test size calculation fallback when exception occurs (lines 276-279)."""
         cache = LRUCache()
         
-        # Create object that raises exception during pickle
-        class UnpicklableObject:
-            def __reduce__(self):
-                raise RuntimeError("Cannot pickle")
+        # Create object that raises exception during JSON serialization
+        # The implementation uses json.dumps(value, default=str), so we need
+        # to create an object that fails even with default=str
+        class UnserializableObject:
+            def __repr__(self):
+                raise RuntimeError("Cannot represent")
+            
+            def __str__(self):
+                raise RuntimeError("Cannot stringify")
         
-        obj = UnpicklableObject()
+        obj = UnserializableObject()
         
         # Should return fallback size
         size = cache._calculate_size(obj)

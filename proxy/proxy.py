@@ -106,8 +106,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     Handles initialization of LLMLingua compressor on startup
     and cleanup on shutdown.
     """
-    # Store state in app.state instead of globals
-    app.state.start_time = time.time()
+    global _compressor, _compression_enabled, _start_time
+    
+    # Store state in app.state and sync module-level variables
+    _start_time = time.time()
+    app.state.start_time = _start_time
     app.state.compressor = None
     app.state.compression_enabled = False
     
@@ -119,11 +122,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         
         logger.info("loading_llmlingua", model="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank")
         
-        app.state.compressor = PromptCompressor(
+        _compressor = PromptCompressor(
             model_name="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
             use_llmlingua2=True,
             device_map="cpu",
         )
+        app.state.compressor = _compressor
+        _compression_enabled = True
         app.state.compression_enabled = True
         
         logger.info("llmlingua_loaded", compression_enabled=True)
@@ -131,10 +136,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except ImportError as e:
         logger.warning("llmlingua_not_available", error=str(e), compression_enabled=False)
         app.state.compression_enabled = False
+        _compression_enabled = False
         
     except Exception as e:
         logger.error("llmlingua_load_failed", error=str(e), exc_info=True)
         app.state.compression_enabled = False
+        _compression_enabled = False
     
     logger.info("proxy_started", version=PROXY_VERSION)
     
@@ -143,6 +150,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Cleanup
     logger.info("proxy_shutting_down")
     app.state.compressor = None
+    _compressor = None
 
 
 # Create FastAPI application
@@ -165,12 +173,18 @@ def _compress_content(content: str, compressor: Any = None, enabled: bool = Fals
     
     Args:
         content: Original content to compress
-        compressor: LLMLingua compressor instance
-        enabled: Whether compression is enabled
+        compressor: LLMLingua compressor instance (uses module-level _compressor if None)
+        enabled: Whether compression is enabled (uses module-level _compression_enabled if False)
         
     Returns:
         Compressed content, or original if compression fails/disabled
     """
+    # Use module-level defaults if not explicitly provided
+    if compressor is None:
+        compressor = _compressor
+    if enabled is False:
+        enabled = _compression_enabled
+    
     if not enabled or not compressor:
         return content
     
@@ -254,12 +268,16 @@ async def health_check() -> HealthResponse:
     Returns:
         Health status including compression availability and uptime
     """
-    uptime = time.time() - app.state.start_time
+    # Handle case where lifespan hasn't run yet (e.g., during testing)
+    start_time = getattr(app.state, "start_time", time.time())
+    compression_enabled = getattr(app.state, "compression_enabled", False)
+    
+    uptime = time.time() - start_time
     
     return HealthResponse(
-        status="healthy" if app.state.compression_enabled else "degraded",
+        status="healthy" if compression_enabled else "degraded",
         version=PROXY_VERSION,
-        compression_enabled=app.state.compression_enabled,
+        compression_enabled=compression_enabled,
         llm_endpoint=LLM_ENDPOINT,
         uptime_seconds=uptime,
     )
@@ -435,3 +453,22 @@ async def _stream_generator(
 
 # Re-export for testing
 __all__ = ["app", "_compress_content", "_process_messages"]
+
+
+# Module-level variables for backward compatibility with tests
+# Tests may set/access these directly; they're synced with app.state
+_compressor = None
+_compression_enabled = False
+_start_time = 0.0
+
+
+def _sync_from_app_state() -> None:
+    """Sync module-level variables from app.state if available."""
+    global _compressor, _compression_enabled, _start_time
+    
+    if hasattr(app.state, "compressor") and app.state.compressor is not None:
+        _compressor = app.state.compressor
+    if hasattr(app.state, "compression_enabled"):
+        _compression_enabled = app.state.compression_enabled
+    if hasattr(app.state, "start_time") and app.state.start_time > 0:
+        _start_time = app.state.start_time

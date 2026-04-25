@@ -526,7 +526,7 @@ class TestCreateKVCache:
             
             assert cache is not None
             assert cache.cache.persist_path is not None
-            assert cache.cache.persist_path.name == "llm_cache.pkl"
+            assert cache.cache.persist_path.name == "llm_cache.json"
     
     def test_create_kv_cache_custom_size(self):
         """Test creating cache with custom max size."""

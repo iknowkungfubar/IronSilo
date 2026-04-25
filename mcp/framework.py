@@ -242,6 +242,21 @@ class MCPServerBase(ABC):
             capabilities=self.capabilities,
         )
     
+    def get_tool_handler(self, tool_name: str) -> Optional[Callable]:
+        """
+        Get a tool handler by name for testing purposes.
+        
+        This method allows tests to directly call tool handlers without
+        going through the full MCP protocol.
+        
+        Args:
+            tool_name: Name of the tool
+            
+        Returns:
+            The tool handler function, or None if not found
+        """
+        return self._tools.get(tool_name)
+    
     def get_tool_definitions(self) -> List[MCPTool]:
         """Get list of all registered tool definitions."""
         return list(self._tool_definitions.values())

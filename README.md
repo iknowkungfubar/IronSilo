@@ -16,8 +16,8 @@
     <img src="https://img.shields.io/badge/Docs-Advanced_Architecture-red.svg?style=flat-square" alt="Advanced Architecture">
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square" alt="Supported Platforms">
-  <img src="https://img.shields.io/badge/Tests-644%20passed-brightgreen.svg?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/Coverage-92.8%25-brightgreen.svg?style=flat-square" alt="Coverage">
+  <img src="https://img.shields.io/badge/Tests-664%20passed-brightgreen.svg?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/Coverage-81.6%25-brightgreen.svg?style=flat-square" alt="Coverage">
 </p>
 
 **Turn your PC into a private, autonomous AI lab, without melting your GPU.**
@@ -126,13 +126,14 @@ pytest tests/unit/test_proxy_proxy.py -v
 
 ### Test Coverage
 
-- **Total Tests:** 644 tests (all passing)
-- **Code Coverage:** 92.8%
+- **Total Tests:** 664 tests (all passing)
+- **Code Coverage:** 81.6%
 - **Test Types:**
   - Unit tests for all core modules
   - Integration tests for proxy and security
   - Mock-based testing for external dependencies
   - TUI Pilot tests for headless interface testing
+  - MCP server tests with mocked HTTP clients
 
 ### Security
 
