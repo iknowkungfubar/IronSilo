@@ -1,231 +1,657 @@
 # IronSilo Master Backlog - Production Readiness
 
-## Version: 2.0.1
+## Version: 2.0.2
 ## Generated: 2026-04-28
 ## Status: IN PROGRESS
+## Target: 100% Production Ready
 
 ---
 
-## Critical Issues (Fix Immediately)
+## Phase 1: Security & Hardening
 
-### [CRITICAL-1] Missing websockets dependency in swarm Dockerfile
-**Status**: COMPLETED
-**Priority**: CRITICAL
-**Description**: `harness_worker.py` imports `websockets` library but Dockerfile only installs `httpx pydantic fastapi websockets structlog`. The `websockets` package is NOT the same as the built-in `websocket` support in FastAPI.
+### CRITICAL Security Issues
 
-**Files Affected**:
-- `swarm/Dockerfile`
+- [ ] **Add request timeout middleware to proxy**
+  - File: `proxy/proxy.py`
+  - Issue: No timeout on upstream LLM requests causing hanging connections
+  - Fix: Add `httpx.AsyncClient(timeout=60.0)` instead of 300s
 
-**Action**:
-- [x] Add `websockets` to pip install command
-- [x] Add `uvicorn` to pip install command
+- [ ] **Add retry logic with exponential backoff to proxy**
+  - File: `proxy/proxy.py`
+  - Issue: Failed requests are not retried
+  - Fix: Implement retry logic for 5xx errors from upstream
 
-**Commit**: 0707ef1
+- [ ] **Add input sanitization to chat completions**
+  - File: `proxy/proxy.py:chat_completions()`
+  - Issue: User content not sanitized before passing to LLM
+  - Fix: Add content filtering/sanitization
 
----
+- [ ] **Add SQL injection prevention for genesys**
+  - File: `genesys/app.py`
+  - Issue: Direct string interpolation in SQL queries
+  - Fix: Use parameterized queries with asyncpg
 
-### [CRITICAL-2] No tests for swarm module
-**Status**: COMPLETED
-**Priority**: CRITICAL
-**Description**: The entire swarm module (harness_worker, orchestrator, main) has zero test coverage. This is a new feature with no validation.
-
-**Files Affected**:
-- tests/unit/test_swarm_harness_worker.py (NEW) - 16 tests
-- tests/unit/test_swarm_orchestrator.py (NEW) - 15 tests
-- tests/unit/test_swarm_main.py (NEW) - 19 tests
-
-**Action**:
-- [x] Create comprehensive unit tests for HarnessWorker
-- [x] Create comprehensive unit tests for Manager class
-- [x] Create integration tests for SwarmState and WebSocket
-- [x] Achieve 90%+ coverage on swarm module (86% achieved)
-
-**Commit**: 0707ef1
+- [ ] **Add rate limiting persistence**
+  - File: `security/middleware.py`
+  - Issue: In-memory rate limiter resets on restart
+  - Fix: Add Redis/PostgreSQL-backed rate limiting
 
 ---
 
-## High Priority Issues
+### HIGH Security Issues
 
-### [HIGH-1] TUI widget not exported from package
-**Status**: COMPLETED
-**Priority**: HIGH
-**Description**: `SwarmMonitorWidget` was added to `tui/widgets/` but is not exported in `__init__.py`, breaking package imports.
+- [ ] **Add API key rotation mechanism**
+  - File: `security/key_manager.py`
+  - Issue: No way to rotate API keys without restart
+  - Fix: Implement key rotation endpoint
 
-**Files Affected**:
-- `tui/widgets/__init__.py`
+- [ ] **Add request ID tracking across services**
+  - File: `security/middleware.py`, `proxy/proxy.py`
+  - Issue: Request IDs not propagated to all services
+  - Fix: Add X-Request-ID header propagation
 
-**Action**:
-- [x] Add `SwarmMonitorWidget` to exports
+- [ ] **Add CORS origin validation**
+  - File: `security/middleware.py:setup_cors()`
+  - Issue: Wildcard origins allowed in development
+  - Fix: Strict origin validation for production
 
-**Commit**: 0707ef1
-
----
-
-### [HIGH-2] No tests for SwarmMonitorWidget
-**Status**: COMPLETED
-**Priority**: HIGH
-**Description**: New TUI widget has no unit tests.
-
-**Files Affected**:
-- tests/unit/test_swarm_monitor.py (NEW) - 33 tests
-
-**Action**:
-- [x] Create tests for SwarmMonitorWidget
-- [x] Test WebSocket connection handling
-- [x] Test action display and history
-- [x] Graceful skip if textual not installed
-
-**Commit**: 0707ef1
+- [ ] **Add secret scanning pre-commit hook**
+  - File: `.pre-commit-config.yaml`
+  - Issue: No secret scanning in CI
+  - Fix: Add gitleaks or detect-secrets hook
 
 ---
 
-## Medium Priority Issues
+### MEDIUM Security Issues
 
-### [MEDIUM-1] No integration tests for swarm-genesys connection
-**Status**: TODO
-**Priority**: MEDIUM
-**Description**: Manager._store_memory() calls genesys API but there's no integration test verifying this works end-to-end.
+- [ ] **Add audit logging for memory operations**
+  - File: `genesys/app.py`
+  - Issue: No audit trail for memory create/update/delete
+  - Fix: Add structured audit logs
 
-**Files Affected**:
-- tests/integration/test_swarm_genesys.py (NEW)
+- [ ] **Add memory encryption at rest**
+  - File: `genesys/app.py`
+  - Issue: Memories stored in plaintext
+  - Fix: Implement column-level encryption
 
-**Action**:
-- [ ] Create mock-based integration test for memory storage
+- [ ] **Add websocket security for swarm-service**
+  - File: `swarm/main.py:websocket_swarm()`
+  - Issue: No authentication on WebSocket endpoint
+  - Fix: Add WebSocket authentication
 
----
-
-### [MEDIUM-2] No documentation for swarm module
-**Status**: TODO
-**Priority**: MEDIUM
-**Description**: New swarm services (browser-node, swarm-service) have no documentation.
-
-**Files Affected**:
-- README.md (update)
-- docs/ARCHITECTURE.md (update)
-
-**Action**:
-- [ ] Document swarm architecture
-- [ ] Document environment variables
-- [ ] Document API endpoints (port 8095)
+- [ ] **Add browser-node security hardening**
+  - File: `docker-compose.yml:browser-node`
+  - Issue: Chrome DevTools exposed without authentication
+  - Fix: Add Chrome security flags, network isolation
 
 ---
 
-## Low Priority / Technical Debt
+## Phase 2: Reliability & Resilience
 
-### [LOW-1] Missing health check on swarm-service
-**Status**: COMPLETED
-**Priority**: LOW
-**Description**: The swarm-service FastAPI app has no `/health` endpoint like other services.
+### CRITICAL Reliability Issues
 
-**Files Affected**:
-- `swarm/main.py`
+- [ ] **Add health check to swarm-service**
+  - File: `docker-compose.yml:swarm-service`
+  - Issue: No healthcheck defined
+  - Fix: Add healthcheck to docker-compose.yml
 
-**Action**:
-- [x] Add health check endpoint with uptime tracking
+- [ ] **Add restart policy to critical services**
+  - File: `docker-compose.yml`
+  - Issue: Services don't auto-restart on failure
+  - Fix: Add `restart: unless-stopped` to all services
 
-**Commit**: 0974d2f
+- [ ] **Add graceful shutdown handling**
+  - File: `swarm/harness_worker.py`, `swarm/orchestrator.py`
+  - Issue: No signal handling for SIGTERM
+  - Fix: Add graceful shutdown with cleanup
 
----
-
-### [LOW-2] No Docker healthcheck for swarm-service
-**Status**: TODO
-**Priority**: LOW
-**Description**: docker-compose.yml doesn't define a healthcheck for swarm-service.
-
-**Files Affected**:
-- `docker-compose.yml`
-
-**Action**:
-- [ ] Add healthcheck configuration
+- [ ] **Add connection pooling to genesys**
+  - File: `genesys/app.py`
+  - Issue: Creating new connection per request
+  - Fix: Use connection pool properly
 
 ---
 
-### [LOW-3] Missing __init__.py in swarm directory
-**Status**: COMPLETED
-**Priority**: LOW
-**Description**: `swarm/__init__.py` doesn't exist, making it not a proper Python package.
+### HIGH Reliability Issues
 
-**Files Affected**:
-- `swarm/__init__.py` (NEW)
+- [ ] **Add circuit breaker to proxy**
+  - File: `proxy/proxy.py`
+  - Issue: No circuit breaker for upstream failures
+  - Fix: Implement circuit breaker pattern
 
-**Action**:
-- [x] Create `swarm/__init__.py` with package exports
+- [ ] **Add timeout to all HTTP calls**
+  - File: `swarm/harness_worker.py`, `swarm/orchestrator.py`
+  - Issue: No timeouts on HTTP requests
+  - Fix: Add explicit timeouts to all httpx calls
 
-**Commit**: 0974d2f
+- [ ] **Add leader election for postgres**
+  - File: `docker-compose.yml:ironclaw-db`
+  - Issue: No HA setup for database
+  - Fix: Consider patroni or similar
 
----
-
-### [LOW-4] WebSocket test timing issues
-**Status**: TODO
-**Priority**: LOW
-**Description**: 2 tests in test_swarm_main.py fail due to async WebSocket timing issues.
-
-**Files Affected**:
-- tests/unit/test_swarm_main.py
-
-**Action**:
-- [ ] Fix async test timing in test_websocket_sends_action_updates_state
-- [ ] Fix async test timing in test_websocket_receives_confirmation
+- [ ] **Add watchdog timer for file watcher**
+  - File: `pipeline/file_watcher.py`
+  - Issue: File watcher can hang
+  - Fix: Add watchdog restart mechanism
 
 ---
 
-## Completed Items (from this session)
+### MEDIUM Reliability Issues
 
-### [DONE-1] Browser swarm services added
-**Status**: COMPLETED
-**Description**: Added browser-node and swarm-service to docker-compose.yml
-**Commit**: c556aca
+- [ ] **Add retry queue for failed memory operations**
+  - File: `swarm/orchestrator.py`
+  - Issue: Failed memory stores are lost
+  - Fix: Implement retry queue
 
-### [DONE-2] Proxy bypass compression for vision/dom models
-**Status**: COMPLETED
-**Description**: Added X-Bypass-Compression header and model-based bypass logic
-**Commit**: c556aca
+- [ ] **Add dead letter queue for swarm tasks**
+  - File: `swarm/orchestrator.py`
+  - Issue: Failed tasks vanish
+  - Fix: Add persistent dead letter queue
 
-### [DONE-3] Swarm FastAPI server created
-**Status**: COMPLETED
-**Description**: Created swarm/main.py with /status, /ws/swarm, /history endpoints
-**Commit**: c556aca
+- [ ] **Add service discovery for swarm**
+  - File: `swarm/main.py`
+  - Issue: Hardcoded service URLs
+  - Fix: Implement dynamic service discovery
 
-### [DONE-4] SwarmMonitorWidget created
-**Status**: COMPLETED
-**Description**: Created TUI widget connecting to swarm WebSocket
-**Commit**: c556aca
+- [ ] **Add container resource monitoring**
+  - File: `docker-compose.yml`
+  - Issue: No resource monitoring alerts
+  - Fix: Add container metrics export
 
 ---
 
-## Testing Requirements
+## Phase 3: Testing & Quality
 
-### Unit Test Coverage Targets
+### CRITICAL Testing Gaps
 
-| Module | Current Coverage | Target | Status |
-|--------|------------------|--------|--------|
-| swarm/harness_worker.py | 0% | 90% | TODO |
-| swarm/orchestrator.py | 0% | 90% | TODO |
-| swarm/main.py | 0% | 90% | TODO |
-| tui/widgets/swarm_monitor.py | 0% | 90% | TODO |
+- [ ] **Add integration tests for proxy → upstream LLM**
+  - File: `tests/integration/test_proxy_integration.py`
+  - Issue: No integration tests with real LLM
+  - Fix: Add mock-based integration tests
 
-### Integration Test Requirements
+- [ ] **Add E2E tests for swarm workflow**
+  - File: `tests/e2e/test_swarm_workflow.py`
+  - Issue: No end-to-end tests for browser swarm
+  - Fix: Create full E2E test scenario
 
-| Test | Status |
-|------|--------|
-| swarm-genesys memory storage | TODO |
-| WebSocket broadcast | TODO |
-| TUI widget rendering | TODO |
+- [ ] **Add load tests for proxy**
+  - File: `tests/load/`
+  - Issue: No performance testing
+  - Fix: Add locust or similar load test
+
+- [ ] **Add chaos engineering tests**
+  - File: `tests/chaos/`
+  - Issue: No resilience testing
+  - Fix: Test service failures
+
+---
+
+### HIGH Testing Gaps
+
+- [ ] **Add test for swarm/main.py WebSocket broadcasts**
+  - File: `tests/unit/test_swarm_main.py`
+  - Issue: WebSocket broadcast untested
+  - Fix: Add broadcast verification test
+
+- [ ] **Add contract tests for MCP servers**
+  - File: `tests/contract/`
+  - Issue: No API contract testing
+  - Fix: Add OpenAPI contract tests
+
+- [ ] **Add test for genesys with real postgres**
+  - File: `tests/integration/test_genesys_postgres.py`
+  - Issue: Only in-memory tested
+  - Fix: Add postgres integration tests
+
+- [ ] **Add fuzzing tests for proxy**
+  - File: `tests/fuzz/`
+  - Issue: No fuzzing
+  - Fix: Add request fuzzing tests
+
+---
+
+### MEDIUM Testing Gaps
+
+- [ ] **Add test coverage for security middleware**
+  - File: `tests/unit/test_security.py`
+  - Issue: Middleware not fully tested
+  - Fix: Add comprehensive middleware tests
+
+- [ ] **Add visual regression tests for TUI**
+  - File: `tests/visual/`
+  - Issue: No visual testing
+  - Fix: Add screenshot comparison tests
+
+- [ ] **Add performance benchmarks**
+  - File: `tests/benchmarks/`
+  - Issue: No benchmarks
+  - Fix: Add pytest-benchmark tests
+
+- [ ] **Add mutation testing**
+  - File: `tests/mutation/`
+  - Issue: No mutation testing
+  - Fix: Add mutmut or cosmic ray
+
+---
+
+## Phase 4: Observability & Debugging
+
+### CRITICAL Observability Gaps
+
+- [ ] **Add structured logging to all services**
+  - File: All Python files
+  - Issue: Some modules lack logging
+  - Fix: Add consistent structlog usage
+
+- [ ] **Add distributed tracing**
+  - File: `proxy/proxy.py`, `mcp/`
+  - Issue: No request tracing across services
+  - Fix: Add OpenTelemetry tracing
+
+- [ ] **Add metrics endpoint to all services**
+  - File: `swarm/main.py`, `genesys/app.py`, `mcp/*.py`
+  - Issue: No Prometheus metrics
+  - Fix: Add /metrics endpoint
+
+- [ ] **Add alerting rules**
+  - File: `monitoring/alerts.yml`
+  - Issue: No alerting configuration
+  - Fix: Add Prometheus alerting rules
+
+---
+
+### HIGH Observability Gaps
+
+- [ ] **Add log aggregation configuration**
+  - File: `docker-compose.yml`
+  - Issue: Logs not centralized
+  - Fix: Configure logspout or similar
+
+- [ ] **Add dashboard for swarm monitoring**
+  - File: `monitoring/dashboards/`
+  - Issue: No Grafana dashboard
+  - Fix: Create swarm-specific dashboard
+
+- [ ] **Add error tracking (Sentry)**
+  - File: All services
+  - Issue: No error tracking
+  - Fix: Add Sentry SDK initialization
+
+- [ ] **Add health check for all services**
+  - File: `docker-compose.yml`
+  - Issue: Some services lack healthchecks
+  - Fix: Add healthchecks to all
+
+---
+
+### MEDIUM Observability Gaps
+
+- [ ] **Add request/response logging to proxy**
+  - File: `proxy/proxy.py`
+  - Issue: Full request/response not logged
+  - Fix: Add debug logging option
+
+- [ ] **Add correlation IDs to logs**
+  - File: All services
+  - Issue: Logs not correlated
+  - Fix: Add correlation ID propagation
+
+- [ ] **Add service dependency graph**
+  - File: `docs/`
+  - Issue: No service map
+  - Fix: Create service dependency diagram
+
+- [ ] **Add runbook documentation**
+  - File: `docs/runbooks/`
+  - Issue: No operational runbooks
+  - Fix: Document common failure scenarios
+
+---
+
+## Phase 5: Documentation & Communication
+
+### CRITICAL Documentation Gaps
+
+- [ ] **Document swarm architecture**
+  - File: `docs/ARCHITECTURE.md`
+  - Issue: Swarm service undocumented
+  - Fix: Add swarm architecture docs
+
+- [ ] **Document environment variables**
+  - File: `docs/ENVIRONMENT.md`
+  - Issue: No comprehensive env var docs
+  - Fix: Document all env vars with defaults
+
+- [ ] **Document API endpoints**
+  - File: `docs/API.md`
+  - Issue: No API documentation
+  - Fix: Add OpenAPI spec and docs
+
+- [ ] **Document deployment process**
+  - File: `docs/DEPLOYMENT.md`
+  - Issue: No deployment docs
+  - Fix: Document Docker Compose deployment
+
+---
+
+### HIGH Documentation Gaps
+
+- [ ] **Add troubleshooting guide**
+  - File: `docs/TROUBLESHOOTING.md`
+  - Issue: No troubleshooting docs
+  - Fix: Add common issues and solutions
+
+- [ ] **Document security model**
+  - File: `docs/SECURITY.md`
+  - Issue: Security model not documented
+  - Fix: Document auth, encryption, network security
+
+- [ ] **Add example configurations**
+  - File: `examples/`
+  - Issue: No example configs
+  - Fix: Add production.example.yml
+
+- [ ] **Document rate limiting behavior**
+  - File: `docs/RATE_LIMITING.md`
+  - Issue: Rate limits not documented
+  - Fix: Document rate limit headers and behavior
+
+---
+
+### MEDIUM Documentation Gaps
+
+- [ ] **Add changelog automation**
+  - File: `.github/workflows/`
+  - Issue: Manual changelog updates
+  - Fix: Add release Please or similar
+
+- [ ] **Add contributing guide**
+  - File: `CONTRIBUTING.md`
+  - Issue: Contributing guide incomplete
+  - Fix: Expand with PR process, testing requirements
+
+- [ ] **Document test strategy**
+  - File: `docs/TESTING.md`
+  - Issue: No testing documentation
+  - Fix: Document test types and coverage requirements
+
+- [ ] **Add architecture decision records**
+  - File: `docs/adr/`
+  - Issue: No ADR documentation
+  - Fix: Document key architectural decisions
+
+---
+
+## Phase 6: Performance & Scaling
+
+### CRITICAL Performance Issues
+
+- [ ] **Add connection pooling to proxy**
+  - File: `proxy/proxy.py`
+  - Issue: Creating new client per request
+  - Fix: Use httpx connection pooling
+
+- [ ] **Add cache for repeated LLM requests**
+  - File: `cache/kv_store.py`
+  - Issue: Same requests repeated
+  - Fix: Implement semantic caching
+
+- [ ] **Add response streaming compression**
+  - File: `proxy/proxy.py`
+  - Issue: Full responses not compressed
+  - Fix: Add gzip compression
+
+- [ ] **Optimize genesys queries**
+  - File: `genesys/app.py`
+  - Issue: Slow query performance
+  - Fix: Add query optimization, indexes
+
+---
+
+### HIGH Performance Issues
+
+- [ ] **Add async workers for background tasks**
+  - File: `swarm/orchestrator.py`
+  - Issue: Blocking operations in request path
+  - Fix: Use task queue for background work
+
+- [ ] **Add CDN for static assets**
+  - File: `khoj` service
+  - Issue: Static files served without CDN
+  - Fix: Add nginx caching layer
+
+- [ ] **Add database query caching**
+  - File: `genesys/app.py`
+  - Issue: Repeated queries not cached
+  - Fix: Add query result caching
+
+- [ ] **Add compression for large DOMs**
+  - File: `swarm/harness_worker.py`
+  - Issue: Large DOMs transferred uncompressed
+  - Fix: Add compression for CDP responses
+
+---
+
+### MEDIUM Performance Issues
+
+- [ ] **Add lazy loading for memories**
+  - File: `genesys/app.py`
+  - Issue: Loading all memories at once
+  - Fix: Implement pagination
+
+- [ ] **Add database query timeouts**
+  - File: `genesys/app.py`
+  - Issue: Long-running queries
+  - Fix: Add query timeout configuration
+
+- [ ] **Add resource limits to docker**
+  - File: `docker-compose.yml`
+  - Issue: Some services lack resource limits
+  - Fix: Ensure all services have limits
+
+- [ ] **Add index recommendations**
+  - File: `genesys/app.py`
+  - Issue: Missing query indexes
+  - Fix: Analyze and add indexes
+
+---
+
+## Phase 7: Automation & DevOps
+
+### CRITICAL DevOps Gaps
+
+- [ ] **Add GitHub Actions CI pipeline**
+  - File: `.github/workflows/ci.yml`
+  - Issue: No automated testing
+  - Fix: Add test workflow
+
+- [ ] **Add Docker build validation**
+  - File: `.github/workflows/docker.yml`
+  - Issue: Docker builds not tested
+  - Fix: Add build and push workflow
+
+- [ ] **Add pre-commit hooks**
+  - File: `.pre-commit-config.yaml`
+  - Issue: No code quality checks
+  - Fix: Add lint, type-check, format hooks
+
+- [ ] **Add dependency scanning**
+  - File: `.github/workflows/security.yml`
+  - Issue: Vulnerable dependencies
+  - Fix: Add Dependabot or Snyk scanning
+
+---
+
+### HIGH DevOps Gaps
+
+- [ ] **Add release automation**
+  - File: `.github/workflows/release.yml`
+  - Issue: Manual releases
+  - Fix: Add release workflow
+
+- [ ] **Add infrastructure as code**
+  - File: `infrastructure/`
+  - Issue: Manual infrastructure setup
+  - Fix: Add Terraform or similar
+
+- [ ] **Add secrets management**
+  - File: `security/`
+  - Issue: Secrets in env vars
+  - Fix: Use Vault or Sealed Secrets
+
+- [ ] **Add backup automation**
+  - File: `scripts/backup.sh`
+  - Issue: No automated backups
+  - Fix: Add backup scripts and schedule
+
+---
+
+### MEDIUM DevOps Gaps
+
+- [ ] **Add staging environment**
+  - File: `docker-compose.staging.yml`
+  - Issue: Only production environment
+  - Fix: Add staging config
+
+- [ ] **Add canary deployment strategy**
+  - File: `.github/workflows/deploy.yml`
+  - Issue: All-or-nothing deploys
+  - Fix: Add canary deployment
+
+- [ ] **Add feature flags**
+  - File: `security/feature_flags.py`
+  - Issue: No feature flag system
+  - Fix: Add feature flag infrastructure
+
+- [ ] **Add cost monitoring**
+  - File: `monitoring/costs.yml`
+  - Issue: No cloud cost tracking
+  - Fix: Add cost monitoring dashboards
+
+---
+
+## Phase 8: Feature Completeness
+
+### CRITICAL Missing Features
+
+- [ ] **Implement MCP server for IronClaw**
+  - File: `mcp/ironclaw_server.py`
+  - Issue: No MCP interface for IronClaw
+  - Fix: Implement MCP server
+
+- [ ] **Implement webhook notifications**
+  - File: `pipeline/agent_bridge.py`
+  - Issue: No webhook support
+  - Fix: Add webhook endpoints
+
+- [ ] **Implement task scheduling**
+  - File: `pipeline/scheduler.py`
+  - Issue: No task scheduling
+  - Fix: Add APScheduler or similar
+
+- [ ] **Implement search functionality**
+  - File: `search/`
+  - Issue: Search not implemented
+  - Fix: Implement search client
+
+---
+
+### HIGH Missing Features
+
+- [ ] **Implement user management**
+  - File: `security/users.py`
+  - Issue: No user accounts
+  - Fix: Add user registration/login
+
+- [ ] **Implement API versioning**
+  - File: `proxy/proxy.py`
+  - Issue: No API versioning
+  - Fix: Add /api/v1, /api/v2 paths
+
+- [ ] **Implement multi-tenancy**
+  - File: All services
+  - Issue: No tenant isolation
+  - Fix: Add tenant_id to all data
+
+- [ ] **Implement audit logging**
+  - File: `security/audit.py`
+  - Issue: No audit trail
+  - Fix: Add comprehensive audit logs
+
+---
+
+### MEDIUM Missing Features
+
+- [ ] **Implement file upload**
+  - File: `mcp/khoj_server.py`
+  - Issue: File upload not implemented
+  - Fix: Add file upload endpoint
+
+- [ ] **Implement export functionality**
+  - File: `genesys/app.py`
+  - Issue: Cannot export memories
+  - Fix: Add export endpoints
+
+- [ ] **Implement import functionality**
+  - File: `genesys/app.py`
+  - Issue: Cannot import memories
+  - Fix: Add import endpoints
+
+- [ ] **Implement memory templates**
+  - File: `genesys/app.py`
+  - Issue: No memory templates
+  - Fix: Add template system
+
+---
+
+## Completed Items
+
+### Phase 1: Security (v2.0.1)
+- [x] API key authentication
+- [x] Rate limiting middleware
+- [x] Request size limiting
+- [x] CORS configuration
+- [x] Error sanitization
+
+### Phase 2: Reliability (v2.0.1)
+- [x] Health checks for MCP servers
+- [x] Health checks for searxng
+- [x] Resource limits on all services
+- [x] Internal network isolation
+
+### Phase 3: Testing (v2.0.1)
+- [x] 644 unit tests
+- [x] Integration tests for proxy
+- [x] TUI pilot tests
+
+### Phase 4: Observability (v2.0.1)
+- [x] Structured logging with structlog
+- [x] Request ID tracking
+- [x] Health check endpoints
+
+### Phase 5: Documentation (v2.0.1)
+- [x] CHANGELOG.md updated
+- [x] SECURITY.md documented
+- [x] README.md updated
 
 ---
 
 ## Definition of Done
 
-For the swarm module to be considered production-ready:
+For IronSilo to be considered 100% production-ready:
 
-1. [ ] All critical issues resolved
-2. [ ] 90%+ test coverage on swarm module
-3. [ ] All high priority issues resolved
-4. [ ] Documentation complete
-5. [ ] No import errors or missing dependencies
-6. [ ] Health checks in place
-7. [ ] CHANGELOG.md updated
+1. [ ] All CRITICAL items checked off
+2. [ ] All HIGH priority items checked off
+3. [ ] 90%+ test coverage on all modules
+4. [ ] All services have health checks
+5. [ ] All services have resource limits
+6. [ ] Security audit passed
+7. [ ] Load tests passing
+8. [ ] Documentation complete
+9. [ ] CI/CD pipeline operational
+10. [ ] Monitoring and alerting operational
 
 ---
 
-*Backlog updated continuously throughout execution.*
+*Last updated: 2026-04-28*
+*Maintained by: Autonomous Swarm*
