@@ -24,10 +24,12 @@ logger = structlog.get_logger(__name__)
 
 
 class SwarmState:
+    """Shared state for swarm service."""
     current_action: str = "idle"
     action_history: list[dict[str, Any]] = []
     connected_clients: list[WebSocket] = []
     lock: asyncio.Lock = asyncio.Lock()
+    start_time: float = time.time()
 
 
 state = SwarmState()
@@ -35,8 +37,22 @@ state = SwarmState()
 app = FastAPI(title="Swarm Service API", version="1.0.0")
 
 
+@app.get("/health")
+async def health_check() -> JSONResponse:
+    """Health check endpoint."""
+    return JSONResponse({
+        "status": "healthy",
+        "service": "swarm-service",
+        "version": "1.0.0",
+        "uptime_seconds": time.time() - state.start_time,
+        "current_action": state.current_action,
+        "connected_agents": len(state.connected_clients),
+    })
+
+
 @app.get("/status")
 async def get_status() -> JSONResponse:
+    """Return current swarm status."""
     return JSONResponse({
         "status": "running",
         "current_action": state.current_action,
@@ -47,6 +63,7 @@ async def get_status() -> JSONResponse:
 
 @app.websocket("/ws/swarm")
 async def websocket_swarm(websocket: WebSocket) -> None:
+    """WebSocket endpoint for broadcasting swarm actions."""
     await websocket.accept()
     logger.info("swarm_ws_client_connected")
 
@@ -99,6 +116,7 @@ async def websocket_swarm(websocket: WebSocket) -> None:
 
 @app.get("/history")
 async def get_history() -> JSONResponse:
+    """Return action history."""
     async with state.lock:
         return JSONResponse({
             "history": state.action_history[-50:],
