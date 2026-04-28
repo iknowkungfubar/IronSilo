@@ -1,9 +1,0 @@
-SYSTEM DIRECTIVE: You are an autonomous worker. 
-1. Update docs/DEV_JOURNAL.md with your plan for this task.
-2. Write the tests for this task.
-3. Write the implementation code.
-4. When complete, update docs/MASTER_BACKLOG.md by changing the exact line "- [ ]" to "- [x]" for this task.
-
-YOUR CURRENT TASK IS: - [ ] **Add request timeout middleware to proxy**
-
-Do not stop until this specific task is fully implemented and tested. Do not ask for human intervention.
