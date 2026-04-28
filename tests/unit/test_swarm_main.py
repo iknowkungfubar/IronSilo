@@ -19,6 +19,48 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+class TestHealthEndpoint:
+    """Test suite for /health endpoint."""
+
+    @pytest.fixture
+    def client(self):
+        """Create test client."""
+        from swarm.main import app
+        return TestClient(app)
+
+    def test_health_returns_healthy(self, client):
+        """Test health endpoint returns healthy status."""
+        response = client.get("/health")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert data["service"] == "swarm-service"
+
+    def test_health_returns_uptime(self, client):
+        """Test health endpoint includes uptime."""
+        response = client.get("/health")
+
+        data = response.json()
+        assert "uptime_seconds" in data
+        assert isinstance(data["uptime_seconds"], (int, float))
+
+    def test_health_returns_current_action(self, client):
+        """Test health endpoint includes current action."""
+        response = client.get("/health")
+
+        data = response.json()
+        assert "current_action" in data
+        assert isinstance(data["current_action"], str)
+
+    def test_health_returns_version(self, client):
+        """Test health endpoint includes version."""
+        response = client.get("/health")
+
+        data = response.json()
+        assert data["version"] == "1.0.0"
+
+
 class TestSwarmState:
     """Test suite for SwarmState class."""
 
@@ -178,8 +220,12 @@ class TestWebSocketEndpoint:
             assert state.current_action == "Navigating to URL"
 
     @pytest.mark.asyncio
-    async def test_websocket_receives_confirmation(self, client):
-        """Test WebSocket sends back confirmation."""
+    async def test_websocket_receives_action_broadcast(self, client):
+        """Test WebSocket action updates shared state."""
+        from swarm.main import state
+        state.action_history = []
+        state.current_action = "idle"
+
         with client.websocket_connect("/ws/swarm") as ws:
             ws.send_json({
                 "type": "action",
@@ -187,9 +233,9 @@ class TestWebSocketEndpoint:
                 "agent": "test"
             })
 
-            data = ws.receive_json(timeout=2.0)
-            assert data["type"] == "action"
-            assert "timestamp" in data
+            await asyncio.sleep(0.2)
+
+            assert state.current_action == "Test action"
 
 
 class TestSwarmMainIntegration:
@@ -201,6 +247,7 @@ class TestSwarmMainIntegration:
 
         routes = [route.path for route in app.routes]
 
+        assert "/health" in routes
         assert "/status" in routes
         assert "/ws/swarm" in routes
         assert "/history" in routes

@@ -11,7 +11,7 @@ import httpx
 import structlog
 from pydantic import BaseModel, Field
 
-from harness_worker import HarnessWorker
+from swarm.harness_worker import HarnessWorker
 
 structlog.configure(
     processors=[

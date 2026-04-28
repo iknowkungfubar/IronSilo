@@ -17,9 +17,12 @@ Environment Variables:
 
 from swarm.harness_worker import HarnessWorker
 from swarm.orchestrator import Manager, MemoryNodeInput
+from swarm.main import app, state
 
 __all__ = [
     "HarnessWorker",
     "Manager",
     "MemoryNodeInput",
+    "app",
+    "state",
 ]
