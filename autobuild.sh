@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# IronSilo Autonomous Orchestrator Loop v2.0
+# IronSilo Autonomous Orchestrator Loop v2.1 (OpenCode Edition)
 BACKLOG_FILE="docs/MASTER_BACKLOG.md"
 JOURNAL_FILE="docs/DEV_JOURNAL.md"
 
@@ -35,7 +35,6 @@ while true; do
         else
             echo "⚠️ Final tests failed! Forcing agent to fix..."
             NEXT_TASK="- [ ] Fix failing tests in final test suite."
-            # BUGFIX: We MUST physically write this to the backlog so it isn't lost on the next loop
             echo "$NEXT_TASK" >> "$BACKLOG_FILE"
         fi
     fi
@@ -44,7 +43,7 @@ while true; do
     echo "🎯 NEXT TASK: $NEXT_TASK"
     echo "-----------------------------------------------------"
 
-    # 3. Create a temporary prompt file (safest way to pass multi-line text to LLM CLIs)
+    # 3. Create a temporary prompt file to avoid multi-line string escaping issues
     cat <<EOF > .temp_prompt.txt
 SYSTEM DIRECTIVE: You are an autonomous worker. 
 1. Update $JOURNAL_FILE with your plan for this task.
@@ -57,20 +56,19 @@ YOUR CURRENT TASK IS: $NEXT_TASK
 Do not stop until this specific task is fully implemented and tested. Do not ask for human intervention.
 EOF
 
-    # Read the prompt back into a variable safely
     PROMPT=$(cat .temp_prompt.txt)
     
-    echo "🤖 Waking up agent..."
-    # BUGFIX: Add your auto-confirm flag (e.g., -y). If opencode crashes, sleep 3s to prevent CPU runaway loops.
-    opencode --message "$PROMPT" -y || sleep 3
+    echo "🤖 Waking up OpenCode agent..."
+    # BUGFIX: Changed to 'opencode run' based on the CLI help menu
+    opencode run "$PROMPT" || sleep 3
     
     echo "🧪 Agent finished. Running test suite..."
+    # Ensure pytest actually runs here. If you use a virtual environment, you might need: poetry run pytest tests/
     pytest tests/ > test_output.txt 2>&1
     TEST_EXIT_CODE=$?
 
     if [ $TEST_EXIT_CODE -ne 0 ]; then
         echo "❌ Tests failed! Forcing agent to fix errors..."
-        # Grab only the last 40 lines of the error to save token context limits
         tail -n 40 test_output.txt > .temp_error.txt
         
         cat <<EOF > .temp_error_prompt.txt
@@ -80,21 +78,16 @@ Read the following error log, find the bug, and fix the code immediately:
 $(cat .temp_error.txt)
 EOF
         ERROR_PROMPT=$(cat .temp_error_prompt.txt)
-        opencode --message "$ERROR_PROMPT" -y || sleep 3
+        
+        # BUGFIX: Changed to 'opencode run'
+        opencode run "$ERROR_PROMPT" || sleep 3
     else
         echo "✅ Tests passed! Checking if agent marked task complete..."
         
-        # BUGFIX: The "Agent Forgot" Catcher
-        # If the agent fixed the code but forgot to check off the box, we do it for them
-        # so the script doesn't feed them the exact same task again.
-        
-        # Escape special characters in the task string so sed doesn't crash
         ESCAPED_TASK=$(echo "$NEXT_TASK" | sed 's/[.[\*^$]/\\&/g')
         
         if grep -q "$ESCAPED_TASK" "$BACKLOG_FILE"; then
             echo "⚠️ Agent forgot to check off the task. Auto-checking to prevent infinite loop..."
-            
-            # Cross-platform compatibility for sed (macOS vs Linux)
             if [[ "$OSTYPE" == "darwin"* ]]; then
                 sed -i '' "s/$ESCAPED_TASK/${ESCAPED_TASK/- \[ \]/- \[x\]}/" "$BACKLOG_FILE"
             else

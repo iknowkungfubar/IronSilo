@@ -1,0 +1,43 @@
+CRITICAL FAILURE. The test suite failed after your last changes. 
+Read the following error log, find the bug, and fix the code immediately:
+
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_tui.py:16: in <module>
+    from tui import __version__, main, monitor
+E   ModuleNotFoundError: No module named 'tui'[0m
+[31m[1m__________________ ERROR collecting tests/unit/test_wizard.py __________________[0m
+[31mImportError while importing test module '/run/media/turin/Data/projects/stacks/IronSilo/tests/unit/test_wizard.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.14/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/unit/test_wizard.py:17: in <module>
+    from setup.wizard import (
+E   ModuleNotFoundError: No module named 'setup'[0m
+[36m[1m=========================== short test summary info ============================[0m
+[31mERROR[0m tests/integration/test_proxy_integration.py
+[31mERROR[0m tests/integration/test_security_integration.py
+[31mERROR[0m tests/unit/test_cache_kv_store.py
+[31mERROR[0m tests/unit/test_cache_kv_store_100.py
+[31mERROR[0m tests/unit/test_detector.py
+[31mERROR[0m tests/unit/test_file_watcher.py
+[31mERROR[0m tests/unit/test_key_manager_100.py
+[31mERROR[0m tests/unit/test_mcp_framework.py
+[31mERROR[0m tests/unit/test_mcp_framework_100.py
+[31mERROR[0m tests/unit/test_mcp_servers.py
+[31mERROR[0m tests/unit/test_mcp_servers_100.py
+[31mERROR[0m tests/unit/test_pipeline_agent_bridge.py
+[31mERROR[0m tests/unit/test_pipeline_task_schema.py
+[31mERROR[0m tests/unit/test_proxy_classifier.py
+[31mERROR[0m tests/unit/test_proxy_models.py
+[31mERROR[0m tests/unit/test_proxy_proxy.py
+[31mERROR[0m tests/unit/test_proxy_proxy_100.py
+[31mERROR[0m tests/unit/test_security.py
+[31mERROR[0m tests/unit/test_setup.py
+[31mERROR[0m tests/unit/test_tui.py
+[31mERROR[0m tests/unit/test_wizard.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 21 errors during collection !!!!!!!!!!!!!!!!!!!
+[31m======================== [33m3 skipped[0m, [31m[1m21 errors[0m[31m in 0.38s[0m[31m =========================[0m

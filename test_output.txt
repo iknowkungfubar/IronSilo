@@ -241,4 +241,4 @@ E   ModuleNotFoundError: No module named 'setup'[0m
 [31mERROR[0m tests/unit/test_tui.py
 [31mERROR[0m tests/unit/test_wizard.py
 !!!!!!!!!!!!!!!!!!! Interrupted: 21 errors during collection !!!!!!!!!!!!!!!!!!!
-[31m======================== [33m3 skipped[0m, [31m[1m21 errors[0m[31m in 0.39s[0m[31m =========================[0m
+[31m======================== [33m3 skipped[0m, [31m[1m21 errors[0m[31m in 0.38s[0m[31m =========================[0m
