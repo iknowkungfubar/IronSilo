@@ -24,6 +24,7 @@ from textual.widgets import (
 from .widgets.container_status import ContainerStatusWidget
 from .widgets.resource_monitor import ResourceMonitorWidget
 from .widgets.log_viewer import LogViewerWidget
+from .widgets.swarm_monitor import SwarmMonitorWidget
 from .theme import IRONSILO_THEME
 
 
@@ -90,7 +91,11 @@ class IronSiloTUI(App):
     ResourceMonitorWidget {
         height: 100%;
     }
-    
+
+    SwarmMonitorWidget {
+        height: 100%;
+    }
+
     LogViewerWidget {
         height: 100%;
     }
@@ -123,7 +128,8 @@ class IronSiloTUI(App):
             with Horizontal(id="top-panel"):
                 yield ContainerStatusWidget(id="container-status")
                 yield ResourceMonitorWidget(id="resource-monitor")
-            
+                yield SwarmMonitorWidget(id="swarm-monitor")
+
             with Vertical(id="bottom-panel"):
                 yield LogViewerWidget(id="log-viewer")
         

@@ -221,15 +221,16 @@ def _compress_content(content: str, compressor: Any = None, enabled: bool = Fals
         return content
 
 
-def _process_messages(messages: list[Message], compressor: Any = None, enabled: bool = False) -> list[Dict[str, Any]]:
+def _process_messages(messages: list[Message], compressor: Any = None, enabled: bool = False, bypass_compression: bool = False) -> list[Dict[str, Any]]:
     """
     Process messages, applying compression where needed.
-    
+
     Args:
         messages: List of validated Message objects
         compressor: LLMLingua compressor instance
         enabled: Whether compression is enabled
-        
+        bypass_compression: If True, skip compression entirely
+
     Returns:
         List of message dicts ready for upstream
     """
@@ -237,12 +238,12 @@ def _process_messages(messages: list[Message], compressor: Any = None, enabled: 
         from .models import Role
     except ImportError:
         from models import Role
-    
+
     processed = []
-    
+
     for msg in messages:
         msg_dict = msg.model_dump(exclude_none=True)
-        
+
         # Convert role enum to string value (e.g., Role.USER -> "user")
         if "role" in msg_dict:
             role = msg_dict["role"]
@@ -250,13 +251,13 @@ def _process_messages(messages: list[Message], compressor: Any = None, enabled: 
                 msg_dict["role"] = role.value
             elif hasattr(role, "value"):
                 msg_dict["role"] = role.value
-        
-        # Compress content if present and long enough
-        if msg_dict.get("content") and len(msg_dict["content"]) > COMPRESSION_THRESHOLD:
+
+        # Compress content if present and long enough (unless bypass is set)
+        if not bypass_compression and msg_dict.get("content") and len(msg_dict["content"]) > COMPRESSION_THRESHOLD:
             msg_dict["content"] = _compress_content(msg_dict["content"], compressor, enabled)
-        
+
         processed.append(msg_dict)
-    
+
     return processed
 
 
@@ -320,10 +321,20 @@ async def chat_completions(request: Request):
                     type="invalid_request_error",
                 ).model_dump(),
             )
-        
+
+        # Check if compression should be bypassed
+        bypass_compression = False
+        x_bypass = request.headers.get("X-Bypass-Compression", "").lower()
+        if x_bypass == "true":
+            bypass_compression = True
+            logger.info("compression_bypassed", request_id=request_id, reason="X-Bypass-Compression header")
+        elif req.model and any(keyword in req.model.lower() for keyword in ["vision", "dom"]):
+            bypass_compression = True
+            logger.info("compression_bypassed", request_id=request_id, reason="model contains vision/dom", model=req.model)
+
         # Build upstream request payload
         upstream_payload: Dict[str, Any] = {
-            "messages": _process_messages(req.messages, app.state.compressor, app.state.compression_enabled),
+            "messages": _process_messages(req.messages, app.state.compressor, app.state.compression_enabled, bypass_compression),
             "stream": req.stream,
         }
         
