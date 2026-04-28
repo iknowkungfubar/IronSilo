@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-04-28
+### Added
+- **Browser Swarm Services:** Added `browser-node` (browserless/chrome:latest) and `swarm-service` to docker-compose.yml
+- **Swarm Worker Module:** `harness_worker.py` with raw CDP WebSocket connection for DOM extraction and element clicking
+- **Orchestrator Module:** `orchestrator.py` with Manager class that formats research data into IronSilo MemoryNode schema
+- **Swarm FastAPI Server:** `main.py` on port 8095 with `/status`, `/ws/swarm`, and `/history` endpoints
+- **TUI Swarm Monitor Widget:** `swarm_monitor.py` displaying live feed of swarm actions in #top-panel
+- **Proxy Bypass Compression:** `X-Bypass-Compression: true` header and model-based bypass for "vision"/"dom" models
+- **Internal Bridge Network:** Isolated `internal_bridge` network for swarm-service connectivity
+
+### Changed
+- **swarm/Dockerfile:** Added `uvicorn` and `websockets` dependencies
+- **tui/widgets/__init__.py:** Exported `SwarmMonitorWidget`
+
+### Fixed
+- **Missing Dependencies:** Added `websockets` package to swarm Dockerfile
+
+### Security
+- **Network Isolation:** swarm-service now uses internal_bridge network
+
+---
+
 ## [2.0.0] - 2026-04-24
 ### Added
 - **Comprehensive Test Suite:** Added 644 tests covering all core modules with 92.8% code coverage
