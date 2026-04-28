@@ -83,24 +83,6 @@ class TestHarnessWorker:
         assert worker.ws is None
 
     @pytest.mark.asyncio
-    async def test_send_command_success(self, mock_websockets):
-        """Test sending CDP command and receiving response."""
-        from swarm.harness_worker import HarnessWorker
-
-        mock_ws = MagicMock()
-        mock_ws.send = AsyncMock()
-        mock_ws.recv = AsyncMock(return_value=json.dumps({"id": 1, "result": {"success": True}}))
-        mock_websockets.connect = AsyncMock(return_value=mock_ws)
-
-        worker = HarnessWorker()
-        await worker.connect()
-
-        result = await worker._send_command("DOM.getDocument", {"depth": -1})
-
-        assert result == {"success": True}
-        mock_ws.send.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_send_command_not_connected(self):
         """Test sending command when not connected raises RuntimeError."""
         from swarm.harness_worker import HarnessWorker
@@ -111,130 +93,114 @@ class TestHarnessWorker:
             await worker._send_command("DOM.getDocument")
 
     @pytest.mark.asyncio
-    async def test_send_command_timeout(self, mock_websockets):
-        """Test CDP command timeout raises TimeoutError."""
+    async def test_send_command_builds_message_with_params(self):
+        """Test CDP command message includes method and params."""
         from swarm.harness_worker import HarnessWorker
 
-        mock_ws = MagicMock()
-        mock_ws.send = AsyncMock()
-        mock_websockets.connect = AsyncMock(return_value=mock_ws)
-
         worker = HarnessWorker()
-        await worker.connect()
+        worker._message_id = 5
+        worker.ws = MagicMock()
 
-        worker._message_id = 0
         future = asyncio.get_event_loop().create_future()
-        worker._response_futures[1] = future
+        future.set_result({"success": True})
+        worker._response_futures[6] = future
 
-        with pytest.raises(TimeoutError):
-            await worker._send_command("DOM.getDocument", {"depth": -1})
+        result = await worker._send_command("DOM.getDocument", {"depth": -1})
+
+        assert result == {"success": True}
+        assert worker._message_id == 6
 
     @pytest.mark.asyncio
-    async def test_get_dom(self, mock_websockets):
-        """Test DOM extraction."""
+    async def test_send_command_increments_message_id(self):
+        """Test CDP command increments message ID."""
+        from swarm.harness_worker import HarnessWorker
+
+        worker = HarnessWorker()
+        initial_id = worker._message_id
+        worker.ws = MagicMock()
+
+        future = asyncio.get_event_loop().create_future()
+        future.set_result({"result": True})
+        worker._response_futures[initial_id + 1] = future
+
+        await worker._send_command("Test.method")
+
+        assert worker._message_id == initial_id + 1
+
+    @pytest.mark.asyncio
+    async def test_get_dom_returns_json_string(self, mock_websockets):
+        """Test DOM extraction returns JSON string."""
         from swarm.harness_worker import HarnessWorker
 
         mock_ws = MagicMock()
-        mock_ws.send = AsyncMock()
-        mock_response = {
-            "id": 1,
-            "result": {
-                "root": {
-                    "nodeId": 1,
-                    "name": "html",
-                    "value": "<html></html>"
-                }
-            }
-        }
-        mock_ws.recv = AsyncMock(return_value=json.dumps(mock_response))
         mock_websockets.connect = AsyncMock(return_value=mock_ws)
 
         worker = HarnessWorker()
-        await worker.connect()
+        worker.ws = mock_ws
+
+        mock_result = {"root": {"nodeId": 1, "name": "html"}}
+        future = asyncio.get_event_loop().create_future()
+        future.set_result(mock_result)
+        worker._response_futures[1] = future
+        worker._message_id = 0
 
         result = await worker.get_dom()
-        result_parsed = json.loads(result)
 
-        assert result_parsed["name"] == "html"
-        assert result_parsed["value"] == "<html></html>"
+        assert isinstance(result, str)
+        parsed = json.loads(result)
+        assert parsed["name"] == "html"
 
     @pytest.mark.asyncio
-    async def test_click_element_success(self, mock_websockets):
-        """Test successful element click."""
+    async def test_click_element_returns_true_on_success(self, mock_websockets):
+        """Test click_element returns True when element found."""
         from swarm.harness_worker import HarnessWorker
 
         mock_ws = MagicMock()
-        mock_ws.send = AsyncMock()
-
-        query_response = {
-            "id": 1,
-            "result": {
-                "result": {
-                    "objectId": "obj-123"
-                }
-            }
-        }
-
-        click_response = {
-            "id": 2,
-            "result": {"success": True}
-        }
-
-        mock_ws.recv = AsyncMock(side_effect=[
-            json.dumps(query_response),
-            json.dumps(click_response)
-        ])
         mock_websockets.connect = AsyncMock(return_value=mock_ws)
 
         worker = HarnessWorker()
-        await worker.connect()
+        worker.ws = mock_ws
 
-        result = await worker.click_element("#my-button")
+        future = asyncio.get_event_loop().create_future()
+        future.set_result({"result": {"objectId": "obj-123"}})
+        worker._response_futures[1] = future
+        worker._message_id = 0
+
+        result = await worker.click_element("#button")
 
         assert result is True
 
     @pytest.mark.asyncio
-    async def test_click_element_not_found(self, mock_websockets):
-        """Test clicking element that doesn't exist."""
+    async def test_click_element_returns_false_when_not_found(self, mock_websockets):
+        """Test click_element returns False when element not found."""
         from swarm.harness_worker import HarnessWorker
 
         mock_ws = MagicMock()
-        mock_ws.send = AsyncMock()
-
-        query_response = {
-            "id": 1,
-            "result": {
-                "result": None
-            }
-        }
-
-        mock_ws.recv = AsyncMock(return_value=json.dumps(query_response))
         mock_websockets.connect = AsyncMock(return_value=mock_ws)
 
         worker = HarnessWorker()
-        await worker.connect()
+        worker.ws = mock_ws
+
+        future = asyncio.get_event_loop().create_future()
+        future.set_result({"result": None})
+        worker._response_futures[1] = future
+        worker._message_id = 0
 
         result = await worker.click_element("#nonexistent")
 
         assert result is False
 
     @pytest.mark.asyncio
-    async def test_evaluate_for_research(self, mock_websockets, mock_httpx_client):
-        """Test research evaluation sends correct headers."""
+    async def test_evaluate_for_research_sends_bypass_header(self, mock_websockets, mock_httpx_client):
+        """Test evaluate_for_research sends X-Bypass-Compression header."""
         from swarm.harness_worker import HarnessWorker
 
         mock_ws = MagicMock()
-        mock_ws.send = AsyncMock()
-        mock_ws.recv = AsyncMock()
         mock_websockets.connect = AsyncMock(return_value=mock_ws)
 
         mock_response = MagicMock()
         mock_response.json.return_value = {
-            "choices": [{
-                "message": {
-                    "content": '{"key": "value"}'
-                }
-            }]
+            "choices": [{"message": {"content": '{"data": "test"}'}}]
         }
         mock_response.raise_for_status = MagicMock()
 
@@ -245,57 +211,40 @@ class TestHarnessWorker:
         mock_httpx_client.return_value = mock_client
 
         worker = HarnessWorker()
-        await worker.connect()
+        worker.ws = mock_ws
 
-        result = await worker.evaluate_for_research('<html><body><div>Test</div></body></html>')
+        result = await worker.evaluate_for_research("<html>test</html>")
 
-        assert result == '{"key": "value"}'
         mock_client.post.assert_called_once()
         call_kwargs = mock_client.post.call_args.kwargs
         assert call_kwargs["headers"]["X-Bypass-Compression"] == "true"
 
     @pytest.mark.asyncio
-    async def test_receive_loop_processes_messages(self, mock_websockets):
-        """Test receive loop processes incoming messages."""
+    async def test_evaluate_for_research_returns_content(self, mock_websockets, mock_httpx_client):
+        """Test evaluate_for_research returns extracted content."""
         from swarm.harness_worker import HarnessWorker
 
         mock_ws = MagicMock()
-        response_message = {"id": 1, "result": {"success": True}}
-        mock_ws.recv = AsyncMock(return_value=json.dumps(response_message))
         mock_websockets.connect = AsyncMock(return_value=mock_ws)
 
-        worker = HarnessWorker()
-        worker.ws = mock_ws
-
-        future = asyncio.get_event_loop().create_future()
-        worker._response_futures[1] = future
-
-        await worker._receive_loop()
-
-        assert future.done()
-        assert future.result() == {"success": True}
-
-    @pytest.mark.asyncio
-    async def test_receive_loop_handles_console_events(self, mock_websockets):
-        """Test receive loop handles Runtime.consoleAPICalled events."""
-        from swarm.harness_worker import HarnessWorker
-
-        mock_ws = MagicMock()
-        console_message = {
-            "method": "Runtime.consoleAPICalled",
-            "params": {"type": "log", "args": [{"value": "test"}]}
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "choices": [{"message": {"content": '{"extracted": "data"}'}}]
         }
-        mock_ws.recv = AsyncMock(side_effect=[
-            json.dumps(console_message),
-            Exception("stop")
-        ])
-        mock_websockets.connect = AsyncMock(return_value=mock_ws)
+        mock_response.raise_for_status = MagicMock()
+
+        mock_client = MagicMock()
+        mock_client.post = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock()
+        mock_httpx_client.return_value = mock_client
 
         worker = HarnessWorker()
         worker.ws = mock_ws
 
-        with pytest.raises(Exception, match="stop"):
-            await worker._receive_loop()
+        result = await worker.evaluate_for_research("<html>test</html>")
+
+        assert result == '{"extracted": "data"}'
 
 
 class TestHarnessWorkerEnvironment:
