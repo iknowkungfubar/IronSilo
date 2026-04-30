@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-04-30
+### Added
+- **Distributed Tracing:** `proxy/tracing.py` with OpenTelemetry instrumentation and NoOpSpan fallback
+- **Trace Function Decorator:** `@trace_function()` decorator for automatic function tracing
+- **Tracing Middleware:** FastAPI middleware for request tracing with context propagation
+- **API Documentation:** `docs/API.md` with comprehensive endpoint documentation
+- **Architecture Documentation:** `docs/ARCHITECTURE.md` with detailed True Silo architecture
+- **Fuzzing Tests:** 13 fuzz tests in `tests/fuzz/test_proxy_fuzz.py` covering edge cases
+- **Security Middleware Tests:** 20 tests in `tests/unit/test_security_middleware.py`
+
+### Fixed
+- **TaskFileHandler Cleanup:** Added `stop()` method to cancel background tasks and prevent coroutine warnings
+- **Rate Limit Test Fix:** Added `tests/conftest.py` with rate limiter reset fixture
+
+### Tests
+- **Tracing Tests:** 13 new tests in `tests/unit/test_proxy_tracing.py`
+- **Fuzz Tests:** 13 new fuzz tests for proxy edge cases
+- **Security Tests:** 20 new middleware tests
+- **Performance Tests:** 10 new performance tests
+- **Test Suite:** 933 tests passing (up from 877)
+
+---
+
 ## [2.1.0] - 2026-04-29
 ### Added
 - **Traefik API Gateway:** Single entry point on port 8080 routing all services

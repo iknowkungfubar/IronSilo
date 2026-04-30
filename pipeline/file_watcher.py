@@ -128,6 +128,13 @@ class TaskFileHandler(FileSystemEventHandler):
 
                 self._recovery_action()
 
+    def stop(self) -> None:
+        """Stop the debounce and watchdog processors."""
+        if hasattr(self, '_debounce_task') and self._debounce_task is not None:
+            self._debounce_task.cancel()
+        if hasattr(self, '_watchdog_task') and self._watchdog_task is not None:
+            self._watchdog_task.cancel()
+
     def _recovery_action(self) -> None:
         """Attempt recovery after watchdog trigger."""
         logger.info("Watchdog recovery action triggered")
