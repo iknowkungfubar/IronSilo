@@ -188,8 +188,15 @@ async def create_memory(memory: MemoryNode):
                  json.dumps(memory.tags), memory.created_at, json.dumps(memory.metadata))
     else:
         _memories[memory.id] = memory.model_dump()
-    
-    logger.info("Memory created", memory_id=memory.id)
+
+    logger.info(
+        "memory_operation",
+        operation="CREATE",
+        memory_id=memory.id,
+        memory_type=memory.memory_type,
+        importance=memory.importance,
+        tags_count=len(memory.tags),
+    )
     return memory
 
 
@@ -240,24 +247,31 @@ async def update_memory(memory_id: str, content: Optional[str] = None, **kwargs)
             if updates:
                 query = f"UPDATE memories SET {', '.join(updates)} WHERE id = $1"
                 await conn.execute(query, *params)
-            
+
             # Return updated row
             row = await conn.fetchrow("SELECT * FROM memories WHERE id = $1", memory_id)
             result = dict(row)
             result['tags'] = json.loads(result['tags']) if result.get('tags') else []
             result['metadata'] = json.loads(result['metadata']) if result.get('metadata') else {}
-            return result
     else:
         if memory_id not in _memories:
             raise HTTPException(status_code=404, detail="Memory not found")
-        
+
         if content is not None:
             _memories[memory_id]["content"] = content
         for k, v in kwargs.items():
             if v is not None:
                 _memories[memory_id][k] = v
-        
-        return _memories[memory_id]
+
+        result = _memories[memory_id]
+
+    logger.info(
+        "memory_operation",
+        operation="UPDATE",
+        memory_id=memory_id,
+        updated_fields=list(kwargs.keys()) if kwargs else ["content"],
+    )
+    return result
 
 
 @app.delete("/api/v1/memories/{memory_id}")
@@ -272,7 +286,12 @@ async def delete_memory(memory_id: str):
         if memory_id not in _memories:
             raise HTTPException(status_code=404, detail="Memory not found")
         del _memories[memory_id]
-    
+
+    logger.info(
+        "memory_operation",
+        operation="DELETE",
+        memory_id=memory_id,
+    )
     return {"deleted": True, "memory_id": memory_id}
 
 
@@ -385,4 +404,28 @@ async def root():
         "backend": "postgres" if _pool else "memory",
         "docs": "/docs",
         "health": "/health",
+    }
+
+
+@app.get("/metrics")
+async def metrics():
+    """Prometheus-compatible metrics endpoint."""
+    if _pool:
+        async with _pool.acquire() as conn:
+            mem_count = await conn.fetchval("SELECT COUNT(*) FROM memories")
+            edge_count = await conn.fetchval("SELECT COUNT(*) FROM edges")
+            session_count = await conn.fetchval("SELECT COUNT(*) FROM sessions")
+    else:
+        mem_count = len(_memories)
+        edge_count = len(_edges)
+        session_count = len(_sessions)
+
+    return {
+        "metrics": {
+            "memories_count": mem_count,
+            "edges_count": edge_count,
+            "sessions_count": session_count,
+            "backend": "postgres" if _pool else "memory",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
     }

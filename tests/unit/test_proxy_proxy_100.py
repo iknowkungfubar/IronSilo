@@ -101,78 +101,70 @@ class TestStreamingResponseExtended:
     async def test_stream_generator_success(self):
         """Test successful streaming response."""
         from proxy.proxy import _stream_generator
-        
-        # Mock httpx client
+
         mock_context = AsyncIteratorContext(response=MagicMock())
-        
+
         mock_client = MagicMock()
         mock_client.stream = MagicMock(return_value=mock_context)
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
-        
-        with patch("proxy.proxy.httpx.AsyncClient", return_value=mock_client):
-            payload = {"messages": [{"role": "user", "content": "test"}]}
-            chunks = []
-            
-            async for chunk in _stream_generator(payload, "test-req-id"):
-                chunks.append(chunk)
-            
-            assert len(chunks) == 2
-            assert chunks[0] == b"chunk1"
-            assert chunks[1] == b"chunk2"
+
+        payload = {"messages": [{"role": "user", "content": "test"}]}
+        chunks = []
+
+        async for chunk in _stream_generator(payload, "test-req-id", mock_client):
+            chunks.append(chunk)
+
+        assert len(chunks) == 2
+        assert chunks[0] == b"chunk1"
+        assert chunks[1] == b"chunk2"
     
     @pytest.mark.asyncio
     async def test_stream_generator_timeout(self):
         """Test streaming response handles timeout."""
         from proxy.proxy import _stream_generator
         import httpx
-        
-        # Mock httpx to raise TimeoutException
+
         mock_client = MagicMock()
         mock_client.stream = MagicMock(return_value=AsyncIteratorContext(
             error=httpx.TimeoutException("Request timed out")
         ))
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
-        
-        with patch("proxy.proxy.httpx.AsyncClient", return_value=mock_client):
-            payload = {"messages": [{"role": "user", "content": "test"}]}
-            chunks = []
-            
-            async for chunk in _stream_generator(payload, "test-req-id"):
-                chunks.append(chunk)
-            
-            # Should yield error message
-            assert len(chunks) == 1
-            error_data = json.loads(chunks[0].decode().replace("data: ", "").strip())
-            assert "error" in error_data
+
+        payload = {"messages": [{"role": "user", "content": "test"}]}
+        chunks = []
+
+        async for chunk in _stream_generator(payload, "test-req-id", mock_client):
+            chunks.append(chunk)
+
+        assert len(chunks) == 1
+        error_data = json.loads(chunks[0].decode().replace("data: ", "").strip())
+        assert "error" in error_data
     
     @pytest.mark.asyncio
     async def test_stream_generator_http_error(self):
         """Test streaming response handles HTTP error."""
         from proxy.proxy import _stream_generator
         import httpx
-        
-        # Mock httpx to raise HTTPStatusError
+
         mock_response = MagicMock()
         mock_response.raise_for_status = MagicMock(side_effect=httpx.HTTPStatusError(
             "Bad Request", request=MagicMock(), response=MagicMock()
         ))
-        
+
         mock_client = MagicMock()
         mock_client.stream = MagicMock(return_value=AsyncIteratorContext(mock_response))
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
-        
-        with patch("proxy.proxy.httpx.AsyncClient", return_value=mock_client):
-            payload = {"messages": [{"role": "user", "content": "test"}]}
-            chunks = []
-            
-            async for chunk in _stream_generator(payload, "test-req-id"):
-                chunks.append(chunk)
-            
-            # Should yield error message
-            assert len(chunks) == 1
+
+        payload = {"messages": [{"role": "user", "content": "test"}]}
+        chunks = []
+
+        async for chunk in _stream_generator(payload, "test-req-id", mock_client):
+            chunks.append(chunk)
+
+        assert len(chunks) == 1
 
 
 class AsyncIteratorContext:
@@ -207,22 +199,21 @@ class TestNonStreamRequest:
     async def test_non_stream_request_success(self):
         """Test successful non-streaming request."""
         from proxy.proxy import _non_stream_request
-        
+
         mock_response = MagicMock()
         mock_response.json.return_value = {"choices": [{"message": {"content": "Hello"}}]}
         mock_response.raise_for_status = MagicMock()
-        
+
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
-        
-        with patch("proxy.proxy.httpx.AsyncClient", return_value=mock_client):
-            payload = {"messages": [{"role": "user", "content": "test"}]}
-            result = await _non_stream_request(payload, "test-req-id")
-            
-            assert "choices" in result
-            mock_client.post.assert_called_once()
+
+        payload = {"messages": [{"role": "user", "content": "test"}]}
+        result = await _non_stream_request(payload, "test-req-id", mock_client)
+
+        assert "choices" in result
+        mock_client.post.assert_called_once()
     
     @pytest.mark.asyncio
     async def test_non_stream_request_http_error(self):
@@ -241,11 +232,10 @@ class TestNonStreamRequest:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
 
-        with patch("proxy.proxy.httpx.AsyncClient", return_value=mock_client):
-            payload = {"messages": [{"role": "user", "content": "test"}]}
+        payload = {"messages": [{"role": "user", "content": "test"}]}
 
-            with pytest.raises(httpx.HTTPStatusError):
-                await _non_stream_request(payload, "test-req-id")
+        with pytest.raises(httpx.HTTPStatusError):
+            await _non_stream_request(payload, "test-req-id", mock_client)
 
 
 class TestProcessMessagesExtended:

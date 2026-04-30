@@ -5,7 +5,7 @@ Comprehensive tests for security/key_manager.py to achieve 100% coverage.
 import base64
 import json
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch, mock_open
 
@@ -124,7 +124,7 @@ class TestKeyManagerExtended:
             key_id = "missing-key"
             manager._keystore.keys.append(KeyInfo(
                 id=key_id,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
                 fingerprint="abc123",
             ))
             
@@ -400,7 +400,7 @@ class TestKeyManagerExtended:
         """Test KeyInfo.is_expired when no expiration set."""
         key_info = KeyInfo(
             id="test",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             expires_at=None,
             fingerprint="abc",
         )

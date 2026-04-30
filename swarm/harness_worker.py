@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import signal
 from typing import Any, Optional
 
 import httpx
@@ -24,6 +25,28 @@ logger = structlog.get_logger(__name__)
 
 CDP_URL = os.getenv("CDP_URL", "ws://browser-node:9222")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "http://llm-proxy:8001/api/v1")
+
+_shutdown_event: Optional[asyncio.Event] = None
+
+
+def init_shutdown_handler() -> asyncio.Event:
+    """Initialize shutdown signal handler."""
+    global _shutdown_event
+    if _shutdown_event is None:
+        _shutdown_event = asyncio.Event()
+        
+        def signal_handler():
+            logger.info("harness_worker_shutdown_requested")
+            if _shutdown_event:
+                _shutdown_event.set()
+        
+        try:
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                asyncio.get_event_loop().add_signal_handler(sig, signal_handler)
+        except (NotImplementedError, OSError):
+            pass
+    
+    return _shutdown_event
 
 
 class HarnessWorker:
@@ -152,17 +175,25 @@ class HarnessWorker:
 
 
 async def main():
+    shutdown_event = init_shutdown_handler()
     worker = HarnessWorker()
 
     try:
         await worker.connect()
 
-        dom = await worker.get_dom()
-        research_data = await worker.evaluate_for_research(dom)
-        print(research_data)
-
+        while not shutdown_event.is_set():
+            dom = await worker.get_dom()
+            research_data = await worker.evaluate_for_research(dom)
+            print(research_data)
+            
+            await asyncio.wait_for(shutdown_event.wait(), timeout=5.0)
+            break
+            
+    except asyncio.CancelledError:
+        logger.info("main_cancelled")
     finally:
         await worker.disconnect()
+        logger.info("main_shutdown_complete")
 
 
 if __name__ == "__main__":

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import json
+import signal
 import time
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator
 
 import structlog
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -34,7 +36,42 @@ class SwarmState:
 
 state = SwarmState()
 
-app = FastAPI(title="Swarm Service API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Application lifespan manager for graceful shutdown."""
+    logger.info("swarm_service_starting")
+
+    loop = asyncio.get_event_loop()
+    shutdown_event = asyncio.Event()
+
+    def signal_handler():
+        logger.info("swarm_received_shutdown_signal")
+        shutdown_event.set()
+
+    for sig in (signal.SIGTERM, signal.SIGINT):
+        loop.add_signal_handler(sig, signal_handler)
+
+    yield
+
+    logger.info("swarm_service_stopping", clients=len(state.connected_clients))
+
+    async with state.lock:
+        for client in state.connected_clients:
+            try:
+                await client.close(code=1001, reason="Server shutting down")
+            except Exception as e:
+                logger.warning("swarm_client_close_error", error=str(e))
+        state.connected_clients.clear()
+
+    logger.info("swarm_service_stopped")
+
+
+app = FastAPI(
+    title="Swarm Service API",
+    version="1.0.0",
+    lifespan=lifespan,
+)
 
 
 @app.get("/health")
@@ -122,6 +159,22 @@ async def get_history() -> JSONResponse:
             "history": state.action_history[-50:],
             "count": len(state.action_history),
         })
+
+
+@app.get("/metrics")
+async def get_metrics() -> JSONResponse:
+    """Return Prometheus-compatible metrics."""
+    return JSONResponse({
+        "metrics": {
+            "state": {
+                "current_action": state.current_action,
+                "action_history_count": len(state.action_history),
+                "connected_clients": len(state.connected_clients),
+            },
+            "uptime_seconds": time.time() - state.start_time,
+            "timestamp": time.time(),
+        }
+    })
 
 
 if __name__ == "__main__":

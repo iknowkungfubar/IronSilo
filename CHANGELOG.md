@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Proxy Timeout:** Reduced from 300s to 60s to prevent hanging connections
 - **Retry Logic:** Exponential backoff for 5xx errors from upstream LLM
 - **Input Sanitization:** Content sanitization removing control chars and null bytes
+- **Circuit Breaker:** Proxy now has circuit breaker pattern to fail fast on upstream failures
+- **Graceful Shutdown:** Swarm services now handle SIGTERM/SIGINT signals properly
+- **Retry Queue:** Orchestrator has retry queue with exponential backoff for failed memory operations
+- **Dead Letter Queue:** Failed memories after retries go to dead letter queue for later inspection
 
 ### Changed
 - **docker-compose.yml:** Refactored with Traefik service, removed all `ports:` from internal services
@@ -24,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - **C01 Vulnerability Fixed:** All services now behind API Gateway with X-Silo-Auth header middleware
 - **No Direct Port Exposure:** Internal services no longer exposed directly to network
+- **API Key Rotation:** Runtime API key rotation via `/api/v1/key/rotate` endpoint with `KEY_ROTATION_ENABLED` flag
 
 ---
 

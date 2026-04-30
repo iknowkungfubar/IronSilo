@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import signal
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -27,6 +28,29 @@ structlog.configure(
 logger = structlog.get_logger(__name__)
 
 GENESYS_URL = os.getenv("GENESYS_URL", "http://genesys-memory:8000")
+RETRY_QUEUE: list[dict[str, Any]] = []
+DEAD_LETTER_QUEUE: list[dict[str, Any]] = []
+_shutdown_event: Optional[asyncio.Event] = None
+
+
+def init_shutdown_handler() -> asyncio.Event:
+    """Initialize shutdown signal handler."""
+    global _shutdown_event
+    if _shutdown_event is None:
+        _shutdown_event = asyncio.Event()
+        
+        def signal_handler():
+            logger.info("orchestrator_shutdown_requested")
+            if _shutdown_event:
+                _shutdown_event.set()
+        
+        try:
+            for sig in (signal.SIGTERM, signal.SIGINT):
+                asyncio.get_event_loop().add_signal_handler(sig, signal_handler)
+        except (NotImplementedError, OSError):
+            pass
+    
+    return _shutdown_event
 
 
 class MemoryNodeInput(BaseModel):
@@ -82,14 +106,47 @@ class Manager:
             response.raise_for_status()
             return response.json()
 
+    async def _retry_failed_memory(self, memory: MemoryNodeInput, max_retries: int = 3) -> Optional[dict[str, Any]]:
+        """Retry storing failed memory with exponential backoff."""
+        for attempt in range(max_retries):
+            try:
+                return await self._store_memory(memory)
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    delay = min(2 ** attempt, 10.0)
+                    logger.warning(
+                        "memory_retry",
+                        memory_id=memory.id,
+                        attempt=attempt + 1,
+                        delay=delay,
+                        error=str(e),
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    logger.error(
+                        "memory_retry_exhausted",
+                        memory_id=memory.id,
+                        error=str(e),
+                    )
+                    DEAD_LETTER_QUEUE.append({
+                        "memory": memory.model_dump(),
+                        "failed_at": datetime.now(timezone.utc).isoformat(),
+                        "error": str(e),
+                    })
+        return None
+
     async def run_research_session(self, queries: list[str]) -> list[dict[str, Any]]:
         logger.info("manager_session_start", query_count=len(queries))
         results = []
+        shutdown_event = init_shutdown_handler()
 
         await self.worker.connect()
 
         try:
             for query in queries:
+                if shutdown_event.is_set():
+                    logger.info("manager_session_interrupted", queries_completed=len(results))
+                    break
                 result = await self.extract_and_store(query)
                 results.append(result)
                 await asyncio.sleep(0.5)
@@ -101,12 +158,12 @@ class Manager:
 
 
 async def main():
+    shutdown_event = init_shutdown_handler()
     worker = HarnessWorker()
     manager = Manager(worker)
 
-    await worker.connect()
-
     try:
+        await worker.connect()
         dom = await worker.get_dom()
         research_data = await worker.evaluate_for_research(dom)
 
@@ -119,8 +176,12 @@ async def main():
         )
 
         await manager._store_memory(memory)
+        logger.info("orchestrator_main_complete")
+    except asyncio.CancelledError:
+        logger.info("orchestrator_main_cancelled")
     finally:
         await worker.disconnect()
+        logger.info("orchestrator_main_shutdown_complete")
 
 
 if __name__ == "__main__":

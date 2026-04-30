@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import os
 import time
+import uuid
 from collections import defaultdict
 from typing import Callable, Optional
 
@@ -85,6 +86,29 @@ def get_client_id(request: Request) -> str:
     
     client_host = request.client.host if request.client else "unknown"
     return f"ip:{client_host}"
+
+
+async def request_id_middleware(request: Request, call_next: Callable) -> Response:
+    """
+    Request ID middleware for tracing.
+    
+    Generates or propagates X-Request-ID header for request tracking.
+    """
+    # Use existing request ID or generate new one
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    
+    # Store in request state for access by endpoints
+    request.state.request_id = request_id
+    
+    # Log with request ID
+    logger = structlog.get_logger(__name__).bind(request_id=request_id)
+    
+    response = await call_next(request)
+    
+    # Ensure response has request ID header
+    response.headers["X-Request-ID"] = request_id
+    
+    return response
 
 
 async def auth_middleware(request: Request, call_next: Callable) -> Response:
@@ -198,18 +222,39 @@ async def request_size_middleware(request: Request, call_next: Callable) -> Resp
 def setup_cors(app) -> None:
     """
     Configure CORS for the application.
-    
+
     In development, allows localhost.
     In production, requires explicit CORS_ORIGINS env var.
     """
     env = os.getenv("ENVIRONMENT", "development")
-    
+
     if env == "development":
         allow_origins = ["http://localhost:*", "http://127.0.0.1:*"]
+        logger.info("cors_configured", mode="development", allow_origins=allow_origins)
     else:
         origins = os.getenv("CORS_ORIGINS", "")
-        allow_origins = [o.strip() for o in origins.split(",") if o.strip()]
-    
+
+        if not origins:
+            logger.warning("cors_no_origins_configured", message="CORS_ORIGINS not set in production - blocking cross-origin requests")
+            allow_origins = []
+        else:
+            allow_origins = [o.strip() for o in origins.split(",") if o.strip()]
+
+            if not allow_origins:
+                logger.warning("cors_empty_origins", message="CORS_ORIGINS is empty in production - blocking cross-origin requests")
+                allow_origins = []
+            else:
+                for origin in allow_origins:
+                    if not origin.startswith(("http://", "https://")):
+                        logger.warning("cors_invalid_origin", origin=origin, message="Origin must start with http:// or https://")
+                        allow_origins.remove(origin)
+
+                if not allow_origins:
+                    logger.warning("cors_all_origins_invalid", message="No valid CORS origins - blocking cross-origin requests")
+                    allow_origins = []
+
+        logger.info("cors_configured", mode="production", allow_origins=allow_origins)
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allow_origins,
@@ -246,9 +291,10 @@ def setup_security_middleware(app) -> None:
     
     Order matters - applied in sequence:
     1. CORS (outermost)
-    2. Request size limit
-    3. Rate limiting
-    4. Authentication (innermost)
+    2. Request ID tracking
+    3. Request size limit
+    4. Rate limiting
+    5. Authentication (innermost)
     """
     # CORS
     setup_cors(app)
@@ -257,6 +303,7 @@ def setup_security_middleware(app) -> None:
     app.middleware("http")(auth_middleware)
     app.middleware("http")(rate_limit_middleware)
     app.middleware("http")(request_size_middleware)
+    app.middleware("http")(request_id_middleware)
 
 
 # Type hint import

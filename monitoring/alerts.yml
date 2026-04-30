@@ -1,0 +1,47 @@
+groups:
+  - name: ironclow_silo_alerts
+    rules:
+      - alert: ProxyHighLatency
+        expr: proxy_request_duration_seconds{quantile="0.99"} > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Proxy latency above 10s"
+          description: "99th percentile latency is {{ $value }}s"
+
+      - alert: ProxyCircuitBreakerOpen
+        expr: proxy_circuit_breaker_state == 1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Proxy circuit breaker is OPEN"
+          description: "Upstream LLM is failing, requests are being blocked"
+
+      - alert: SwarmServiceDown
+        expr: up{job="swarm-service"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Swarm service is down"
+          description: "The browser swarm service has been unreachable for 30s"
+
+      - alert: MemoryUsageHigh
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container memory usage above 90%"
+          description: "{{ $labels.container }} memory usage is {{ $value | humanizePercentage }}"
+
+      - alert: LLMProxyUpstreamErrors
+        expr: rate(proxy_upstream_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate from upstream LLM"
+          description: "Error rate is {{ $value }} errors/second"

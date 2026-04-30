@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -155,7 +155,7 @@ class Task(BaseModel):
     @model_validator(mode='after')
     def update_timestamps(self) -> 'Task':
         """Update timestamps based on status changes."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         if self.status == TaskStatus.IN_PROGRESS and self.started_at is None:
             self.started_at = now
@@ -172,8 +172,8 @@ class Task(BaseModel):
         self.status = TaskStatus.IN_PROGRESS
         if assigned_to:
             self.assigned_to = assigned_to
-        self.started_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.started_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(timezone.utc)
     
     def complete(
         self,
@@ -183,45 +183,45 @@ class Task(BaseModel):
     ) -> None:
         """Mark task as completed."""
         self.status = TaskStatus.COMPLETED
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         if implementation_files:
             self.implementation_files = implementation_files
         if test_files:
             self.test_files = test_files
         if notes:
             self.result_notes = notes
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def fail(self, error_message: str) -> None:
         """Mark task as failed."""
         self.status = TaskStatus.FAILED
-        self.completed_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
         self.error_message = error_message
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def cancel(self) -> None:
         """Mark task as cancelled."""
         self.status = TaskStatus.CANCELLED
-        self.completed_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.completed_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(timezone.utc)
     
     def add_research_finding(self, finding: ResearchFinding) -> None:
         """Add a research finding to the task."""
         self.research_findings.append(finding)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def add_implementation_note(self, content: str, priority: TaskPriority = TaskPriority.MEDIUM) -> None:
         """Add an implementation note."""
         self.implementation_notes.append(
             ImplementationNote(content=content, priority=priority)
         )
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
     
     def add_acceptance_criterion(self, description: str) -> str:
         """Add an acceptance criterion and return its ID."""
         criterion = AcceptanceCriterion(description=description)
         self.acceptance_criteria.append(criterion)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
         return criterion.id
     
     def verify_criterion(self, criterion_id: str, notes: Optional[str] = None) -> bool:
@@ -231,7 +231,7 @@ class Task(BaseModel):
                 criterion.verified = True
                 if notes:
                     criterion.verification_notes = notes
-                self.updated_at = datetime.utcnow()
+                self.updated_at = datetime.now(timezone.utc)
                 return True
         return False
     
@@ -275,7 +275,7 @@ class TaskList(BaseModel):
     def add_task(self, task: Task) -> str:
         """Add a task and return its ID."""
         self.tasks.append(task)
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
         return task.id
     
     def get_task(self, task_id: str) -> Optional[Task]:

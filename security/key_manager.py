@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import os
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -38,7 +38,7 @@ class KeyInfo(BaseModel):
         """Check if key is expired."""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
     
     @property
     def is_valid(self) -> bool:
@@ -51,8 +51,8 @@ class KeyStore(BaseModel):
     
     version: str = "1.0.0"
     keys: List[KeyInfo] = Field(default_factory=list)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class KeyManager:
@@ -159,7 +159,7 @@ class KeyManager:
             raise KeyError("Keystore not initialized")
         
         try:
-            self._keystore.updated_at = datetime.utcnow()
+            self._keystore.updated_at = datetime.now(timezone.utc)
             json_data = self._keystore.model_dump_json()
             
             if self._master_encryptor:
@@ -202,12 +202,12 @@ class KeyManager:
         # Calculate expiration
         expires_at = None
         if expires_in_days:
-            expires_at = datetime.utcnow() + timedelta(days=expires_in_days)
+            expires_at = datetime.now(timezone.utc) + timedelta(days=expires_in_days)
         
         # Create key info
         key_info = KeyInfo(
             id=key_id,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             expires_at=expires_at,
             fingerprint=fingerprint,
             is_active=True,
@@ -475,7 +475,7 @@ class KeyManager:
             
             # Check if expiring in next 7 days
             if key_info.expires_at:
-                days_until_expiry = (key_info.expires_at - datetime.utcnow()).days
+                days_until_expiry = (key_info.expires_at - datetime.now(timezone.utc)).days
                 if 0 < days_until_expiry <= 7:
                     status["expiring_soon"].append({
                         "id": key_info.id,

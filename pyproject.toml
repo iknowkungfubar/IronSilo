@@ -122,6 +122,7 @@ disallow_untyped_defs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -131,9 +132,6 @@ addopts = [
     "-v",
     "--tb=short",
     "--color=yes",
-    "-x",
-    "--ignore=tests/unit/test_swarm_harness_worker.py",
-    "--ignore=tests/unit/test_swarm_orchestrator.py",
 ]
 markers = [
     "unit: Unit tests (fast, no external dependencies)",

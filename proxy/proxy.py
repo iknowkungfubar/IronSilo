@@ -103,31 +103,144 @@ RETRY_BASE_DELAY = float(os.getenv("RETRY_BASE_DELAY", "1.0"))
 RETRY_MAX_DELAY = float(os.getenv("RETRY_MAX_DELAY", "10.0"))
 RETRY_STATUS_CODES = [500, 502, 503, 504]
 
+# KV Cache configuration
+KV_CACHE_ENABLED = os.getenv("KV_CACHE_ENABLED", "false").lower() == "true"
+KV_CACHE_MAX_SIZE = int(os.getenv("KV_CACHE_MAX_SIZE", "1000"))
+KV_CACHE_TTL_SECONDS = int(os.getenv("KV_CACHE_TTL_SECONDS", "3600"))
+
+# Global cache instance (lazy initialization)
+_kv_cache = None
+
+
+def _get_kv_cache():
+    """Get or create the global KV cache instance."""
+    global _kv_cache
+    if _kv_cache is None:
+        from cache.kv_store import create_kv_cache
+        _kv_cache = create_kv_cache(max_size=KV_CACHE_MAX_SIZE)
+    return _kv_cache
+
+CIRCUIT_BREAKER_FAILURE_THRESHOLD = int(os.getenv("CIRCUIT_BREAKER_FAILURE_THRESHOLD", "5"))
+CIRCUIT_BREAKER_TIMEOUT = float(os.getenv("CIRCUIT_BREAKER_TIMEOUT", "30.0"))
+
+# HTTP Client connection pool settings
+HTTP_CLIENT_MAX_CONNECTIONS = int(os.getenv("HTTP_CLIENT_MAX_CONNECTIONS", "100"))
+HTTP_CLIENT_MAX_KEEPALIVE = int(os.getenv("HTTP_CLIENT_MAX_KEEPALIVE", "20"))
+HTTP_CLIENT_TIMEOUT = float(os.getenv("HTTP_CLIENT_TIMEOUT", "60.0"))
+
+
+class CircuitBreaker:
+    """
+    Circuit breaker pattern implementation for proxy reliability.
+
+    States:
+    - CLOSED: Normal operation, requests pass through
+    - OPEN: Too many failures, requests fail fast
+    - HALF_OPEN: Testing if service recovered
+    """
+
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+
+    def __init__(self, failure_threshold: int = 5, timeout: float = 30.0):
+        self.failure_threshold = failure_threshold
+        self.timeout = timeout
+        self.failure_count = 0
+        self.last_failure_time: float = 0.0
+        self.state = self.CLOSED
+        self._lock = __import__("asyncio").Lock()
+
+    async def can_proceed(self) -> bool:
+        """Check if request can proceed through circuit breaker."""
+        async with self._lock:
+            if self.state == self.CLOSED:
+                return True
+
+            if self.state == self.OPEN:
+                if __import__("time").time() - self.last_failure_time >= self.timeout:
+                    self.state = self.HALF_OPEN
+                    logger.info("circuit_breaker_half_open")
+                    return True
+                return False
+
+            if self.state == self.HALF_OPEN:
+                return True
+
+            return False
+
+    async def record_success(self) -> None:
+        """Record successful request."""
+        async with self._lock:
+            if self.state == self.HALF_OPEN:
+                self.state = self.CLOSED
+                self.failure_count = 0
+                logger.info("circuit_breaker_closed")
+            else:
+                self.failure_count = 0
+
+    async def record_failure(self) -> None:
+        """Record failed request."""
+        async with self._lock:
+            self.failure_count += 1
+            self.last_failure_time = __import__("time").time()
+
+            if self.state == self.HALF_OPEN:
+                self.state = self.OPEN
+                logger.warning("circuit_breaker_reopened")
+            elif self.failure_count >= self.failure_threshold:
+                self.state = self.OPEN
+                logger.warning("circuit_breaker_opened", failures=self.failure_count)
+
+    @property
+    def status(self) -> dict[str, Any]:
+        """Return circuit breaker status for monitoring."""
+        return {
+            "state": self.state,
+            "failure_count": self.failure_count,
+            "failure_threshold": self.failure_threshold,
+            "timeout_seconds": self.timeout,
+        }
+
+
+circuit_breaker = CircuitBreaker(
+    failure_threshold=CIRCUIT_BREAKER_FAILURE_THRESHOLD,
+    timeout=CIRCUIT_BREAKER_TIMEOUT,
+)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application lifespan manager.
-    
+
     Handles initialization of LLMLingua compressor on startup
     and cleanup on shutdown.
     """
     global _compressor, _compression_enabled, _start_time
-    
-    # Store state in app.state and sync module-level variables
+
     _start_time = time.time()
     app.state.start_time = _start_time
     app.state.compressor = None
     app.state.compression_enabled = False
-    
+
     logger.info("proxy_starting", llm_endpoint=LLM_ENDPOINT)
-    
+
+    limits = httpx.Limits(
+        max_connections=HTTP_CLIENT_MAX_CONNECTIONS,
+        max_keepalive_connections=HTTP_CLIENT_MAX_KEEPALIVE,
+    )
+    app.state.http_client = httpx.AsyncClient(
+        timeout=httpx.Timeout(HTTP_CLIENT_TIMEOUT),
+        limits=limits,
+    )
+    logger.info("http_client_initialized", max_connections=HTTP_CLIENT_MAX_CONNECTIONS)
+
     try:
-        # Import and initialize LLMLingua
         from llmlingua import PromptCompressor
-        
+
         logger.info("loading_llmlingua", model="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank")
-        
+
         _compressor = PromptCompressor(
             model_name="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
             use_llmlingua2=True,
@@ -136,25 +249,25 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         app.state.compressor = _compressor
         _compression_enabled = True
         app.state.compression_enabled = True
-        
+
         logger.info("llmlingua_loaded", compression_enabled=True)
-        
+
     except ImportError as e:
         logger.warning("llmlingua_not_available", error=str(e), compression_enabled=False)
         app.state.compression_enabled = False
         _compression_enabled = False
-        
+
     except Exception as e:
         logger.error("llmlingua_load_failed", error=str(e), exc_info=True)
         app.state.compression_enabled = False
         _compression_enabled = False
-    
+
     logger.info("proxy_started", version=PROXY_VERSION)
-    
+
     yield
-    
-    # Cleanup
+
     logger.info("proxy_shutting_down")
+    await app.state.http_client.aclose()
     app.state.compressor = None
     _compressor = None
 
@@ -304,16 +417,15 @@ def _process_messages(messages: list[Message], compressor: Any = None, enabled: 
 async def health_check() -> HealthResponse:
     """
     Health check endpoint.
-    
+
     Returns:
         Health status including compression availability and uptime
     """
-    # Handle case where lifespan hasn't run yet (e.g., during testing)
     start_time = getattr(app.state, "start_time", time.time())
     compression_enabled = getattr(app.state, "compression_enabled", False)
-    
+
     uptime = time.time() - start_time
-    
+
     return HealthResponse(
         status="healthy" if compression_enabled else "degraded",
         version=PROXY_VERSION,
@@ -321,6 +433,35 @@ async def health_check() -> HealthResponse:
         llm_endpoint=LLM_ENDPOINT,
         uptime_seconds=uptime,
     )
+
+
+@app.get("/metrics")
+async def metrics() -> JSONResponse:
+    """Prometheus-compatible metrics endpoint."""
+    uptime = time.time() - getattr(app.state, "start_time", time.time())
+    cb = circuit_breaker
+
+    return JSONResponse({
+        "metrics": {
+            "info": {
+                "version": PROXY_VERSION,
+                "compression_enabled": getattr(app.state, "compression_enabled", False),
+                "llm_endpoint": LLM_ENDPOINT,
+            },
+            "uptime_seconds": uptime,
+            "circuit_breaker": cb.status,
+            "compression": {
+                "threshold": COMPRESSION_THRESHOLD,
+                "rate": COMPRESSION_RATE,
+            },
+            "retry": {
+                "max_attempts": RETRY_MAX_ATTEMPTS,
+                "base_delay": RETRY_BASE_DELAY,
+                "max_delay": RETRY_MAX_DELAY,
+            },
+            "timestamp": time.time(),
+        }
+    })
 
 
 @app.post("/api/v1/chat/completions", response_model=None)
@@ -407,7 +548,7 @@ async def chat_completions(request: Request):
         # Handle streaming vs non-streaming
         if req.stream:
             return StreamingResponse(
-                _stream_generator(upstream_payload, request_id),
+                _stream_generator(upstream_payload, request_id, request.app.state.http_client),
                 media_type="text/event-stream",
                 headers={
                     "Cache-Control": "no-cache",
@@ -416,7 +557,7 @@ async def chat_completions(request: Request):
                 },
             )
         else:
-            response = await _non_stream_request(upstream_payload, request_id)
+            response = await _non_stream_request(upstream_payload, request_id, request.app.state.http_client)
             
             elapsed = time.time() - request_start
             logger.info(
@@ -443,6 +584,7 @@ async def chat_completions(request: Request):
 async def _retry_with_backoff(
     payload: Dict[str, Any],
     request_id: str,
+    client: httpx.AsyncClient,
 ) -> Dict[str, Any]:
     """
     Make a request to upstream LLM with retry and exponential backoff.
@@ -450,6 +592,7 @@ async def _retry_with_backoff(
     Args:
         payload: The request payload
         request_id: Request identifier for logging
+        client: Shared httpx AsyncClient for connection pooling
 
     Returns:
         Response dictionary
@@ -463,30 +606,29 @@ async def _retry_with_backoff(
 
     for attempt in range(RETRY_MAX_ATTEMPTS):
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                response = await client.post(
-                    LLM_ENDPOINT,
-                    json=payload,
-                    headers={"X-Request-ID": request_id},
-                )
+            response = await client.post(
+                LLM_ENDPOINT,
+                json=payload,
+                headers={"X-Request-ID": request_id},
+            )
 
-                if response.status_code in RETRY_STATUS_CODES:
-                    if attempt < RETRY_MAX_ATTEMPTS - 1:
-                        delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
-                        logger.warning(
-                            "retry_attempt",
-                            request_id=request_id,
-                            attempt=attempt + 1,
-                            status_code=response.status_code,
-                            delay=delay,
-                        )
-                        await asyncio.sleep(delay)
-                        continue
-                    else:
-                        response.raise_for_status()
+            if response.status_code in RETRY_STATUS_CODES:
+                if attempt < RETRY_MAX_ATTEMPTS - 1:
+                    delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
+                    logger.warning(
+                        "retry_attempt",
+                        request_id=request_id,
+                        attempt=attempt + 1,
+                        status_code=response.status_code,
+                        delay=delay,
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                else:
+                    response.raise_for_status()
 
-                response.raise_for_status()
-                return response.json()
+            response.raise_for_status()
+            return response.json()
 
         except httpx.HTTPStatusError as e:
             if 400 <= e.response.status_code < 500:
@@ -526,51 +668,105 @@ async def _retry_with_backoff(
 async def _non_stream_request(
     payload: Dict[str, Any],
     request_id: str,
+    client: httpx.AsyncClient,
 ) -> Dict[str, Any]:
     """
-    Make a non-streaming request to the upstream LLM with retry.
+    Make a non-streaming request to the upstream LLM with circuit breaker and retry.
 
     Args:
         payload: The request payload
         request_id: Request identifier for logging
+        client: Shared httpx AsyncClient for connection pooling
 
     Returns:
         Response dictionary
+
+    Raises:
+        Exception: If circuit breaker is open or all retries fail
     """
-    return await _retry_with_backoff(payload, request_id)
+    if not await circuit_breaker.can_proceed():
+        logger.warning("circuit_breaker_open", request_id=request_id)
+        raise Exception("Circuit breaker is OPEN - upstream service unavailable")
+
+    # Check KV cache first (only for non-streaming)
+    cache = _get_kv_cache()
+    if KV_CACHE_ENABLED:
+        messages = payload.get("messages", [])
+        model = payload.get("model", "")
+        temperature = payload.get("temperature", 0.7)
+        max_tokens = payload.get("max_tokens", 4096)
+
+        cached_response = await cache.get_response(
+            messages=messages,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+
+        if cached_response is not None:
+            logger.info("cache_hit", request_id=request_id)
+            await circuit_breaker.record_success()
+            return cached_response
+
+        logger.info("cache_miss", request_id=request_id)
+
+    try:
+        result = await _retry_with_backoff(payload, request_id, client)
+
+        # Store in KV cache if enabled
+        if KV_CACHE_ENABLED:
+            messages = payload.get("messages", [])
+            model = payload.get("model", "")
+            temperature = payload.get("temperature", 0.7)
+            max_tokens = payload.get("max_tokens", 4096)
+
+            await cache.set_response(
+                messages=messages,
+                response=result,
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+
+        await circuit_breaker.record_success()
+        return result
+    except Exception as e:
+        await circuit_breaker.record_failure()
+        raise
 
 
 async def _stream_generator(
     payload: Dict[str, Any],
     request_id: str,
+    client: httpx.AsyncClient,
 ) -> AsyncGenerator[bytes, None]:
     """
     Generate streaming response chunks from upstream LLM.
-    
+
     Args:
         payload: The request payload
         request_id: Request identifier for logging
-        
+        client: Shared httpx AsyncClient for connection pooling
+
     Yields:
         Raw bytes from the upstream stream
     """
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
-            async with client.stream(
-                "POST",
-                LLM_ENDPOINT,
-                json=payload,
-                headers={"X-Request-ID": request_id},
-            ) as response:
-                response.raise_for_status()
-                
-                async for chunk in response.aiter_raw():
-                    yield chunk
-                    
+        async with client.stream(
+            "POST",
+            LLM_ENDPOINT,
+            json=payload,
+            headers={"X-Request-ID": request_id},
+        ) as response:
+            response.raise_for_status()
+
+            async for chunk in response.aiter_raw():
+                yield chunk
+
     except httpx.TimeoutException as e:
         logger.error("stream_timeout", request_id=request_id, error=str(e))
         yield f"data: {ErrorResponse.create(message='Request timed out', type='api_error').model_dump_json()}\n\n".encode()
-        
+
     except Exception as e:
         logger.error("stream_error", request_id=request_id, error=str(e), exc_info=True)
         safe_message = sanitize_error_message(e)
@@ -578,7 +774,7 @@ async def _stream_generator(
 
 
 # Re-export for testing
-__all__ = ["app", "_compress_content", "_process_messages"]
+__all__ = ["app", "_compress_content", "_process_messages", "circuit_breaker", "CircuitBreaker"]
 
 
 # Module-level variables for backward compatibility with tests

@@ -101,25 +101,27 @@ class TestHarnessWorker:
         worker._message_id = 5
         worker.ws = MagicMock()
 
-        async def mock_send(cmd):
-            pass
+        sent_commands = []
 
-        async def mock_recv():
-            return json.dumps({"id": 6, "result": {"success": True}})
+        async def mock_ws_send(cmd):
+            sent_commands.append(json.loads(cmd))
 
-        worker.ws.send = mock_send
-        worker.ws.recv = mock_recv
+        worker.ws.send = mock_ws_send
 
-        future = asyncio.get_event_loop().create_future()
-        future.set_result({"success": True})
-        worker._response_futures[6] = future
+        async def mock_wait_for(fut, timeout):
+            fut.set_result({"success": True})
+            return {"success": True}
 
-        worker._message_id = 5
-        result = await worker._send_command("DOM.getDocument", {"depth": -1})
+        with patch("swarm.harness_worker.asyncio.wait_for", mock_wait_for):
+            result = await worker._send_command("DOM.getDocument", {"depth": -1})
 
         assert result == {"success": True}
         assert worker._message_id == 6
+        assert len(sent_commands) == 1
+        assert sent_commands[0]["method"] == "DOM.getDocument"
+        assert sent_commands[0]["params"] == {"depth": -1}
 
+    @pytest.mark.asyncio
     @pytest.mark.asyncio
     async def test_send_command_increments_message_id(self):
         """Test CDP command increments message ID."""
@@ -129,20 +131,17 @@ class TestHarnessWorker:
         initial_id = worker._message_id
         worker.ws = MagicMock()
 
-        async def mock_send(cmd):
+        async def mock_ws_send(cmd):
             pass
 
-        async def mock_recv():
-            return json.dumps({"id": initial_id + 1, "result": {"result": True}})
+        worker.ws.send = mock_ws_send
 
-        worker.ws.send = mock_send
-        worker.ws.recv = mock_recv
+        async def mock_wait_for(fut, timeout):
+            fut.set_result({"result": True})
+            return {"result": True}
 
-        future = asyncio.get_event_loop().create_future()
-        future.set_result({"result": True})
-        worker._response_futures[initial_id + 1] = future
-
-        await worker._send_command("Test.method")
+        with patch("swarm.harness_worker.asyncio.wait_for", mock_wait_for):
+            await worker._send_command("Test.method")
 
         assert worker._message_id == initial_id + 1
 
@@ -159,20 +158,17 @@ class TestHarnessWorker:
 
         mock_result = {"root": {"nodeId": 1, "name": "html"}}
 
-        async def mock_send(cmd):
+        async def mock_ws_send(cmd):
             pass
 
-        async def mock_recv():
-            return json.dumps({"id": 1, "result": mock_result})
+        worker.ws.send = mock_ws_send
 
-        worker.ws.send = mock_send
-        worker.ws.recv = mock_recv
+        async def mock_wait_for(fut, timeout):
+            fut.set_result(mock_result)
+            return mock_result
 
-        worker._message_id = 0
-        worker._response_futures[1] = asyncio.get_event_loop().create_future()
-        worker._response_futures[1].set_result(mock_result)
-
-        result = await worker.get_dom()
+        with patch("swarm.harness_worker.asyncio.wait_for", mock_wait_for):
+            result = await worker.get_dom()
 
         assert isinstance(result, str)
         parsed = json.loads(result)
@@ -188,18 +184,23 @@ class TestHarnessWorker:
 
         worker = HarnessWorker()
         worker.ws = mock_ws
-
-        async def mock_send(cmd):
-            pass
-
-        worker.ws.send = mock_send
-
-        future = asyncio.get_event_loop().create_future()
-        future.set_result({"result": {"objectId": "obj-123"}})
-        worker._response_futures[1] = future
         worker._message_id = 0
 
-        result = await worker.click_element("#button")
+        async def mock_ws_send(cmd):
+            pass
+
+        worker.ws.send = mock_ws_send
+
+        async def mock_wait_for(fut, timeout):
+            if worker._message_id == 1:
+                fut.set_result({"result": {"objectId": "obj-123"}})
+                return {"result": {"objectId": "obj-123"}}
+            else:
+                fut.set_result({"result": None})
+                return {"result": None}
+
+        with patch("swarm.harness_worker.asyncio.wait_for", mock_wait_for):
+            result = await worker.click_element("#button")
 
         assert result is True
 
@@ -213,18 +214,19 @@ class TestHarnessWorker:
 
         worker = HarnessWorker()
         worker.ws = mock_ws
-
-        async def mock_send(cmd):
-            pass
-
-        worker.ws.send = mock_send
-
-        future = asyncio.get_event_loop().create_future()
-        future.set_result({"result": None})
-        worker._response_futures[1] = future
         worker._message_id = 0
 
-        result = await worker.click_element("#nonexistent")
+        async def mock_ws_send(cmd):
+            pass
+
+        worker.ws.send = mock_ws_send
+
+        async def mock_wait_for(fut, timeout):
+            fut.set_result({"result": None})
+            return {"result": None}
+
+        with patch("swarm.harness_worker.asyncio.wait_for", mock_wait_for):
+            result = await worker.click_element("#nonexistent")
 
         assert result is False
 

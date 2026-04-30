@@ -12,7 +12,7 @@ Tests cover:
 import base64
 import json
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Dict, List
 from unittest.mock import MagicMock, patch
@@ -196,7 +196,7 @@ class TestKeyInfo:
         """Test creating key info."""
         key_info = KeyInfo(
             id="test-key-1",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             fingerprint="abc123",
         )
         
@@ -209,8 +209,8 @@ class TestKeyInfo:
         # Not expired
         key_info = KeyInfo(
             id="test",
-            created_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(days=1),
+            created_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=1),
             fingerprint="abc",
         )
         assert not key_info.is_expired
@@ -218,8 +218,8 @@ class TestKeyInfo:
         # Expired
         key_info_expired = KeyInfo(
             id="test",
-            created_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() - timedelta(days=1),
+            created_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) - timedelta(days=1),
             fingerprint="abc",
         )
         assert key_info_expired.is_expired
@@ -229,8 +229,8 @@ class TestKeyInfo:
         # Valid key
         key_info = KeyInfo(
             id="test",
-            created_at=datetime.utcnow(),
-            expires_at=datetime.utcnow() + timedelta(days=1),
+            created_at=datetime.now(timezone.utc),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=1),
             fingerprint="abc",
             is_active=True,
         )
@@ -239,7 +239,7 @@ class TestKeyInfo:
         # Inactive key
         key_info_inactive = KeyInfo(
             id="test",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             fingerprint="abc",
             is_active=False,
         )
