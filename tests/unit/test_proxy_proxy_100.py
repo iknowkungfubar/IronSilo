@@ -229,20 +229,21 @@ class TestNonStreamRequest:
         """Test non-streaming request handles HTTP error."""
         from proxy.proxy import _non_stream_request
         import httpx
-        
+
         mock_response = MagicMock()
+        mock_response.status_code = 400  # Client error - should not retry
         mock_response.raise_for_status = MagicMock(side_effect=httpx.HTTPStatusError(
-            "Bad Request", request=MagicMock(), response=MagicMock()
+            "Bad Request", request=MagicMock(), response=MagicMock(status_code=400)
         ))
-        
+
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=None)
-        
+
         with patch("proxy.proxy.httpx.AsyncClient", return_value=mock_client):
             payload = {"messages": [{"role": "user", "content": "test"}]}
-            
+
             with pytest.raises(httpx.HTTPStatusError):
                 await _non_stream_request(payload, "test-req-id")
 

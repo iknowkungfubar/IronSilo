@@ -53,7 +53,7 @@ class SwarmMonitorWidget(Static):
 
     def _start_websocket(self) -> None:
         """Start WebSocket connection to swarm service."""
-        self._ws_task = self.watch_socket()
+        self._ws_task = asyncio.create_task(self.watch_socket())
 
     async def watch_socket(self) -> None:
         """Watch swarm-service WebSocket for actions."""

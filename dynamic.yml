@@ -1,0 +1,28 @@
+http:
+  middlewares:
+    global-auth:
+      headers:
+        customRequestHeaders:
+          X-Silo-Auth: "true"
+        customResponseHeaders:
+          X-Silo-Version: "2.0"
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+    compress:
+      compress: {}
+
+  routers:
+    catchall:
+      rule: "CatchAll"
+      service: localhost
+      priority: 1
+
+  services:
+    localhost:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:80"

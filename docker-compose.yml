@@ -6,45 +6,98 @@ x-resources: &default-limits
         memory: 512M
 
 services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+    networks:
+      - internal_bridge
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
   ironclaw-db:
     image: pgvector/pgvector:pg15
     container_name: ironclaw-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-ironsilo_vault}
       POSTGRES_USER: ${POSTGRES_USER:-silo_admin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD must be set in .env file}
-    ports:
-      - "127.0.0.1:5432:5432"  # Bind to localhost only for security
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD must be set in .env file}"
     volumes:
       - ironclaw-pg-data:/var/lib/postgresql/data
+    networks:
+      - internal_bridge
     <<: *default-limits
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-silo_admin} -d ${POSTGRES_DB:-ironsilo_vault}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   genesys-memory:
     build: ./genesys
     container_name: genesys-memory
     depends_on:
-      - ironclaw-db
+      ironclaw-db:
+        condition: service_healthy
     environment:
       - GENESYS_BACKEND=postgres
       - DATABASE_URL=postgresql://${POSTGRES_USER:-silo_admin}:${POSTGRES_PASSWORD}@ironclaw-db:5432/${POSTGRES_DB:-ironsilo_vault}
       - GENESYS_EMBEDDER=local
-    ports:
-      - "8005:8000"
+    volumes:
+      - hf-cache:/root/.cache/huggingface
+    networks:
+      - internal_bridge
     <<: *default-limits
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.genesys.rule=PathPrefix(`/genesys`)"
+      - "traefik.http.routers.genesys.entrypoints=web"
+      - "traefik.http.routers.genesys.service=genesys-memory"
+      - "traefik.http.services.genesys-memory.loadbalancer.server.url=http://genesys-memory:8000"
 
   khoj:
     image: ghcr.io/khoj-ai/khoj:latest
     container_name: khoj
-    ports:
-      - "42110:42110"
     volumes:
       - khoj-data:/root/.khoj
     command: ["--host=0.0.0.0", "--port=42110", "-vv", "--anonymous-mode", "--non-interactive"]
+    networks:
+      - internal_bridge
     deploy:
       resources:
         limits:
           cpus: '1.5'
           memory: 1G
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.khoj.rule=PathPrefix(`/khoj`)"
+      - "traefik.http.routers.khoj.entrypoints=web"
+      - "traefik.http.routers.khoj.service=khoj"
+      - "traefik.http.middlewares.khoj-stripprefix.stripPrefix.prefixes=/khoj"
+      - "traefik.http.routers.khoj.middlewares=khoj-stripprefix"
+      - "traefik.http.services.khoj.loadbalancer.server.url=http://khoj:42110"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:42110/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   llm-proxy:
     build: ./proxy
@@ -59,13 +112,26 @@ services:
       - CORS_ORIGINS=${CORS_ORIGINS:-}
     volumes:
       - hf-cache:/root/.cache/huggingface
-    ports:
-      - "8001:8001"
+    networks:
+      - internal_bridge
     deploy:
       resources:
         limits:
           cpus: '2.0'
           memory: 3G
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-proxy.rule=PathPrefix(`/api/v1`)"
+      - "traefik.http.routers.api-proxy.entrypoints=web"
+      - "traefik.http.routers.api-proxy.service=llm-proxy"
+      - "traefik.http.routers.api-proxy.middlewares=silk-road-auth"
+      - "traefik.http.services.llm-proxy.loadbalancer.server.url=http://llm-proxy:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   mcp-genesys:
     build:
@@ -79,14 +145,20 @@ services:
     depends_on:
       - genesys-memory
       - ironclaw-db
-    ports:
-      - "8003:8000"
+    networks:
+      - internal_bridge
     command: ["python", "-m", "uvicorn", "mcp.genesys_server:app", "--host", "0.0.0.0", "--port", "8000"]
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 256M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mcp-genesys.rule=PathPrefix(`/mcp/genesys`)"
+      - "traefik.http.routers.mcp-genesys.entrypoints=web"
+      - "traefik.http.routers.mcp-genesys.service=mcp-genesys"
+      - "traefik.http.services.mcp-genesys.loadbalancer.server.url=http://mcp-genesys:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -105,14 +177,20 @@ services:
       - IRONSILO_API_KEY=${IRONSILO_API_KEY:-}
     depends_on:
       - khoj
-    ports:
-      - "8004:8000"
+    networks:
+      - internal_bridge
     command: ["python", "-m", "uvicorn", "mcp.khoj_server:app", "--host", "0.0.0.0", "--port", "8000"]
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 256M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mcp-khoj.rule=PathPrefix(`/mcp/khoj`)"
+      - "traefik.http.routers.mcp-khoj.entrypoints=web"
+      - "traefik.http.routers.mcp-khoj.service=mcp-khoj"
+      - "traefik.http.services.mcp-khoj.loadbalancer.server.url=http://mcp-khoj:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -126,15 +204,21 @@ services:
     volumes:
       - ./searxng/settings.yml:/etc/searxng/settings.yml:ro
       - searxng-data:/etc/searxng
-    ports:
-      - "8888:8080"
     environment:
-      - SEARXNG_BASE_URL=http://localhost:8888/
+      - SEARXNG_BASE_URL=http://localhost:8080/search
+    networks:
+      - internal_bridge
     deploy:
       resources:
         limits:
           cpus: '0.5'
           memory: 256M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.searxng.rule=PathPrefix(`/search`)"
+      - "traefik.http.routers.searxng.entrypoints=web"
+      - "traefik.http.routers.searxng.service=searxng"
+      - "traefik.http.services.searxng.loadbalancer.server.url=http://searxng:8080"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
       interval: 30s
@@ -145,11 +229,11 @@ services:
   browser-node:
     image: browserless/chrome:latest
     container_name: browser-node
-    ports:
-      - "9222:9222"
     environment:
       - CONNECTION_TIMEOUT=60000
       - STEALTH=true
+    networks:
+      - internal_bridge
     deploy:
       resources:
         limits:
@@ -163,8 +247,10 @@ services:
       - CDP_URL=ws://browser-node:9222
       - OPENAI_API_BASE=http://llm-proxy:8001/api/v1
       - GENESYS_URL=http://genesys-memory:8000
-    ports:
-      - "8095:8095"
+    depends_on:
+      - llm-proxy
+      - genesys-memory
+      - browser-node
     networks:
       - internal_bridge
     deploy:
@@ -172,11 +258,27 @@ services:
         limits:
           cpus: '1.0'
           memory: 1G
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.swarm.rule=PathPrefix(`/swarm`)"
+      - "traefik.http.routers.swarm.entrypoints=web"
+      - "traefik.http.routers.swarm.service=swarm-service"
+      - "traefik.http.routers.swarm-ws.rule=PathPrefix(`/ws/swarm`)"
+      - "traefik.http.routers.swarm-ws.entrypoints=web"
+      - "traefik.http.routers.swarm-ws.service=swarm-service"
+      - "traefik.http.services.swarm-service.loadbalancer.server.url=http://swarm-service:8095"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8095/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 networks:
   internal_bridge:
     driver: bridge
-    internal: true
+    internal: false
+    name: internal_bridge
 
 volumes:
   ironclaw-pg-data:

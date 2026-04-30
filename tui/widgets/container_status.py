@@ -4,6 +4,7 @@ Container Status Widget for IronSilo TUI.
 
 from __future__ import annotations
 
+import asyncio
 import subprocess
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -37,7 +38,7 @@ class ContainerStatusWidget(Static):
         """Called when widget is mounted."""
         table = self.query_one("#container-table", DataTable)
         table.add_columns("Container", "Status", "Health", "CPU", "Memory", "Uptime")
-        self.refresh_data()
+        asyncio.create_task(self.refresh_data())
     
     async def refresh_data(self) -> None:
         """Refresh container status data."""

@@ -11,7 +11,7 @@ import json
 import os
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -129,7 +129,7 @@ class MemoryNode(BaseModel):
     memory_type: str = "semantic"
     importance: float = 0.5
     tags: List[str] = Field(default_factory=list)
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -140,14 +140,14 @@ class CausalEdge(BaseModel):
     target_id: str
     relationship: str = "causes"
     strength: float = 1.0
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class Session(BaseModel):
     """A memory session."""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     session_type: str = "default"
-    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 

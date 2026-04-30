@@ -1,0 +1,164 @@
+api:
+  dashboard: false
+  insecure: false
+
+entryPoints:
+  web:
+    address: ":8080"
+
+  websecure:
+    address: ":8443"
+    http:
+      tls:
+        certResolver: default
+
+  internal:
+    address: ":8090"
+
+log:
+  level: INFO
+  format: json
+
+accessLog:
+  format: json
+  bufferingSize: 100
+
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: internal_bridge
+    watch: true
+
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+http:
+  middlewares:
+    silk-road-auth:
+      headers:
+        customRequestHeaders:
+          X-Silo-Auth: "true"
+
+    strip-khoj-prefix:
+      stripPrefix:
+        prefixes:
+          - "/khoj"
+        prefixHeaders: true
+
+    strip-mcp-prefix:
+      stripPrefix:
+        prefixes:
+          - "/mcp/genesys"
+          - "/mcp/khoj"
+        prefixHeaders: true
+
+  routers:
+    api-proxy:
+      rule: "PathPrefix(`/api/v1`)"
+      service: llm-proxy
+      entryPoints:
+        - web
+      middlewares:
+        - silk-road-auth
+
+    khoj:
+      rule: "PathPrefix(`/khoj`)"
+      service: khoj
+      entryPoints:
+        - web
+      middlewares:
+        - silk-road-auth
+        - strip-khoj-prefix
+
+    genesys:
+      rule: "PathPrefix(`/genesys`)"
+      service: genesys-memory
+      entryPoints:
+        - web
+      middlewares:
+        - silk-road-auth
+
+    mcp-genesys:
+      rule: "PathPrefix(`/mcp/genesys`)"
+      service: mcp-genesys
+      entryPoints:
+        - web
+      middlewares:
+        - silk-road-auth
+        - strip-mcp-prefix
+
+    mcp-khoj:
+      rule: "PathPrefix(`/mcp/khoj`)"
+      service: mcp-khoj
+      entryPoints:
+        - web
+      middlewares:
+        - silk-road-auth
+        - strip-mcp-prefix
+
+    searxng:
+      rule: "PathPrefix(`/search`)"
+      service: searxng
+      entryPoints:
+        - web
+      middlewares:
+        - silk-road-auth
+
+    swarm:
+      rule: "PathPrefix(`/swarm`)"
+      service: swarm-service
+      entryPoints:
+        - web
+      middlewares:
+        - silk-road-auth
+
+    swarm-ws:
+      rule: "PathPrefix(`/ws/swarm`)"
+      service: swarm-service
+      entryPoints:
+        - web
+      middlewares:
+        - silk-road-auth
+
+  services:
+    llm-proxy:
+      loadBalancer:
+        servers:
+          - url: "http://llm-proxy:8001"
+
+    khoj:
+      loadBalancer:
+        servers:
+          - url: "http://khoj:42110"
+
+    genesys-memory:
+      loadBalancer:
+        servers:
+          - url: "http://genesys-memory:8000"
+
+    mcp-genesys:
+      loadBalancer:
+        servers:
+          - url: "http://mcp-genesys:8000"
+
+    mcp-khoj:
+      loadBalancer:
+        servers:
+          - url: "http://mcp-khoj:8000"
+
+    searxng:
+      loadBalancer:
+        servers:
+          - url: "http://searxng:8080"
+
+    swarm-service:
+      loadBalancer:
+        servers:
+          - url: "http://swarm-service:8095"

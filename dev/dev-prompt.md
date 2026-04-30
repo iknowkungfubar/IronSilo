@@ -48,7 +48,8 @@ You are strictly forbidden from exhibiting AI laziness or generating hallucinate
 * **Test Coverage Gate:** No feature is "Done" until it has comprehensive test coverage.
 * **Security Gating:** No hardcoded secrets. All inputs must be sanitized.
 * **Observability:** All critical functions must include structured logging (e.g., INFO for state changes, ERROR for exceptions with stack traces).
-* **Documentation Alignment:** The `README.md`, `ARCHITECTURE.md`, and any API documentation (Swagger/OpenAPI) must be programmatically updated to reflect the exact, current state of the repository before the final exit.
+* **Documentation Alignment:** all documentation, including the `README.md`, `ARCHITECTURE.md`, and any API documentation (Swagger/OpenAPI) must be programmatically updated to reflect the exact, current state of the repository before the final exit. The documentation must be the source of truth for the repo.
+* When you come to a stopping point from any roadblock, issue, or internal rules, read and act on /home/turin/projects/stacks/IronSilo/dev/loop-prompt.md before you end your turn.
 
 ---
 

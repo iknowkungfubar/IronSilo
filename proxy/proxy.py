@@ -97,6 +97,12 @@ COMPRESSION_THRESHOLD = int(os.getenv("COMPRESSION_THRESHOLD", "1000"))
 COMPRESSION_RATE = float(os.getenv("COMPRESSION_RATE", "0.6"))
 PROXY_VERSION = os.getenv("PROXY_VERSION", "2.0.0")
 
+# Retry configuration for upstream LLM requests
+RETRY_MAX_ATTEMPTS = int(os.getenv("RETRY_MAX_ATTEMPTS", "3"))
+RETRY_BASE_DELAY = float(os.getenv("RETRY_BASE_DELAY", "1.0"))
+RETRY_MAX_DELAY = float(os.getenv("RETRY_MAX_DELAY", "10.0"))
+RETRY_STATUS_CODES = [500, 502, 503, 504]
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -165,6 +171,37 @@ app = FastAPI(
 
 # Apply security middleware
 setup_security_middleware(app)
+
+
+def _sanitize_content(content: str) -> str:
+    """
+    Sanitize user content by removing dangerous characters.
+
+    Removes:
+    - Null bytes (\\x00)
+    - Control characters (except newline, tab, carriage return)
+    - Vertical tab, form feed
+    - Invalid Unicode surrogates
+
+    Args:
+        content: Raw user content
+
+    Returns:
+        Sanitized content safe for LLM
+    """
+    if not content:
+        return content
+
+    import re
+
+    content = content.replace('\x00', '')
+    content = content.replace('\u0000', '')
+
+    content = re.sub(r'[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]', '', content)
+
+    content = re.sub(r'[\ud800-\udfff]', '', content)
+
+    return content.strip()
 
 
 def _compress_content(content: str, compressor: Any = None, enabled: bool = False) -> str:
@@ -252,9 +289,11 @@ def _process_messages(messages: list[Message], compressor: Any = None, enabled: 
             elif hasattr(role, "value"):
                 msg_dict["role"] = role.value
 
-        # Compress content if present and long enough (unless bypass is set)
-        if not bypass_compression and msg_dict.get("content") and len(msg_dict["content"]) > COMPRESSION_THRESHOLD:
-            msg_dict["content"] = _compress_content(msg_dict["content"], compressor, enabled)
+        # Sanitize content first, then compress if long enough (unless bypass is set)
+        if msg_dict.get("content"):
+            msg_dict["content"] = _sanitize_content(msg_dict["content"])
+            if not bypass_compression and len(msg_dict["content"]) > COMPRESSION_THRESHOLD:
+                msg_dict["content"] = _compress_content(msg_dict["content"], compressor, enabled)
 
         processed.append(msg_dict)
 
@@ -401,28 +440,104 @@ async def chat_completions(request: Request):
         )
 
 
+async def _retry_with_backoff(
+    payload: Dict[str, Any],
+    request_id: str,
+) -> Dict[str, Any]:
+    """
+    Make a request to upstream LLM with retry and exponential backoff.
+
+    Args:
+        payload: The request payload
+        request_id: Request identifier for logging
+
+    Returns:
+        Response dictionary
+
+    Raises:
+        Exception: If all retry attempts fail
+    """
+    import asyncio
+
+    last_exception = None
+
+    for attempt in range(RETRY_MAX_ATTEMPTS):
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                response = await client.post(
+                    LLM_ENDPOINT,
+                    json=payload,
+                    headers={"X-Request-ID": request_id},
+                )
+
+                if response.status_code in RETRY_STATUS_CODES:
+                    if attempt < RETRY_MAX_ATTEMPTS - 1:
+                        delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
+                        logger.warning(
+                            "retry_attempt",
+                            request_id=request_id,
+                            attempt=attempt + 1,
+                            status_code=response.status_code,
+                            delay=delay,
+                        )
+                        await asyncio.sleep(delay)
+                        continue
+                    else:
+                        response.raise_for_status()
+
+                response.raise_for_status()
+                return response.json()
+
+        except httpx.HTTPStatusError as e:
+            if 400 <= e.response.status_code < 500:
+                raise
+            last_exception = e
+        except httpx.TimeoutException as e:
+            last_exception = e
+            if attempt < RETRY_MAX_ATTEMPTS - 1:
+                delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
+                logger.warning(
+                    "retry_timeout",
+                    request_id=request_id,
+                    attempt=attempt + 1,
+                    delay=delay,
+                )
+                await asyncio.sleep(delay)
+                continue
+        except Exception as e:
+            last_exception = e
+            if attempt < RETRY_MAX_ATTEMPTS - 1:
+                delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
+                logger.warning(
+                    "retry_error",
+                    request_id=request_id,
+                    attempt=attempt + 1,
+                    error=str(e),
+                    delay=delay,
+                )
+                await asyncio.sleep(delay)
+                continue
+
+    if last_exception:
+        raise last_exception
+    raise Exception("Max retries exceeded")
+
+
 async def _non_stream_request(
     payload: Dict[str, Any],
     request_id: str,
 ) -> Dict[str, Any]:
     """
-    Make a non-streaming request to the upstream LLM.
-    
+    Make a non-streaming request to the upstream LLM with retry.
+
     Args:
         payload: The request payload
         request_id: Request identifier for logging
-        
+
     Returns:
         Response dictionary
     """
-    async with httpx.AsyncClient(timeout=300.0) as client:
-        response = await client.post(
-            LLM_ENDPOINT,
-            json=payload,
-            headers={"X-Request-ID": request_id},
-        )
-        response.raise_for_status()
-        return response.json()
+    return await _retry_with_backoff(payload, request_id)
 
 
 async def _stream_generator(
@@ -440,7 +555,7 @@ async def _stream_generator(
         Raw bytes from the upstream stream
     """
     try:
-        async with httpx.AsyncClient(timeout=300.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             async with client.stream(
                 "POST",
                 LLM_ENDPOINT,

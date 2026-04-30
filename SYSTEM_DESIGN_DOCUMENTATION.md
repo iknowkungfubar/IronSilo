@@ -241,10 +241,17 @@ def get_tool_handler(self, tool_name: str) -> Optional[Callable]:
 ## 7. Appendix
 
 ### 7.1 Related Documents
+- [AGENTS.md](./AGENTS.md) - AGENTS.md
 - [README.md](./README.md) - User documentation
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed architecture
+- [SYSTEM_DESIGN.md](./docs/SYSTEM_DESIGN.md) - v2.0 system design
+- [v3.0.0-pivot.md](./v3.0.0-pivot.md) - v3.0 system design
 - [SECURITY_AUDIT_REPORT.md](./SECURITY_AUDIT_REPORT.md) - Security assessment
 - [ROADMAP.md](./ROADMAP.md) - Future features
+- [CHANGELOG.md](./CHANGELOG.md) - Change log
+- [DEV_JOURNAL.md](./docs/DEV_JOURNAL.md) - development jounal
+- [SPRINT_BACKLOG.md](./docs/SPRINT_BACKLOG.md) - sprint backlog
+- [MASTER_BACKLOG.md](./docs/MASTER_BACKLOG.md) - master backlog
 
 ### 7.2 Changelog
 - v2.0.0 - Current version with 35 failing tests

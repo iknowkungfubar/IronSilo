@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-04-29
+### Added
+- **Traefik API Gateway:** Single entry point on port 8080 routing all services
+- **True Silo Architecture:** All internal services hidden behind Traefik gateway
+- **Dynamic Configuration:** `dynamic.yml` for middleware configuration
+- **Traefik Routing Tests:** 26 tests validating routing configuration
+- **Genesys App Tests:** 30 tests covering all genesys/app.py endpoints
+- **Proxy Timeout:** Reduced from 300s to 60s to prevent hanging connections
+- **Retry Logic:** Exponential backoff for 5xx errors from upstream LLM
+- **Input Sanitization:** Content sanitization removing control chars and null bytes
+
+### Changed
+- **docker-compose.yml:** Refactored with Traefik service, removed all `ports:` from internal services
+- **traefik.yml:** API Gateway configuration with X-Silo-Auth middleware
+- **README.md:** Updated to reflect True Silo architecture with single port 8080
+
+### Security
+- **C01 Vulnerability Fixed:** All services now behind API Gateway with X-Silo-Auth header middleware
+- **No Direct Port Exposure:** Internal services no longer exposed directly to network
+
+---
+
 ## [2.0.1] - 2026-04-28
 ### Added
 - **Browser Swarm Services:** Added `browser-node` (browserless/chrome:latest) and `swarm-service` to docker-compose.yml

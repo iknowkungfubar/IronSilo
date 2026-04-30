@@ -83,7 +83,7 @@ class ResourceMonitorWidget(Static):
     
     def on_mount(self) -> None:
         """Called when widget is mounted."""
-        self.refresh_data()
+        asyncio.create_task(self.refresh_data())
     
     async def refresh_data(self) -> None:
         """Refresh resource metrics."""

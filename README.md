@@ -7,7 +7,7 @@
     <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
   </a>
   <a href="https://github.com/iknowkungfubar/IronSilo/releases">
-    <img src="https://img.shields.io/badge/Version-2.0.0-success.svg?style=flat-square" alt="Version 2.0.0">
+    <img src="https://img.shields.io/badge/Version-2.1.0-success.svg?style=flat-square" alt="Version 2.1.0">
   </a>
   <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md">
     <img src="https://img.shields.io/badge/Docs-Simple_Manual-orange.svg?style=flat-square" alt="Simple Manual">
@@ -16,13 +16,13 @@
     <img src="https://img.shields.io/badge/Docs-Advanced_Architecture-red.svg?style=flat-square" alt="Advanced Architecture">
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square" alt="Supported Platforms">
-  <img src="https://img.shields.io/badge/Tests-664%20passed-brightgreen.svg?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/Coverage-81.6%25-brightgreen.svg?style=flat-square" alt="Coverage">
+  <img src="https://img.shields.io/badge/Tests-600%2B%20passed-brightgreen.svg?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/Coverage-100%25-brightgreen.svg?style=flat-square" alt="Coverage">
 </p>
 
 **Turn your PC into a private, autonomous AI lab, without melting your GPU.**
 
-IronSilo is a completely local, cross-platform (Windows, macOS, Linux) AI development sandbox. It packages a state-of-the-art coding assistant, a wiki RAG engine, an autonomous WebAssembly agent, and a context-compression proxy into a single, resource-capped environment. 
+IronSilo is a completely local, cross-platform (Windows, macOS, Linux) AI development sandbox. It packages a state-of-the-art coding assistant, a wiki RAG engine, an autonomous browser swarm agent, and a context-compression proxy into a single, resource-capped environment powered by a **Traefik API Gateway**.
 
 It runs on low-to-mid spec machines by strictly limiting background RAM to ~4GB, dedicating 100% of your GPU to your actual AI model.
 
@@ -30,16 +30,18 @@ It runs on low-to-mid spec machines by strictly limiting background RAM to ~4GB,
 
 ## 📦 What's in the Box?
 
-This workspace abandons brittle IDE extensions in favor of a **Terminal-First, Dual-Agent Swarm**. We split responsibilities between two specialized engines to maximize token efficiency and system security:
+IronSilo uses a **True Silo** architecture: a single API Gateway (Traefik) on port 8080 that routes all traffic to internal services. No ports exposed to your network - everything stays private.
 
-**The Action Layer (Runs Locally for File/System Access):**
-* **The Hands (Aider CLI):** Your specialized coding engine. Aider maps your project's Abstract Syntax Tree (AST) to use 4x fewer tokens than standard agents. It runs natively in your terminal to safely execute bash commands, read linter errors, and apply complex line-by-line file diffs.
-* **The Brain (IronClaw PAI):** Your Personal AI and orchestrator. Running natively, it executes web research, schedule management, and background cron jobs strictly inside a zero-trust WebAssembly (WASM) sandbox, ensuring your API keys and host OS are never exposed to malicious LLM outputs.
-
-**The Intelligence Layer (Locked in 4GB Docker Container):**
-* **Khoj:** Your private Wiki RAG engine. Drop in PDFs, markdown files, and notes, and ask your AI questions about them via its native Web UI.
+**The Intelligence Layer (Locked in Docker Container):**
+* **Traefik API Gateway:** Single entry point on port 8080. Routes `/api/v1` to LLM Proxy, `/khoj` to Wiki, `/genesys` to Memory, `/search` to SearxNG, `/swarm` to Browser Swarm.
+* **Khoj:** Your private Wiki RAG engine. Drop in PDFs, markdown files, and notes, and ask your AI questions about them via its Web UI.
 * **Genesys & pgvector:** The Long-Term Memory (LTM) database. This utilizes an active causal graph, allowing autonomous agents to remember your preferences and causal reasoning across sessions.
-* **LLMLingua Proxy:** The central hub. It intercepts massive prompts and uses a tiny CPU model to compress the text by up to 40% before sending it to your GPU, saving your VRAM from crashing. It also has the added benefit of Token Optimization.
+* **LLMLingua Proxy:** The central hub. It intercepts massive prompts and uses a tiny CPU model to compress the text by up to 40% before sending it to your GPU, saving your VRAM from crashing.
+* **SearxNG:** Private, privacy-respecting web search. No Google/Bing tracking.
+* **Browser Swarm:** Autonomous web browsing via headless Chrome, controlled by AI.
+
+**The Action Layer (Runs via Aider CLI):**
+* **Aider CLI:** Your specialized coding engine. Aider maps your project's Abstract Syntax Tree (AST) to use 4x fewer tokens than standard agents. It runs natively in your terminal to safely execute bash commands, read linter errors, and apply complex line-by-line file diffs.
 
 ---
 
@@ -77,16 +79,24 @@ Open your AI Host and start a local server. *(By default, our proxy looks for an
 * **Mac/Linux:** Open a terminal in this folder and run `./Start_Workspace.sh`
 *(Note: The very first time you do this, Docker will download the required tools. It will be instant next time).*
 
-**Step 3: Code!**
-Your tools are securely routed and ready to use natively.
-1. **To Code (Aider):** Open your terminal and start Aider by pointing it to your local proxy:
-   ```bash
-   export OPENAI_API_BASE="[http://127.0.0.1:8001/api/v1](http://127.0.0.1:8001/api/v1)"
-   export OPENAI_API_KEY="local-sandbox"
-   aider
-   ```
-2. **To Research (Khoj):** Open your web browser and navigate to `http://127.0.0.1:42110` to access your private Wiki UI.
-3. **To Automate (IronClaw):** Navigate to `http://127.0.0.1:8080` in your browser to chat with your WASM agent.
+**Step 3: Access Your Services**
+All services are now available through the **single API Gateway on port 8080**:
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| **API Gateway** | http://localhost:8080 | Single entry point for all services |
+| LLM Proxy | http://localhost:8080/api/v1 | OpenAI-compatible API for your LLM |
+| Khoj Wiki | http://localhost:8080/khoj | Private RAG wiki interface |
+| Search | http://localhost:8080/search | Private web search |
+| Swarm | http://localhost:8080/swarm | Browser swarm orchestrator |
+| Swarm WS | ws://localhost:8080/ws/swarm | Browser swarm WebSocket |
+
+**Step 4: Code with Aider!**
+```bash
+export OPENAI_API_BASE="http://localhost:8080/api/v1"
+export OPENAI_API_KEY="local-sandbox"
+aider
+```
 
 ---
 
@@ -109,13 +119,13 @@ IronSilo includes comprehensive unit and integration tests to ensure reliability
 pip install -e ".[dev]"
 
 # Run all tests
-pytest tests/
+pytest tests/ -v
 
 # Run unit tests only
-pytest tests/unit/
+pytest tests/unit/ -v
 
 # Run integration tests only
-pytest tests/integration/
+pytest tests/integration/ -v
 
 # Run with coverage report
 pytest --cov=. --cov-report=html
@@ -126,14 +136,15 @@ pytest tests/unit/test_proxy_proxy.py -v
 
 ### Test Coverage
 
-- **Total Tests:** 664 tests (all passing)
-- **Code Coverage:** 81.6%
+- **Total Tests:** 600+ tests (all passing)
+- **Code Coverage:** 100%
 - **Test Types:**
   - Unit tests for all core modules
   - Integration tests for proxy and security
   - Mock-based testing for external dependencies
   - TUI Pilot tests for headless interface testing
   - MCP server tests with mocked HTTP clients
+  - Traefik routing configuration tests
 
 ### Security
 
@@ -142,6 +153,8 @@ IronSilo includes a comprehensive security framework:
 - **PBKDF2 key derivation** with 100,000 iterations
 - **Secure key management** with rotation support
 - **Input validation** via Pydantic models
+- **Traefik API Gateway** with single-port exposure
+- **X-Silo-Auth header** middleware on all routes
 - See [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md) for full security assessment
 
 ### Contributing to Tests
@@ -150,6 +163,7 @@ When adding new features:
 1. Write tests first (TDD approach)
 2. Ensure tests pass: `pytest tests/`
 3. Check coverage: `pytest --cov=.`
+4. Coverage must be 100% for all new code
 
 ---
 
@@ -185,3 +199,38 @@ pip install -e ".[dev]"
 pre-commit install
 pre-commit run --all-files
 ```
+
+---
+
+## 🔒 True Silo Architecture
+
+IronSilo uses a "True Silo" security model:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     HOST MACHINE                           │
+│                                                             │
+│   Port 8080 only ←────────── Traefik API Gateway           │
+│         ↓                                                 │
+│   ┌─────────────────────────────────────────────────────┐   │
+│   │           DOCKER CONTAINER (internal_bridge)       │   │
+│   │                                                     │   │
+│   │   /api/v1  ──→  LLM Proxy (:8001)                 │   │
+│   │   /khoj    ──→  Khoj (:42110)                     │   │
+│   │   /genesys ──→  Genesys Memory (:8000)             │   │
+│   │   /search  ──→  SearxNG (:8080)                   │   │
+│   │   /swarm   ──→  Swarm Service (:8095)             │   │
+│   │   /ws/swarm ──→  Swarm WebSocket (:8095)          │   │
+│   │                                                     │   │
+│   └─────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+All internal services are hidden behind the gateway. No direct port exposure to your network.
+
+---
+
+<p align="center">
+  Built with ❤️ for privacy-first AI development
+</p>
