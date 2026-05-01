@@ -49,21 +49,39 @@ class TestIronSiloTracer:
         assert tracer1 is tracer2
 
     def test_initialization_without_otel(self, mocker):
-        """Tracer should handle missing OpenTelemetry gracefully."""
-        tracer = IronSiloTracer()
-        tracer._tracer = None
-        tracer._propagator = None
+        """Tracer should handle missing OpenTelemetry gracefully when not installed."""
+        import proxy.tracing as tracing_module
+        
+        original_otel = tracing_module.OTEL_AVAILABLE
+        try:
+            tracing_module.OTEL_AVAILABLE = False
+            IronSiloTracer._instance = None
+            tracer = IronSiloTracer()
+            tracer._tracer = None
+            tracer._propagator = None
 
-        result = tracer.get_tracer()
-        assert result is None
+            result = tracer.get_tracer()
+            assert result is None
+        finally:
+            tracing_module.OTEL_AVAILABLE = original_otel
+            IronSiloTracer._instance = None
 
     def test_create_span_returns_noop_when_no_tracer(self):
         """create_span should return NoOpSpan when not initialized."""
-        tracer = IronSiloTracer()
-        tracer._tracer = None
+        import proxy.tracing as tracing_module
+        
+        original_otel = tracing_module.OTEL_AVAILABLE
+        try:
+            tracing_module.OTEL_AVAILABLE = False
+            IronSiloTracer._instance = None
+            tracer = IronSiloTracer()
+            tracer._tracer = None
 
-        span = tracer.create_span("test-span")
-        assert isinstance(span, NoOpSpan)
+            span = tracer.create_span("test-span")
+            assert isinstance(span, NoOpSpan)
+        finally:
+            tracing_module.OTEL_AVAILABLE = original_otel
+            IronSiloTracer._instance = None
 
     def test_extract_context_with_no_propagator(self):
         """extract_context should handle missing propagator gracefully."""
@@ -79,14 +97,34 @@ class TestTraceSpan:
 
     def test_trace_span_without_otel(self, mocker):
         """trace_span should work even without OpenTelemetry."""
-        with trace_span("test-span") as span:
-            assert isinstance(span, NoOpSpan)
+        import proxy.tracing as tracing_module
+        
+        original_otel = tracing_module.OTEL_AVAILABLE
+        try:
+            tracing_module.OTEL_AVAILABLE = False
+            IronSiloTracer._instance = None
+            
+            with trace_span("test-span") as span:
+                assert isinstance(span, NoOpSpan)
+        finally:
+            tracing_module.OTEL_AVAILABLE = original_otel
+            IronSiloTracer._instance = None
 
     def test_trace_span_with_headers(self, mocker):
         """trace_span should accept headers for context propagation."""
-        headers = {"X-Request-ID": "test-123", "X-Trace-Parent": "test"}
-        with trace_span("test-span", headers=headers) as span:
-            assert isinstance(span, NoOpSpan)
+        import proxy.tracing as tracing_module
+        
+        original_otel = tracing_module.OTEL_AVAILABLE
+        try:
+            tracing_module.OTEL_AVAILABLE = False
+            IronSiloTracer._instance = None
+            
+            headers = {"X-Request-ID": "test-123", "X-Trace-Parent": "test"}
+            with trace_span("test-span", headers=headers) as span:
+                assert isinstance(span, NoOpSpan)
+        finally:
+            tracing_module.OTEL_AVAILABLE = original_otel
+            IronSiloTracer._instance = None
 
 
 class TestTraceFunctionDecorator:
