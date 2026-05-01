@@ -1,0 +1,83 @@
+{
+  "name": "ironforge",
+  "description": "IronForge - Unified coding agent with ForgeGod + OpenCode/PAI integration",
+  "version": "1.0.0",
+  "capabilities": [
+    "forgegod_integration",
+    "lemonade_backend", 
+    "sochdb_memory",
+    "pai_algorithm",
+    "autonomous_loop",
+    "resource_management"
+  ],
+  "tools": [
+    {
+      "name": "ironforge_status",
+      "description": "Get IronForge integration status",
+      "inputSchema": {"type": "object", "properties": {}}
+    },
+    {
+      "name": "ironforge_run",
+      "description": "Run a coding task via ForgeGod",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "task": {"type": "string", "description": "Task description"},
+          "model": {"type": "string", "default": "ollama:qwen3-coder-next"}
+        },
+        "required": ["task"]
+      }
+    },
+    {
+      "name": "ironforge_loop_start",
+      "description": "Start ForgeGod autonomous loop from PRD",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prd_path": {"type": "string", "default": ".forgegod/prd.json"},
+          "workers": {"type": "integer", "default": 1}
+        }
+      }
+    },
+    {
+      "name": "ironforge_loop_stop",
+      "description": "Stop ForgeGod autonomous loop",
+      "inputSchema": {"type": "object", "properties": {}}
+    },
+    {
+      "name": "ironforge_memory_store",
+      "description": "Store in ForgeGod memory (via SochDB)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "content": {"type": "string"},
+          "metadata": {"type": "object"}
+        },
+        "required": ["content"]
+      }
+    },
+    {
+      "name": "ironforge_memory_recall",
+      "description": "Recall from ForgeGod memory",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {"type": "string"},
+          "limit": {"type": "integer", "default": 5}
+        },
+        "required": ["query"]
+      }
+    }
+  ],
+  "configuration": {
+    "lemonade_host": "http://localhost:11434",
+    "default_model": "qwen3-coder-next",
+    "max_workers": 2,
+    "sandbox_mode": "standard"
+  },
+  "benchmarks": {
+    "sochdb": "0.07ms/query (~13,700 qps)",
+    "velesdb": "0.11ms/query (~9,000 qps)",
+    "synadb": "2.66ms/query (~376 qps)"
+  }
+}
