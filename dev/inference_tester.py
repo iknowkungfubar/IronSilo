@@ -9,7 +9,7 @@ import json
 import sys
 from typing import Dict, Tuple
 
-LEMONADE_URL = "http://127.0.0.1:8000/api/v1"
+LEMONADE_URL = "http://127.0.0.1:13305/api/v1"
 
 DEFAULT_SETTINGS: Dict[str, Dict] = {
     "factual": {
