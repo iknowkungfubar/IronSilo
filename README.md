@@ -1,3 +1,5 @@
+Warning... this is a work in progress, needs more development and testing.
+
 <p align="center">
   <img src="assets/banner.png" alt="IronSilo Architecture Banner" width="100%">
 </p>
