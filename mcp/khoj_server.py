@@ -7,18 +7,15 @@ RAG engine, enabling document search and management operations.
 
 from __future__ import annotations
 
-import asyncio
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import httpx
 import structlog
 
 from .framework import MCPServerBase, MCPToolError, create_mcp_app
 from .models import (
-    DocumentInfo,
     MCPToolType,
     SearchQuery,
-    SearchResult,
 )
 
 logger = structlog.get_logger(__name__)

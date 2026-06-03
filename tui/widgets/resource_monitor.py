@@ -5,12 +5,11 @@ Resource Monitor Widget for IronSilo TUI.
 from __future__ import annotations
 
 import asyncio
-import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from textual.app import ComposeResult
-from textual.widgets import Static, Sparkline
+from textual.widgets import Static
 
 
 class ResourceMetric:

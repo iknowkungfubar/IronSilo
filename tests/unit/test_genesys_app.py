@@ -12,8 +12,6 @@ Tests cover:
 - Both PostgreSQL and in-memory backend paths
 """
 
-import json
-from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -157,7 +155,7 @@ class TestCreateMemory:
         import genesys.app
         genesys.app._pool = None
 
-        from genesys.app import MemoryNode, create_memory, _memories
+        from genesys.app import MemoryNode, create_memory
 
         memory = MemoryNode(content="Test memory")
         result = await create_memory(memory)

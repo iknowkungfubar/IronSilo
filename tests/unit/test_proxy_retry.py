@@ -1,5 +1,4 @@
 """Tests for proxy retry logic with exponential backoff."""
-import pytest
 
 
 class TestProxyRetryLogic:

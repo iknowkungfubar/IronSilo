@@ -15,7 +15,7 @@ import os
 import time
 import uuid
 from collections import defaultdict
-from typing import Callable, Optional
+from typing import Callable
 
 import structlog
 from fastapi import Request, Response, status

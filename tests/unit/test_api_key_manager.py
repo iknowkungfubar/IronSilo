@@ -4,7 +4,6 @@ Tests for API key management endpoint.
 
 import os
 import importlib
-from unittest.mock import patch
 
 import pytest
 
@@ -201,7 +200,7 @@ class TestRotateApiKey:
     @pytest.mark.asyncio
     async def test_rotate_key_success(self, rotation_enabled_env):
         """Test successful key rotation."""
-        from security.api_key_manager import rotate_api_key, get_current_key
+        from security.api_key_manager import rotate_api_key
         
         result = await rotate_api_key(current_key="old-api-key")
         

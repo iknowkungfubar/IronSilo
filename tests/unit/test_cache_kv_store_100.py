@@ -3,11 +3,9 @@ Additional tests for cache/kv_store.py to achieve 100% coverage.
 """
 
 import asyncio
-import pickle
 import tempfile
-import time
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import patch, mock_open
 
 import pytest
 
@@ -16,7 +14,6 @@ from cache.kv_store import (
     CacheStats,
     LRUCache,
     KVCache,
-    create_kv_cache,
 )
 
 

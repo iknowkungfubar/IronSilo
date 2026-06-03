@@ -8,7 +8,6 @@ Phase 3: Intelligence
 - Learning from execution patterns
 """
 import json
-import os
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime

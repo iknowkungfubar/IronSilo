@@ -2,18 +2,12 @@
 Comprehensive TUI tests using Textual Pilot for 100% coverage.
 """
 
-import asyncio
-from datetime import datetime
-from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 
 # Skip if textual not available
 textual = pytest.importorskip("textual")
 from textual.app import App, ComposeResult
-from textual.pilot import Pilot
-from textual.containers import Container, Horizontal, Vertical
-from textual.widgets import Static, Header, Footer
 
 
 class TestTUIAppWithPilot:

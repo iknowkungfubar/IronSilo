@@ -248,7 +248,6 @@ class TracingMiddleware:
 
     async def _handle_request(self, scope, receive, send, span):
         """Handle the request with tracing."""
-        from fastapi import Response
 
         async def tracing_receive():
             return await receive()
@@ -280,6 +279,5 @@ class TracingMiddleware:
 
     async def _call_app(self, request: Request):
         """Call the next middleware or endpoint."""
-        from fastapi.applications import FastAPI
         handler = request.app.middleware_stack
         return await handler(request)

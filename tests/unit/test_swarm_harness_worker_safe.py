@@ -3,10 +3,8 @@ Unit tests for swarm/harness_worker module - production ready.
 All tests are synchronous to avoid async timing issues.
 """
 
-import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 
 
 class TestHarnessWorkerInit:

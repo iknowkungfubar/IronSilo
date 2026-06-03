@@ -28,7 +28,7 @@ from __future__ import annotations
 import os
 import time
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, Dict, Optional
+from typing import Any, AsyncGenerator, Dict
 
 import httpx
 import structlog
@@ -39,22 +39,19 @@ from fastapi.responses import JSONResponse, StreamingResponse
 try:
     from .models import (
         ChatCompletionRequest,
-        ChatCompletionResponse,
-        Choice,
+        ChatCompletionResponse,  # noqa: F401
+        Choice,  # noqa: F401
         ErrorResponse,
         HealthResponse,
         Message,
-        ResponseMessage,
+        ResponseMessage,  # noqa: F401
     )
 except ImportError:
     from models import (
         ChatCompletionRequest,
-        ChatCompletionResponse,
-        Choice,
         ErrorResponse,
         HealthResponse,
         Message,
-        ResponseMessage,
     )
 
 # Import security middleware
@@ -730,7 +727,7 @@ async def _non_stream_request(
 
         await circuit_breaker.record_success()
         return result
-    except Exception as e:
+    except Exception:
         await circuit_breaker.record_failure()
         raise
 

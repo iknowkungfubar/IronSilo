@@ -213,7 +213,7 @@ def run_tests(model: str, preset: str = "factual") -> list:
 def main():
     if len(sys.argv) < 2:
         print("Usage: python inference_tester.py <model> [preset]")
-        print(f"  model: e.g., Qwen3-8B-GGUF or user.DeepSeek-R1-Distill-Qwen-7B-GGUF")
+        print("  model: e.g., Qwen3-8B-GGUF or user.DeepSeek-R1-Distill-Qwen-7B-GGUF")
         print(f"  preset: {list(DEFAULT_SETTINGS.keys())}")
         print("\nExample: python inference_tester.py Qwen3-8B-GGUF factual")
         sys.exit(1)

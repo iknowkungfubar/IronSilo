@@ -9,7 +9,6 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Optional
 
 
 def get_docker_status() -> dict:
@@ -180,8 +179,6 @@ def main():
                 if msvcrt.kbhit():
                     key = msvcrt.getch().decode()
             else:
-                import termios
-                import tty
                 import select
                 
                 if select.select([sys.stdin], [], [], 0)[0]:

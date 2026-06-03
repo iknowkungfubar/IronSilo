@@ -10,9 +10,7 @@ Tests cover:
 - WebSocket message handling
 """
 
-import asyncio
 import json
-from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

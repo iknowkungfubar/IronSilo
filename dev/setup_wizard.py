@@ -5,8 +5,6 @@ Interactive Setup Wizard for IronSilo
 This wizard guides users through initial configuration,
 LLM host selection, and security setup.
 """
-import os
-import sys
 from pathlib import Path
 from typing import Optional, Callable
 
@@ -40,7 +38,7 @@ class SetupWizard:
             if validate:
                 if validate(user_input):
                     return user_input
-                print(f"Invalid input. Please try again.")
+                print("Invalid input. Please try again.")
             else:
                 return user_input
     

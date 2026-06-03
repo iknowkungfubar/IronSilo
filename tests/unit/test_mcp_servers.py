@@ -9,19 +9,16 @@ Tests cover:
 - Error handling
 """
 
-import json
-from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
 
-from mcp.framework import MCPServerBase, MCPToolError
+from mcp.framework import MCPToolError
 from mcp.models import (
     MCPToolType,
     MemoryNode,
     MemoryEdge,
-    MemoryQuery,
 )
 
 
@@ -1113,7 +1110,6 @@ class TestMCPDockerEntrypoint:
     def test_server_type_selection(self):
         """Test MCP server type selection logic."""
         # Test the expected environment variable handling
-        import os
         
         server_types = ["genesys", "khoj"]
         assert "genesys" in server_types

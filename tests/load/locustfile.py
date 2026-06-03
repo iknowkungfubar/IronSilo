@@ -8,9 +8,8 @@ Or with the web UI:
     locust -f tests/load/locustfile.py --host http://localhost:8080
 """
 
-import random
 import time
-from typing import List, Optional
+from typing import List
 
 from locust import HttpUser, task, between, events
 
@@ -182,14 +181,14 @@ def on_quitting(environment, **kwargs):
         min_time = min(request_times)
 
         print(f"\n{'='*60}")
-        print(f"Load Test Summary")
+        print("Load Test Summary")
         print(f"{'='*60}")
         print(f"Total Requests: {success_count + error_count}")
         print(f"Successful: {success_count}")
         print(f"Failed: {error_count}")
         if success_count + error_count > 0:
             print(f"Error Rate: {error_count / (success_count + error_count) * 100:.2f}%")
-        print(f"\nResponse Times (ms):")
+        print("\nResponse Times (ms):")
         print(f"  Average: {avg_time:.2f}")
         print(f"  Min: {min_time:.2f}")
         print(f"  Max: {max_time:.2f}")

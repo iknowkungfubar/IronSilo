@@ -10,10 +10,7 @@ Tests cover:
 """
 
 import asyncio
-import json
 import time
-from typing import Any, Dict
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient

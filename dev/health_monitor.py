@@ -6,7 +6,6 @@ Monitors MCP servers, Lemonade, and critical services with auto-restart capabili
 
 import subprocess
 import time
-import json
 import sys
 from typing import Dict, List, Tuple
 
@@ -91,7 +90,7 @@ class HealthMonitor:
             # Verify restart
             success, msg = self.check_lemonade()
             return success
-        except Exception as e:
+        except Exception:
             return False
 
     def restart_mcp(self, mcp_name: str) -> bool:
@@ -117,7 +116,7 @@ class HealthMonitor:
             )
             time.sleep(2)
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def diagnose_and_fix(self) -> Dict:

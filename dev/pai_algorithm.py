@@ -11,7 +11,6 @@ Phase 2: Autonomy
 - Wisdom frame generation
 """
 import json
-import os
 import time
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field

@@ -10,12 +10,7 @@ Tests cover:
 Run with: pytest tests/e2e/test_swarm_workflow.py -v
 """
 
-import asyncio
-import json
-from typing import Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 
 
 class TestSwarmWorkflowIntegration:

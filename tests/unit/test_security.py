@@ -10,12 +10,9 @@ Tests cover:
 """
 
 import base64
-import json
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, List
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -23,7 +20,6 @@ from security.encryption import (
     AESEncryptor,
     DecryptionError,
     EncryptedField,
-    EncryptionError,
     KeyError,
     create_key_fingerprint,
     verify_key_integrity,
@@ -31,7 +27,6 @@ from security.encryption import (
 from security.key_manager import (
     KeyInfo,
     KeyManager,
-    KeyStore,
     create_key_manager,
 )
 

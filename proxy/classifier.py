@@ -456,7 +456,7 @@ class ModelRouter:
         
         if old_status != is_healthy:
             logger.info(
-                f"Health status changed",
+                "Health status changed",
                 model=model_type.value,
                 healthy=is_healthy,
             )

@@ -1,5 +1,4 @@
 """Tests for proxy timeout configuration."""
-import pytest
 
 
 class TestProxyTimeout:

@@ -5,7 +5,6 @@ import pytest
 from proxy.tracing import (
     IronSiloTracer,
     NoOpSpan,
-    setup_tracing,
     trace_function,
     trace_span,
 )

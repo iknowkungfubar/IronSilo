@@ -9,11 +9,8 @@ Tests cover:
 """
 
 import tempfile
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 from setup.configurator import Configurator, IronSiloConfig, generate_docker_compose_env
 from setup.detector import HostInfo, LLMHost

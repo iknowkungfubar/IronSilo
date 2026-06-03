@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Horizontal, Vertical
@@ -17,7 +17,6 @@ from textual.reactive import reactive
 from textual.widgets import (
     Footer,
     Header,
-    DataTable,
     Static,
 )
 
@@ -25,7 +24,6 @@ from .widgets.container_status import ContainerStatusWidget
 from .widgets.resource_monitor import ResourceMonitorWidget
 from .widgets.log_viewer import LogViewerWidget
 from .widgets.swarm_monitor import SwarmMonitorWidget
-from .theme import IRONSILO_THEME
 
 
 class StatusBar(Static):

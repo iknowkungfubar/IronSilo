@@ -9,19 +9,13 @@ Tests cover:
 - Task submission and status updates
 """
 
-import asyncio
-import json
 import tempfile
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from pipeline.agent_bridge import (
-    AgentBridge,
     Database,
     TaskSubmission,
     TaskUpdate,

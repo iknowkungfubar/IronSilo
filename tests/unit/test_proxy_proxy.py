@@ -10,9 +10,7 @@ Tests cover:
 - Health check endpoint
 """
 
-import json
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -24,7 +22,6 @@ sys.modules["llmlingua"] = mock_llmlingua
 
 from proxy.models import (
     ChatCompletionRequest,
-    ChatCompletionResponse,
     ErrorResponse,
     HealthResponse,
     Message,
@@ -209,7 +206,6 @@ class TestHealthEndpoint:
     def test_health_endpoint_exists(self):
         """Test that health endpoint is registered."""
         from proxy.proxy import app
-        from fastapi.testclient import TestClient
         
         client = TestClient(app)
         response = client.get("/health")
@@ -226,7 +222,6 @@ class TestHealthEndpoint:
     def test_health_returns_valid_model(self):
         """Test that health endpoint returns valid HealthResponse."""
         from proxy.proxy import app
-        from fastapi.testclient import TestClient
         
         client = TestClient(app)
         response = client.get("/health")
@@ -245,7 +240,6 @@ class TestChatCompletionsEndpoint:
     def test_endpoint_exists(self):
         """Test that chat completions endpoint is registered."""
         from proxy.proxy import app
-        from fastapi.testclient import TestClient
         
         client = TestClient(app)
         
@@ -261,7 +255,6 @@ class TestChatCompletionsEndpoint:
     def test_invalid_request_returns_422(self):
         """Test that invalid request returns 422."""
         from proxy.proxy import app
-        from fastapi.testclient import TestClient
         
         client = TestClient(app)
         
@@ -278,7 +271,6 @@ class TestChatCompletionsEndpoint:
     def test_missing_messages_returns_422(self):
         """Test that missing messages field returns 422."""
         from proxy.proxy import app
-        from fastapi.testclient import TestClient
         
         client = TestClient(app)
         
@@ -292,7 +284,6 @@ class TestChatCompletionsEndpoint:
     def test_valid_request_structure(self):
         """Test that valid request structure is accepted."""
         from proxy.proxy import app
-        from fastapi.testclient import TestClient
         
         client = TestClient(app)
         
@@ -318,7 +309,6 @@ class TestChatCompletionsEndpoint:
     def test_invalid_role_returns_422(self):
         """Test that invalid role returns 422."""
         from proxy.proxy import app
-        from fastapi.testclient import TestClient
         
         client = TestClient(app)
         
@@ -340,7 +330,6 @@ class TestStreamingResponse:
     def test_stream_parameter_recognized(self):
         """Test that stream parameter is recognized."""
         from proxy.proxy import app
-        from fastapi.testclient import TestClient
         
         client = TestClient(app)
         
@@ -361,7 +350,6 @@ class TestErrorHandling:
     
     def test_error_response_format(self):
         """Test error response format."""
-        from proxy.models import ErrorResponse
         
         error = ErrorResponse.create(
             message="Test error",
@@ -377,7 +365,6 @@ class TestErrorHandling:
     
     def test_error_response_minimal(self):
         """Test minimal error response."""
-        from proxy.models import ErrorResponse
         
         error = ErrorResponse.create(message="Simple error")
         
@@ -392,7 +379,6 @@ class TestRequestValidation:
     
     def test_temperature_validation(self):
         """Test temperature bounds validation."""
-        from proxy.models import ChatCompletionRequest
         
         # Valid temperatures
         for temp in [0.0, 1.0, 2.0]:
@@ -412,7 +398,6 @@ class TestRequestValidation:
     
     def test_max_tokens_validation(self):
         """Test max_tokens bounds validation."""
-        from proxy.models import ChatCompletionRequest
         
         # Valid
         req = ChatCompletionRequest(
@@ -430,14 +415,12 @@ class TestRequestValidation:
     
     def test_messages_cannot_be_empty(self):
         """Test that empty messages list is rejected."""
-        from proxy.models import ChatCompletionRequest
         
         with pytest.raises(Exception):
             ChatCompletionRequest(messages=[])
     
     def test_stream_defaults_to_false(self):
         """Test that stream defaults to False."""
-        from proxy.models import ChatCompletionRequest
         
         req = ChatCompletionRequest(
             messages=[Message(role=Role.USER, content="test")],
@@ -446,7 +429,6 @@ class TestRequestValidation:
     
     def test_extra_fields_preserved(self):
         """Test that extra fields are preserved for pass-through."""
-        from proxy.models import ChatCompletionRequest
         
         req = ChatCompletionRequest(
             messages=[Message(role=Role.USER, content="test")],

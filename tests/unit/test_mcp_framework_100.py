@@ -2,9 +2,7 @@
 Comprehensive tests for mcp/framework.py to achieve 100% coverage.
 """
 
-import asyncio
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any, Dict
 
 import pytest
 

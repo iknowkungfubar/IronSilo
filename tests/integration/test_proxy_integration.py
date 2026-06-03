@@ -8,11 +8,8 @@ Tests cover:
 - Retry logic with exponential backoff
 """
 
-import asyncio
-import json
 import sys
-from typing import Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,8 +17,8 @@ from fastapi.testclient import TestClient
 mock_llmlingua = MagicMock()
 sys.modules["llmlingua"] = mock_llmlingua
 
-from proxy.proxy import app, _sanitize_content, _process_messages, _compress_content, circuit_breaker, RETRY_MAX_ATTEMPTS
-from proxy.models import ChatCompletionRequest, Message, Role
+from proxy.proxy import app, _sanitize_content, _process_messages, _compress_content, circuit_breaker
+from proxy.models import Message, Role
 
 
 class TestProxyIntegration:

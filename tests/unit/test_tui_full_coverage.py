@@ -10,9 +10,7 @@ Tests cover:
 """
 
 import asyncio
-import sys
 from datetime import datetime
-from unittest.mock import MagicMock, patch, AsyncMock
 
 import pytest
 
@@ -80,7 +78,6 @@ class TestContainerStatusWidgetFullCoverage:
     
     def test_container_status_data_structure(self):
         """Test container status data has required fields."""
-        import asyncio
         from tui.widgets.container_status import ContainerStatusWidget
         
         widget = ContainerStatusWidget()
@@ -98,7 +95,6 @@ class TestContainerStatusWidgetFullCoverage:
     
     def test_container_status_running_values(self):
         """Test container status has valid running values."""
-        import asyncio
         from tui.widgets.container_status import ContainerStatusWidget
         
         widget = ContainerStatusWidget()

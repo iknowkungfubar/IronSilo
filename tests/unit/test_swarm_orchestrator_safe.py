@@ -3,10 +3,8 @@ Unit tests for swarm/orchestrator module - production ready.
 All tests are synchronous to avoid async timing issues.
 """
 
-import json
 from unittest.mock import MagicMock, patch
 
-import pytest
 
 
 class TestMemoryNodeInputModel:
@@ -139,7 +137,7 @@ class TestManagerMemoryNodeInput:
 
     def test_extract_and_store_uses_memory_node_input(self):
         """Test extract_and_store creates MemoryNodeInput."""
-        from swarm.orchestrator import Manager, MemoryNodeInput
+        from swarm.orchestrator import Manager
 
         mock_worker = MagicMock()
         manager = Manager(mock_worker)
