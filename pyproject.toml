@@ -55,9 +55,6 @@ dev = [
     "pytest-cov>=4.1.0",
     "pytest-mock>=3.12.0",
     "ruff>=0.1.0",
-    "black>=26.3.1",
-    "isort>=5.13.0",
-    "flake8>=7.0.0",
     "mypy>=1.8.0",
     "bandit>=1.7.0",
     "safety>=2.3.0",
@@ -106,14 +103,11 @@ ironsilo-setup = "setup.wizard:main"
 [tool.setuptools.packages.find]
 include = ["proxy*", "genesys*", "mcp*", "pipeline*", "security*", "cache*", "tui*", "setup*", "search*"]
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ['py310', 'py311', 'py312']
 
-[tool.isort]
-profile = "black"
-line_length = 120
-known_first_party = ["proxy", "genesys", "mcp", "pipeline", "security", "cache", "tui", "setup", "search"]
+[tool.ruff.lint]
+per-file-ignores = {"dev/*" = ["E722"], "security/*" = ["E402"], "tests/*" = ["E402", "E741", "F811"]}
 
 [tool.mypy]
 python_version = "3.11"

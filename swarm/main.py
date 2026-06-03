@@ -27,6 +27,7 @@ logger = structlog.get_logger(__name__)
 
 class SwarmState:
     """Shared state for swarm service."""
+
     current_action: str = "idle"
     action_history: list[dict[str, Any]] = []
     connected_clients: list[WebSocket] = []
@@ -77,25 +78,29 @@ app = FastAPI(
 @app.get("/health")
 async def health_check() -> JSONResponse:
     """Health check endpoint."""
-    return JSONResponse({
-        "status": "healthy",
-        "service": "swarm-service",
-        "version": "1.0.0",
-        "uptime_seconds": time.time() - state.start_time,
-        "current_action": state.current_action,
-        "connected_agents": len(state.connected_clients),
-    })
+    return JSONResponse(
+        {
+            "status": "healthy",
+            "service": "swarm-service",
+            "version": "1.0.0",
+            "uptime_seconds": time.time() - state.start_time,
+            "current_action": state.current_action,
+            "connected_agents": len(state.connected_clients),
+        }
+    )
 
 
 @app.get("/status")
 async def get_status() -> JSONResponse:
     """Return current swarm status."""
-    return JSONResponse({
-        "status": "running",
-        "current_action": state.current_action,
-        "timestamp": time.time(),
-        "connected_agents": len(state.connected_clients),
-    })
+    return JSONResponse(
+        {
+            "status": "running",
+            "current_action": state.current_action,
+            "timestamp": time.time(),
+            "connected_agents": len(state.connected_clients),
+        }
+    )
 
 
 @app.websocket("/ws/swarm")
@@ -108,11 +113,13 @@ async def websocket_swarm(websocket: WebSocket) -> None:
         state.connected_clients.append(websocket)
 
     try:
-        await websocket.send_json({
-            "type": "connected",
-            "current_action": state.current_action,
-            "timestamp": time.time(),
-        })
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "current_action": state.current_action,
+                "timestamp": time.time(),
+            }
+        )
 
         while True:
             data = await websocket.receive_text()
@@ -121,11 +128,13 @@ async def websocket_swarm(websocket: WebSocket) -> None:
             if message.get("type") == "action":
                 async with state.lock:
                     state.current_action = message.get("action", "unknown")
-                    state.action_history.append({
-                        "action": state.current_action,
-                        "timestamp": time.time(),
-                        "agent": message.get("agent", "unknown"),
-                    })
+                    state.action_history.append(
+                        {
+                            "action": state.current_action,
+                            "timestamp": time.time(),
+                            "agent": message.get("agent", "unknown"),
+                        }
+                    )
                     if len(state.action_history) > 100:
                         state.action_history.pop(0)
 
@@ -155,28 +164,33 @@ async def websocket_swarm(websocket: WebSocket) -> None:
 async def get_history() -> JSONResponse:
     """Return action history."""
     async with state.lock:
-        return JSONResponse({
-            "history": state.action_history[-50:],
-            "count": len(state.action_history),
-        })
+        return JSONResponse(
+            {
+                "history": state.action_history[-50:],
+                "count": len(state.action_history),
+            }
+        )
 
 
 @app.get("/metrics")
 async def get_metrics() -> JSONResponse:
     """Return Prometheus-compatible metrics."""
-    return JSONResponse({
-        "metrics": {
-            "state": {
-                "current_action": state.current_action,
-                "action_history_count": len(state.action_history),
-                "connected_clients": len(state.connected_clients),
-            },
-            "uptime_seconds": time.time() - state.start_time,
-            "timestamp": time.time(),
+    return JSONResponse(
+        {
+            "metrics": {
+                "state": {
+                    "current_action": state.current_action,
+                    "action_history_count": len(state.action_history),
+                    "connected_clients": len(state.connected_clients),
+                },
+                "uptime_seconds": time.time() - state.start_time,
+                "timestamp": time.time(),
+            }
         }
-    })
+    )
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8095)

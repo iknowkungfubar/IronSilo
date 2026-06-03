@@ -28,3 +28,6 @@ pg-data/
 khoj-data/
 hf-cache/
 .aider*
+
+# Hermes agent artifacts
+.hermes/

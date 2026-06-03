@@ -21,11 +21,7 @@ class TestMemoryNodeInput:
         """Test MemoryNodeInput can be created with valid data."""
         from swarm.orchestrator import MemoryNodeInput
 
-        node = MemoryNodeInput(
-            content="Test content",
-            memory_type="research",
-            importance=0.7
-        )
+        node = MemoryNodeInput(content="Test content", memory_type="research", importance=0.7)
 
         assert node.content == "Test content"
         assert node.memory_type == "research"
@@ -48,10 +44,7 @@ class TestMemoryNodeInput:
         """Test MemoryNodeInput serializes to JSON correctly."""
         from swarm.orchestrator import MemoryNodeInput
 
-        node = MemoryNodeInput(
-            content="Test content",
-            tags=["tag1", "tag2"]
-        )
+        node = MemoryNodeInput(content="Test content", tags=["tag1", "tag2"])
 
         data = node.model_dump()
 
@@ -126,7 +119,7 @@ class TestManager:
         mock_client = MagicMock()
 
         async def mock_post(*args, **kwargs):
-            captured_data['json'] = kwargs.get('json', {})
+            captured_data["json"] = kwargs.get("json", {})
             return mock_response
 
         mock_client.post = mock_post
@@ -139,7 +132,7 @@ class TestManager:
 
         await manager.extract_and_store("test query")
 
-        assert "raw_research" not in captured_data.get('json', {}).get('content', '')
+        assert "raw_research" not in captured_data.get("json", {}).get("content", "")
 
     @pytest.mark.asyncio
     async def test_extract_and_store_fallback_for_invalid_json(self, mock_worker, mock_httpx_client):
@@ -186,7 +179,11 @@ class TestManager:
         result = await manager._store_memory(memory)
 
         mock_client.post.assert_called_once()
-        call_url = mock_client.post.call_args.args[0] if mock_client.post.call_args.args else mock_client.post.call_args.kwargs.get("url", "")
+        call_url = (
+            mock_client.post.call_args.args[0]
+            if mock_client.post.call_args.args
+            else mock_client.post.call_args.kwargs.get("url", "")
+        )
         assert "/api/v1/memories" in call_url
         assert result["id"] == "mem-456"
 
@@ -304,5 +301,5 @@ class TestOrchestratorEnvironment:
         from swarm import orchestrator
 
         with patch.dict(os.environ, {"GENESYS_URL": "http://custom-gene:9000"}):
-            with patch.object(orchestrator, 'GENESYS_URL', "http://custom-gene:9000"):
+            with patch.object(orchestrator, "GENESYS_URL", "http://custom-gene:9000"):
                 assert orchestrator.GENESYS_URL == "http://custom-gene:9000"

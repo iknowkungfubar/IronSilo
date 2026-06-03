@@ -6,7 +6,6 @@ All tests are synchronous to avoid async timing issues.
 from unittest.mock import patch
 
 
-
 class TestHarnessWorkerInit:
     """Test HarnessWorker initialization."""
 
@@ -64,7 +63,7 @@ class TestHarnessWorkerHelpers:
         from swarm.harness_worker import HarnessWorker
 
         worker = HarnessWorker()
-        assert hasattr(worker, 'connect')
+        assert hasattr(worker, "connect")
         assert callable(worker.connect)
 
     def test_worker_has_disconnect_method(self):
@@ -72,7 +71,7 @@ class TestHarnessWorkerHelpers:
         from swarm.harness_worker import HarnessWorker
 
         worker = HarnessWorker()
-        assert hasattr(worker, 'disconnect')
+        assert hasattr(worker, "disconnect")
         assert callable(worker.disconnect)
 
     def test_worker_has_send_command_method(self):
@@ -80,7 +79,7 @@ class TestHarnessWorkerHelpers:
         from swarm.harness_worker import HarnessWorker
 
         worker = HarnessWorker()
-        assert hasattr(worker, '_send_command')
+        assert hasattr(worker, "_send_command")
         assert callable(worker._send_command)
 
     def test_worker_has_get_dom_method(self):
@@ -88,7 +87,7 @@ class TestHarnessWorkerHelpers:
         from swarm.harness_worker import HarnessWorker
 
         worker = HarnessWorker()
-        assert hasattr(worker, 'get_dom')
+        assert hasattr(worker, "get_dom")
         assert callable(worker.get_dom)
 
     def test_worker_has_click_element_method(self):
@@ -96,7 +95,7 @@ class TestHarnessWorkerHelpers:
         from swarm.harness_worker import HarnessWorker
 
         worker = HarnessWorker()
-        assert hasattr(worker, 'click_element')
+        assert hasattr(worker, "click_element")
         assert callable(worker.click_element)
 
     def test_worker_has_evaluate_for_research_method(self):
@@ -104,7 +103,7 @@ class TestHarnessWorkerHelpers:
         from swarm.harness_worker import HarnessWorker
 
         worker = HarnessWorker()
-        assert hasattr(worker, 'evaluate_for_research')
+        assert hasattr(worker, "evaluate_for_research")
         assert callable(worker.evaluate_for_research)
 
     def test_worker_has_receive_loop_method(self):
@@ -112,7 +111,7 @@ class TestHarnessWorkerHelpers:
         from swarm.harness_worker import HarnessWorker
 
         worker = HarnessWorker()
-        assert hasattr(worker, '_receive_loop')
+        assert hasattr(worker, "_receive_loop")
         assert callable(worker._receive_loop)
 
 
@@ -195,7 +194,7 @@ class TestHarnessWorkerEnvironment:
         """Test CDP_URL can be patched for environment override testing."""
         from swarm import harness_worker
 
-        with patch.object(harness_worker, 'CDP_URL', "ws://custom:9999"):
+        with patch.object(harness_worker, "CDP_URL", "ws://custom:9999"):
             assert harness_worker.CDP_URL == "ws://custom:9999"
 
 

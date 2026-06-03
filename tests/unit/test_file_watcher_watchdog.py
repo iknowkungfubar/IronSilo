@@ -49,7 +49,7 @@ class TestTaskFileHandlerWatchdog:
         from pipeline.file_watcher import TaskFileHandler
 
         processing_started = asyncio.Event()
-        watchdog_triggered = asyncio.Event()
+        asyncio.Event()
 
         async def slow_callback(path):
             await processing_started.set()
@@ -114,12 +114,13 @@ class TestFileWatcherWatchdog:
         restart_count = 0
 
         original_start = FileWatcher.start
+
         def mock_start(self):
             nonlocal restart_count
             restart_count += 1
             original_start(self)
 
-        with patch.object(FileWatcher, 'start', mock_start):
+        with patch.object(FileWatcher, "start", mock_start):
             watcher = FileWatcher(
                 workspace_dir=temp_workspace,
                 watchdog_timeout=1.0,

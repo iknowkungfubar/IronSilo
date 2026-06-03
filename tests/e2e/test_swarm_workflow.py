@@ -11,8 +11,6 @@ Run with: pytest tests/e2e/test_swarm_workflow.py -v
 """
 
 
-
-
 class TestSwarmWorkflowIntegration:
     """E2E tests for complete swarm workflow."""
 
@@ -21,6 +19,7 @@ class TestSwarmWorkflowIntegration:
         from fastapi.testclient import TestClient
 
         from swarm.main import app
+
         client = TestClient(app)
 
         response = client.get("/status")
@@ -34,6 +33,7 @@ class TestSwarmWorkflowIntegration:
         from fastapi.testclient import TestClient
 
         from swarm.main import app
+
         client = TestClient(app)
 
         with client.websocket_connect("/ws/swarm") as websocket:
@@ -46,6 +46,7 @@ class TestSwarmWorkflowIntegration:
         from fastapi.testclient import TestClient
 
         from swarm.main import app
+
         client = TestClient(app)
 
         response = client.get("/history")
@@ -96,6 +97,7 @@ class TestSwarmEndToEnd:
         from fastapi.testclient import TestClient
 
         from swarm.main import app
+
         client = TestClient(app)
 
         status_response = client.get("/status")
@@ -116,6 +118,7 @@ class TestSwarmHealthChecks:
         from fastapi.testclient import TestClient
 
         from swarm.main import app
+
         client = TestClient(app)
 
         response = client.get("/health")
@@ -127,6 +130,7 @@ class TestSwarmHealthChecks:
         from fastapi.testclient import TestClient
 
         from swarm.main import app
+
         client = TestClient(app)
 
         response = client.get("/metrics")

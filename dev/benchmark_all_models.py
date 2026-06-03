@@ -25,13 +25,11 @@ MODELS_TO_TEST = [
     ("Llama-3.2-3B-Instruct-GGUF", "factual", "standard"),
     ("Phi-4-mini-instruct-GGUF", "factual", "fast,coding"),
     ("Jan-nano-128k-GGUF", "factual", "long-context"),
-
     # Medium models
     ("Bonsai-4B-gguf", "factual", "medium"),
     ("Qwen3-4B-Instruct-2507-GGUF", "factual", "medium"),
     ("Qwen3.5-4B-GGUF", "factual", "medium,vision"),
     ("gpt-oss-20b-mxfp4-GGUF", "factual", "medium,hot"),
-
     # Larger models (may timeout on your system)
     ("Devstral-Small-2507-GGUF", "coding", "coding,tool-calling"),
     ("GLM-4.7-Flash-GGUF", "factual", "tool-calling"),
@@ -51,22 +49,22 @@ SETTINGS = {
         "top_p": 0.85,
         "top_k": 30,
         "repeat_penalty": 1.15,
-        "max_tokens": 2048
+        "max_tokens": 2048,
     },
     "coding": {
         "temperature": 0.25,
         "top_p": 0.85,
         "top_k": 30,
         "repeat_penalty": 1.15,
-        "max_tokens": 3072
+        "max_tokens": 3072,
     },
     "reasoning": {
         "temperature": 0.4,
         "top_p": 0.95,
         "top_k": 50,
         "repeat_penalty": 1.08,
-        "max_tokens": 4096
-    }
+        "max_tokens": 4096,
+    },
 }
 
 SYSTEM_PROMPT = (
@@ -98,16 +96,12 @@ def check_model_available(model: str) -> bool:
 def load_model(model: str) -> bool:
     """Attempt to load model by sending a minimal request"""
     try:
-        payload = {
-            "model": model,
-            "messages": [{"role": "user", "content": "hi"}],
-            "max_tokens": 1
-        }
+        payload = {"model": model, "messages": [{"role": "user", "content": "hi"}], "max_tokens": 1}
         response = requests.post(
             f"{LEMONADE_URL}/chat/completions",
             json=payload,
             headers={"Content-Type": "application/json"},
-            timeout=TIMEOUT
+            timeout=TIMEOUT,
         )
         return response.status_code == 200
     except Exception:
@@ -123,18 +117,14 @@ def test_model(model: str, preset: str) -> Tuple[int, int, List[str], str]:
 
     for test_name, prompt in TESTS:
         messages = [{"role": "user", "content": prompt}]
-        payload = {
-            "model": model,
-            "messages": messages,
-            **settings
-        }
+        payload = {"model": model, "messages": messages, **settings}
 
         try:
             response = requests.post(
                 f"{LEMONADE_URL}/chat/completions",
                 json=payload,
                 headers={"Content-Type": "application/json"},
-                timeout=TIMEOUT
+                timeout=TIMEOUT,
             )
 
             if response.status_code != 200:
@@ -168,9 +158,18 @@ def test_model(model: str, preset: str) -> Tuple[int, int, List[str], str]:
 def get_model_size(model: str) -> str:
     """Estimate model size based on name"""
     size_map = {
-        "1.2b": "0.7B", "1.7b": "1B", "2b": "1.2B", "3b": "2B",
-        "4b": "2.5B", "7b": "4B", "8b": "5B", "14b": "8B",
-        "20b": "12B", "30b": "18B", "32b": "20B", "35b": "20B"
+        "1.2b": "0.7B",
+        "1.7b": "1B",
+        "2b": "1.2B",
+        "3b": "2B",
+        "4b": "2.5B",
+        "7b": "4B",
+        "8b": "5B",
+        "14b": "8B",
+        "20b": "12B",
+        "30b": "18B",
+        "32b": "20B",
+        "35b": "20B",
     }
     model_lower = model.lower()
     for key, size in size_map.items():
@@ -181,10 +180,10 @@ def get_model_size(model: str) -> str:
 
 def benchmark_model(model: str, preset: str, tags: str) -> Dict:
     """Run benchmark on a single model"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Testing: {model}")
     print(f"Preset: {preset} | Tags: {tags}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Load model first
     print("Loading model...", end=" ", flush=True)
@@ -197,7 +196,7 @@ def benchmark_model(model: str, preset: str, tags: str) -> Dict:
             "score": 0,
             "tags": tags,
             "size": get_model_size(model),
-            "error": "Failed to load"
+            "error": "Failed to load",
         }
     print("LOADED")
 
@@ -217,14 +216,14 @@ def benchmark_model(model: str, preset: str, tags: str) -> Dict:
         "score": score,
         "tags": tags,
         "size": get_model_size(model),
-        "error": error
+        "error": error,
     }
 
 
 def main():
-    print("="*70)
+    print("=" * 70)
     print("Lemonade LLM Comprehensive Benchmark")
-    print("="*70)
+    print("=" * 70)
     print(f"API: {LEMONADE_URL}")
     print(f"Models to test: {len(MODELS_TO_TEST)}")
 
@@ -261,25 +260,25 @@ def main():
         time.sleep(3)
 
     # Print summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("BENCHMARK RESULTS SUMMARY")
-    print("="*70)
+    print("=" * 70)
 
     # Sort by score descending
     results.sort(key=lambda x: (-x["score"], x["model"]))
 
     print(f"\n{'Model':<40} {'Score':<8} {'Size':<8} {'Tags'}")
-    print("-"*70)
+    print("-" * 70)
 
     for r in results:
-        status = "✅" if r["score"] >= 75 else "⚠️" if r["score"] >= 50 else "❌"
+        "✅" if r["score"] >= 75 else "⚠️" if r["score"] >= 50 else "❌"
         error_str = f" [{r['error']}]" if r["error"] else ""
         print(f"{r['model']:<40} {r['score']:>3}%{'':<5} {r['size']:<8} {r['tags']}{error_str}")
 
     # Category rankings
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CATEGORY RANKINGS")
-    print("="*70)
+    print("=" * 70)
 
     categories = {
         "coding": [r for r in results if "coding" in r["tags"] and r["score"] > 0],

@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class MCPMessageType(str, Enum):
     """MCP message types."""
-    
+
     REQUEST = "request"
     RESPONSE = "response"
     NOTIFICATION = "notification"
@@ -26,7 +26,7 @@ class MCPMessageType(str, Enum):
 
 class MCPToolType(str, Enum):
     """Types of MCP tools available."""
-    
+
     MEMORY = "memory"
     SEARCH = "search"
     FILE = "file"
@@ -36,17 +36,17 @@ class MCPToolType(str, Enum):
 
 class MCPError(BaseModel):
     """MCP error model."""
-    
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "code": -32601,
                 "message": "Method not found",
-                "data": {"method": "unknown_method"}
+                "data": {"method": "unknown_method"},
             }
         }
     )
-    
+
     code: int
     message: str
     data: Optional[Dict[str, Any]] = None
@@ -54,7 +54,7 @@ class MCPError(BaseModel):
 
 class MCPRequest(BaseModel):
     """MCP request model."""
-    
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -64,12 +64,12 @@ class MCPRequest(BaseModel):
                 "method": "create_memory_node",
                 "params": {
                     "content": "User prefers Python for backend development",
-                    "metadata": {"category": "preference", "confidence": 0.9}
-                }
+                    "metadata": {"category": "preference", "confidence": 0.9},
+                },
             }
         }
     )
-    
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     type: MCPMessageType = MCPMessageType.REQUEST
     tool: str
@@ -80,13 +80,13 @@ class MCPRequest(BaseModel):
 
 class MCPResponse(BaseModel):
     """MCP response model."""
-    
+
     id: str
     type: MCPMessageType = MCPMessageType.RESPONSE
     result: Optional[Any] = None
     error: Optional[MCPError] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    
+
     @property
     def is_success(self) -> bool:
         return self.error is None
@@ -94,7 +94,7 @@ class MCPResponse(BaseModel):
 
 class MCPTool(BaseModel):
     """MCP tool definition."""
-    
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -103,18 +103,13 @@ class MCPTool(BaseModel):
                 "tool_type": "memory",
                 "parameters": {
                     "content": {"type": "string", "description": "Memory content"},
-                    "metadata": {"type": "object", "description": "Additional metadata"}
+                    "metadata": {"type": "object", "description": "Additional metadata"},
                 },
-                "returns": {
-                    "type": "object",
-                    "properties": {
-                        "node_id": {"type": "string"}
-                    }
-                }
+                "returns": {"type": "object", "properties": {"node_id": {"type": "string"}}},
             }
         }
     )
-    
+
     name: str
     description: str
     tool_type: MCPToolType
@@ -124,7 +119,7 @@ class MCPTool(BaseModel):
 
 class MCPServerInfo(BaseModel):
     """MCP server information."""
-    
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -132,11 +127,11 @@ class MCPServerInfo(BaseModel):
                 "version": "1.0.0",
                 "description": "MCP server for Genesys memory system",
                 "tools": [],
-                "capabilities": ["memory", "causal-graph", "session"]
+                "capabilities": ["memory", "causal-graph", "session"],
             }
         }
     )
-    
+
     name: str
     version: str = "1.0.0"
     description: str
@@ -147,25 +142,25 @@ class MCPServerInfo(BaseModel):
 # Memory-specific MCP models
 class MemoryNode(BaseModel):
     """Memory node for Genesys causal graph."""
-    
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     content: str
     embedding: Optional[List[float]] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    
-    @field_validator('content')
+
+    @field_validator("content")
     @classmethod
     def content_must_not_be_empty(cls, v: str) -> str:
         if not v.strip():
-            raise ValueError('Content must not be empty')
+            raise ValueError("Content must not be empty")
         return v.strip()
 
 
 class MemoryEdge(BaseModel):
     """Causal edge between memory nodes."""
-    
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     from_node_id: str
     to_node_id: str
@@ -173,18 +168,18 @@ class MemoryEdge(BaseModel):
     weight: float = Field(default=1.0, ge=0.0, le=1.0)
     metadata: Dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    
-    @field_validator('relationship')
+
+    @field_validator("relationship")
     @classmethod
     def relationship_must_not_be_empty(cls, v: str) -> str:
         if not v.strip():
-            raise ValueError('Relationship must not be empty')
+            raise ValueError("Relationship must not be empty")
         return v.strip()
 
 
 class MemoryQuery(BaseModel):
     """Query for memory search."""
-    
+
     query: str
     limit: int = Field(default=10, ge=1, le=100)
     filters: Dict[str, Any] = Field(default_factory=dict)
@@ -193,7 +188,7 @@ class MemoryQuery(BaseModel):
 
 class MemorySearchResult(BaseModel):
     """Result from memory search."""
-    
+
     node: MemoryNode
     score: float = Field(ge=0.0, le=1.0)
     edges: List[MemoryEdge] = Field(default_factory=list)
@@ -202,7 +197,7 @@ class MemorySearchResult(BaseModel):
 # Session management models
 class Session(BaseModel):
     """Session for memory tracking."""
-    
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -214,7 +209,7 @@ class Session(BaseModel):
 # Search-specific MCP models
 class SearchQuery(BaseModel):
     """Search query for Khoj RAG."""
-    
+
     query: str
     max_results: int = Field(default=10, ge=1, le=50)
     filters: Dict[str, Any] = Field(default_factory=dict)
@@ -222,7 +217,7 @@ class SearchQuery(BaseModel):
 
 class SearchResult(BaseModel):
     """Search result from Khoj."""
-    
+
     id: str
     title: str
     content: str
@@ -233,7 +228,7 @@ class SearchResult(BaseModel):
 
 class DocumentInfo(BaseModel):
     """Document information."""
-    
+
     id: str
     title: str
     content_type: str
@@ -247,21 +242,18 @@ __all__ = [
     # Enums
     "MCPMessageType",
     "MCPToolType",
-    
     # Base models
     "MCPRequest",
     "MCPResponse",
     "MCPError",
     "MCPTool",
     "MCPServerInfo",
-    
     # Memory models
     "MemoryNode",
     "MemoryEdge",
     "MemoryQuery",
     "MemorySearchResult",
     "Session",
-    
     # Search models
     "SearchQuery",
     "SearchResult",

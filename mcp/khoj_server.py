@@ -23,7 +23,7 @@ logger = structlog.get_logger(__name__)
 
 class KhojMCPServer(MCPServerBase):
     """MCP server for Khoj RAG engine integration."""
-    
+
     def __init__(
         self,
         khoj_api_url: str = "http://khoj:42110",
@@ -35,14 +35,14 @@ class KhojMCPServer(MCPServerBase):
             description="MCP server for Khoj RAG engine",
             capabilities=["search", "documents", "rag"],
         )
-        
+
         self.khoj_api_url = khoj_api_url.rstrip("/")
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None
-        
+
         # Register tools
         self._register_tools()
-    
+
     async def initialize(self) -> None:
         """Initialize HTTP client and verify Khoj connection."""
         self._client = httpx.AsyncClient(
@@ -50,7 +50,7 @@ class KhojMCPServer(MCPServerBase):
             timeout=self.timeout,
             headers={"Content-Type": "application/json"},
         )
-        
+
         # Verify connection
         try:
             response = await self._client.get("/api/health")
@@ -61,22 +61,26 @@ class KhojMCPServer(MCPServerBase):
                 "Could not connect to Khoj API, will retry on first request",
                 error=str(e),
             )
-    
+
     async def shutdown(self) -> None:
         """Shutdown HTTP client."""
         if self._client:
             await self._client.aclose()
-    
+
     def _register_tools(self) -> None:
         """Register all MCP tools."""
-        
+
         @self.register_tool(
             name="search_documents",
             description="Search documents using semantic similarity via Khoj RAG",
             tool_type=MCPToolType.SEARCH,
             parameters={
                 "query": {"type": "string", "description": "Search query"},
-                "max_results": {"type": "integer", "description": "Maximum results (1-50)", "default": 10},
+                "max_results": {
+                    "type": "integer",
+                    "description": "Maximum results (1-50)",
+                    "default": 10,
+                },
                 "filters": {"type": "object", "description": "Search filters", "default": {}},
             },
             returns={
@@ -89,8 +93,8 @@ class KhojMCPServer(MCPServerBase):
                         "content": {"type": "string"},
                         "score": {"type": "number"},
                         "source": {"type": "string"},
-                    }
-                }
+                    },
+                },
             },
         )
         async def search_documents(
@@ -101,16 +105,16 @@ class KhojMCPServer(MCPServerBase):
             """Search documents using Khoj RAG."""
             if not query.strip():
                 raise MCPToolError(-32602, "Query must not be empty")
-            
+
             if not 1 <= max_results <= 50:
                 raise MCPToolError(-32602, "max_results must be between 1 and 50")
-            
+
             search_query = SearchQuery(
                 query=query.strip(),
                 max_results=max_results,
                 filters=filters or {},
             )
-            
+
             try:
                 # Khoj uses a different API format
                 response = await self._client.get(
@@ -123,38 +127,40 @@ class KhojMCPServer(MCPServerBase):
                 )
                 response.raise_for_status()
                 results = response.json()
-                
+
                 # Transform Khoj results to our format
                 transformed_results = []
                 for result in results.get("search", []):
-                    transformed_results.append({
-                        "id": result.get("id", ""),
-                        "title": result.get("title", "Untitled"),
-                        "content": result.get("content", ""),
-                        "score": result.get("score", 0.0),
-                        "source": result.get("source", ""),
-                        "metadata": {
-                            "type": result.get("type", "unknown"),
-                            "file": result.get("file", ""),
-                            "updated": result.get("updated", ""),
+                    transformed_results.append(
+                        {
+                            "id": result.get("id", ""),
+                            "title": result.get("title", "Untitled"),
+                            "content": result.get("content", ""),
+                            "score": result.get("score", 0.0),
+                            "source": result.get("source", ""),
+                            "metadata": {
+                                "type": result.get("type", "unknown"),
+                                "file": result.get("file", ""),
+                                "updated": result.get("updated", ""),
+                            },
                         }
-                    })
-                
+                    )
+
                 self.logger.info(
                     "Document search executed",
                     query_length=len(query),
                     results_count=len(transformed_results),
                 )
-                
+
                 return transformed_results
-                
+
             except httpx.HTTPStatusError as e:
                 raise MCPToolError(
                     -32000,
                     f"Failed to search documents: {e.response.status_code}",
-                    {"response": e.response.text}
+                    {"response": e.response.text},
                 )
-        
+
         @self.register_tool(
             name="upload_document",
             description="Upload a document to Khoj for indexing",
@@ -162,7 +168,11 @@ class KhojMCPServer(MCPServerBase):
             parameters={
                 "file_path": {"type": "string", "description": "Path to file to upload"},
                 "content": {"type": "string", "description": "Document content (if no file)"},
-                "content_type": {"type": "string", "description": "MIME type", "default": "text/plain"},
+                "content_type": {
+                    "type": "string",
+                    "description": "MIME type",
+                    "default": "text/plain",
+                },
                 "filename": {"type": "string", "description": "Filename", "default": None},
             },
             returns={
@@ -171,7 +181,7 @@ class KhojMCPServer(MCPServerBase):
                     "document_id": {"type": "string"},
                     "indexed": {"type": "boolean"},
                     "message": {"type": "string"},
-                }
+                },
             },
         )
         async def upload_document(
@@ -183,17 +193,18 @@ class KhojMCPServer(MCPServerBase):
             """Upload a document to Khoj."""
             if not file_path and not content:
                 raise MCPToolError(-32602, "Either file_path or content must be provided")
-            
+
             if file_path and content:
                 raise MCPToolError(-32602, "Provide either file_path or content, not both")
-            
+
             try:
                 if file_path:
                     # Upload file
                     import os
+
                     if not os.path.exists(file_path):
                         raise MCPToolError(-32602, f"File not found: {file_path}")
-                    
+
                     with open(file_path, "rb") as f:
                         files = {"file": (os.path.basename(file_path), f, content_type)}
                         response = await self._client.post(
@@ -204,43 +215,43 @@ class KhojMCPServer(MCPServerBase):
                     # Upload content
                     if not filename:
                         filename = "document.txt"
-                    
+
                     files = {"file": (filename, content.encode(), content_type)}
                     response = await self._client.post(
                         "/api/upload",
                         files=files,
                     )
-                
+
                 response.raise_for_status()
                 result = response.json()
-                
+
                 doc_id = result.get("id", filename or "unknown")
-                
+
                 self.logger.info(
                     "Document uploaded to Khoj",
                     document_id=doc_id,
                     content_type=content_type,
                     has_file=bool(file_path),
                 )
-                
+
                 return {
                     "document_id": doc_id,
                     "indexed": True,
                     "message": f"Document '{filename}' uploaded and indexed successfully",
                 }
-                
+
             except httpx.HTTPStatusError as e:
                 raise MCPToolError(
                     -32000,
                     f"Failed to upload document: {e.response.status_code}",
-                    {"response": e.response.text}
+                    {"response": e.response.text},
                 )
             except Exception as e:
                 raise MCPToolError(
                     -32000,
                     f"Failed to upload document: {str(e)}",
                 )
-        
+
         @self.register_tool(
             name="list_documents",
             description="List all indexed documents in Khoj",
@@ -255,8 +266,8 @@ class KhojMCPServer(MCPServerBase):
                         "title": {"type": "string"},
                         "content_type": {"type": "string"},
                         "size": {"type": "integer"},
-                    }
-                }
+                    },
+                },
             },
         )
         async def list_documents() -> List[Dict[str, Any]]:
@@ -265,33 +276,35 @@ class KhojMCPServer(MCPServerBase):
                 response = await self._client.get("/api/documents")
                 response.raise_for_status()
                 documents = response.json()
-                
+
                 # Transform to our format
                 result = []
                 for doc in documents:
-                    result.append({
-                        "id": doc.get("id", ""),
-                        "title": doc.get("name", doc.get("title", "Untitled")),
-                        "content_type": doc.get("type", "unknown"),
-                        "size": doc.get("size", 0),
-                        "indexed": doc.get("indexed", True),
-                        "updated": doc.get("updated", ""),
-                    })
-                
+                    result.append(
+                        {
+                            "id": doc.get("id", ""),
+                            "title": doc.get("name", doc.get("title", "Untitled")),
+                            "content_type": doc.get("type", "unknown"),
+                            "size": doc.get("size", 0),
+                            "indexed": doc.get("indexed", True),
+                            "updated": doc.get("updated", ""),
+                        }
+                    )
+
                 self.logger.info(
                     "Listed Khoj documents",
                     documents_count=len(result),
                 )
-                
+
                 return result
-                
+
             except httpx.HTTPStatusError as e:
                 raise MCPToolError(
                     -32000,
                     f"Failed to list documents: {e.response.status_code}",
-                    {"response": e.response.text}
+                    {"response": e.response.text},
                 )
-        
+
         @self.register_tool(
             name="delete_document",
             description="Delete a document from Khoj index",
@@ -304,43 +317,47 @@ class KhojMCPServer(MCPServerBase):
                 "properties": {
                     "success": {"type": "boolean"},
                     "message": {"type": "string"},
-                }
+                },
             },
         )
         async def delete_document(document_id: str) -> Dict[str, Any]:
             """Delete a document from Khoj."""
             if not document_id:
                 raise MCPToolError(-32602, "Document ID is required")
-            
+
             try:
                 response = await self._client.delete(f"/api/documents/{document_id}")
                 response.raise_for_status()
-                
+
                 self.logger.info(
                     "Deleted document from Khoj",
                     document_id=document_id,
                 )
-                
+
                 return {
                     "success": True,
                     "message": f"Document '{document_id}' deleted successfully",
                 }
-                
+
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 404:
                     raise MCPToolError(-32602, f"Document not found: {document_id}")
                 raise MCPToolError(
                     -32000,
                     f"Failed to delete document: {e.response.status_code}",
-                    {"response": e.response.text}
+                    {"response": e.response.text},
                 )
-        
+
         @self.register_tool(
             name="reindex_documents",
             description="Trigger reindexing of all documents in Khoj",
             tool_type=MCPToolType.EXECUTION,
             parameters={
-                "force": {"type": "boolean", "description": "Force reindexing even if already indexed", "default": False},
+                "force": {
+                    "type": "boolean",
+                    "description": "Force reindexing even if already indexed",
+                    "default": False,
+                },
             },
             returns={
                 "type": "object",
@@ -348,7 +365,7 @@ class KhojMCPServer(MCPServerBase):
                     "success": {"type": "boolean"},
                     "message": {"type": "string"},
                     "documents_processed": {"type": "integer"},
-                }
+                },
             },
         )
         async def reindex_documents(force: bool = False) -> Dict[str, Any]:
@@ -360,26 +377,26 @@ class KhojMCPServer(MCPServerBase):
                 )
                 response.raise_for_status()
                 result = response.json()
-                
+
                 self.logger.info(
                     "Triggered document reindexing",
                     force=force,
                     documents_processed=result.get("documents_processed", 0),
                 )
-                
+
                 return {
                     "success": True,
                     "message": "Reindexing started successfully",
                     "documents_processed": result.get("documents_processed", 0),
                 }
-                
+
             except httpx.HTTPStatusError as e:
                 raise MCPToolError(
                     -32000,
                     f"Failed to reindex documents: {e.response.status_code}",
-                    {"response": e.response.text}
+                    {"response": e.response.text},
                 )
-        
+
         @self.register_tool(
             name="get_index_status",
             description="Get the indexing status of Khoj",
@@ -392,7 +409,7 @@ class KhojMCPServer(MCPServerBase):
                     "indexed": {"type": "integer"},
                     "pending": {"type": "integer"},
                     "errors": {"type": "integer"},
-                }
+                },
             },
         )
         async def get_index_status() -> Dict[str, Any]:
@@ -401,21 +418,21 @@ class KhojMCPServer(MCPServerBase):
                 response = await self._client.get("/api/index/status")
                 response.raise_for_status()
                 status = response.json()
-                
+
                 return {
                     "status": status.get("status", "unknown"),
                     "indexed": status.get("indexed", 0),
                     "pending": status.get("pending", 0),
                     "errors": status.get("errors", 0),
                 }
-                
+
             except httpx.HTTPStatusError as e:
                 raise MCPToolError(
                     -32000,
                     f"Failed to get index status: {e.response.status_code}",
-                    {"response": e.response.text}
+                    {"response": e.response.text},
                 )
-    
+
     # Test helper methods - delegate to tool handlers for testing
     async def _handle_search_documents(
         self,
@@ -427,10 +444,14 @@ class KhojMCPServer(MCPServerBase):
         handler = self.get_tool_handler("search_documents")
         if not handler:
             raise ValueError("Tool not found: search_documents")
-        
+
         result = await handler(query=query, max_results=limit, filters=kwargs.get("filters", {}))
-        return {"results": result.get("results", []), "documents": result.get("results", []), **result}
-    
+        return {
+            "results": result.get("results", []),
+            "documents": result.get("results", []),
+            **result,
+        }
+
     async def _handle_list_documents(
         self,
         **kwargs: Any,
@@ -439,10 +460,14 @@ class KhojMCPServer(MCPServerBase):
         handler = self.get_tool_handler("list_documents")
         if not handler:
             raise ValueError("Tool not found: list_documents")
-        
+
         result = await handler(directory=kwargs.get("directory"), extensions=kwargs.get("extensions"))
-        return {"documents": result.get("documents", []), "files": result.get("documents", []), **result}
-    
+        return {
+            "documents": result.get("documents", []),
+            "files": result.get("documents", []),
+            **result,
+        }
+
     async def _handle_get_index_status(
         self,
         **kwargs: Any,
@@ -451,10 +476,10 @@ class KhojMCPServer(MCPServerBase):
         handler = self.get_tool_handler("get_index_status")
         if not handler:
             raise ValueError("Tool not found: get_index_status")
-        
+
         result = await handler()
         return {"status": result.get("status"), "indexed": result.get("indexed_count", 0), **result}
-    
+
     async def _handle_reindex_documents(
         self,
         **kwargs: Any,
@@ -463,10 +488,10 @@ class KhojMCPServer(MCPServerBase):
         handler = self.get_tool_handler("reindex_documents")
         if not handler:
             raise ValueError("Tool not found: reindex_documents")
-        
+
         result = await handler(regenerate=kwargs.get("regenerate", False))
         return {"success": True, "reindexed": True, **result}
-    
+
     async def _handle_upload_document(
         self,
         file_path: str,
@@ -477,21 +502,21 @@ class KhojMCPServer(MCPServerBase):
         handler = self.get_tool_handler("upload_document")
         if not handler:
             raise ValueError("Tool not found: upload_document")
-        
+
         # Read file content
         try:
             with open(file_path, "r") as f:
                 content = f.read()
         except Exception as e:
             return {"error": str(e), "success": False}
-        
+
         result = await handler(
             content=content,
             filename=file_path.split("/")[-1],
             metadata={"type": document_type} if document_type else {},
         )
         return result
-    
+
     async def _handle_delete_document(
         self,
         document_id: str,
@@ -501,7 +526,7 @@ class KhojMCPServer(MCPServerBase):
         handler = self.get_tool_handler("delete_document")
         if not handler:
             raise ValueError("Tool not found: delete_document")
-        
+
         result = await handler(filename=document_id)
         return {"deleted": True, "success": True, **result}
 

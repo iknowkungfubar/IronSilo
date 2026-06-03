@@ -237,9 +237,7 @@ class TestHarnessWorker:
         mock_websockets.connect = AsyncMock(return_value=mock_ws)
 
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": '{"data": "test"}'}}]
-        }
+        mock_response.json.return_value = {"choices": [{"message": {"content": '{"data": "test"}'}}]}
         mock_response.raise_for_status = MagicMock()
 
         mock_client = MagicMock()
@@ -251,7 +249,7 @@ class TestHarnessWorker:
         worker = HarnessWorker()
         worker.ws = mock_ws
 
-        result = await worker.evaluate_for_research("<html>test</html>")
+        await worker.evaluate_for_research("<html>test</html>")
 
         mock_client.post.assert_called_once()
         call_kwargs = mock_client.post.call_args.kwargs
@@ -266,9 +264,7 @@ class TestHarnessWorker:
         mock_websockets.connect = AsyncMock(return_value=mock_ws)
 
         mock_response = MagicMock()
-        mock_response.json.return_value = {
-            "choices": [{"message": {"content": '{"extracted": "data"}'}}]
-        }
+        mock_response.json.return_value = {"choices": [{"message": {"content": '{"extracted": "data"}'}}]}
         mock_response.raise_for_status = MagicMock()
 
         mock_client = MagicMock()
@@ -307,5 +303,5 @@ class TestHarnessWorkerEnvironment:
         from swarm import harness_worker
 
         with patch.dict(os.environ, {"CDP_URL": "ws://custom:9999"}):
-            with patch.object(harness_worker, 'CDP_URL', "ws://custom:9999"):
+            with patch.object(harness_worker, "CDP_URL", "ws://custom:9999"):
                 assert harness_worker.CDP_URL == "ws://custom:9999"

@@ -11,6 +11,7 @@ Commands:
     wisdom        - Show wisdom frames
     resources     - Show resource status
 """
+
 import argparse
 import json
 import sys
@@ -67,29 +68,29 @@ def cmd_resources(args):
 def main():
     parser = argparse.ArgumentParser(description="IronForge CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    
+
     # status
     subparsers.add_parser("status", help="Show IronForge status")
-    
+
     # run
     run_parser = subparsers.add_parser("run", help="Run a coding task")
     run_parser.add_argument("task", help="Task description")
     run_parser.add_argument("--model", default="ollama:qwen3-coder-next", help="Model to use")
-    
+
     # loop
     loop_parser = subparsers.add_parser("loop", help="Start autonomous loop")
     loop_parser.add_argument("--prd", default=".forgegod/prd.json", help="PRD path")
     loop_parser.add_argument("--workers", type=int, default=1, help="Worker count")
-    
+
     # wisdom
     wisdom_parser = subparsers.add_parser("wisdom", help="Show wisdom frames")
     wisdom_parser.add_argument("--task", default="default", help="Task name")
-    
+
     # resources
     subparsers.add_parser("resources", help="Show resource status")
-    
+
     args = parser.parse_args()
-    
+
     commands = {
         "status": cmd_status,
         "run": cmd_run,
@@ -97,7 +98,7 @@ def main():
         "wisdom": cmd_wisdom,
         "resources": cmd_resources,
     }
-    
+
     return commands.get(args.command, lambda _: 1)(args)
 
 

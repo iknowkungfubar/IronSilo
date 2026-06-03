@@ -18,17 +18,18 @@ class TestProxyFuzzing:
     def client(self):
         """Create test client."""
         from proxy.proxy import app
+
         return TestClient(app, raise_server_exceptions=False)
 
     def _random_string(self, length: int) -> str:
         """Generate random string."""
-        return ''.join(random.choices(string.ascii_letters + string.digits + ' ', k=length))
+        return "".join(random.choices(string.ascii_letters + string.digits + " ", k=length))
 
     def _random_message(self) -> dict:
         """Generate random message."""
         return {
             "role": random.choice(["system", "user", "assistant"]),
-            "content": self._random_string(random.randint(0, 1000))
+            "content": self._random_string(random.randint(0, 1000)),
         }
 
     def test_chat_completions_fuzz_messages(self, client):
@@ -36,13 +37,7 @@ class TestProxyFuzzing:
         messages = [self._random_message() for _ in range(random.randint(0, 10))]
 
         try:
-            response = client.post(
-                "/api/v1/chat/completions",
-                json={
-                    "messages": messages,
-                    "model": "test-model"
-                }
-            )
+            response = client.post("/api/v1/chat/completions", json={"messages": messages, "model": "test-model"})
             assert response.status_code in [200, 400, 422, 500]
         except Exception:
             pass
@@ -60,10 +55,7 @@ class TestProxyFuzzing:
             try:
                 response = client.post(
                     "/api/v1/chat/completions",
-                    json={
-                        "messages": [{"role": "user", "content": "hello"}],
-                        "model": model
-                    }
+                    json={"messages": [{"role": "user", "content": "hello"}], "model": model},
                 )
                 assert response.status_code in [200, 400, 422, 500]
             except Exception:
@@ -88,8 +80,8 @@ class TestProxyFuzzing:
                     json={
                         "messages": [{"role": "user", "content": "hello"}],
                         "model": "test",
-                        "temperature": temp
-                    }
+                        "temperature": temp,
+                    },
                 )
                 assert response.status_code in [200, 400, 422, 500]
             except Exception:
@@ -113,8 +105,8 @@ class TestProxyFuzzing:
                     json={
                         "messages": [{"role": "user", "content": "hello"}],
                         "model": "test",
-                        "max_tokens": max_tokens
-                    }
+                        "max_tokens": max_tokens,
+                    },
                 )
                 assert response.status_code in [200, 400, 422, 500]
             except Exception:
@@ -137,10 +129,7 @@ class TestProxyFuzzing:
             try:
                 response = client.post(
                     "/api/v1/chat/completions",
-                    json={
-                        "messages": [{"role": "user", "content": content}],
-                        "model": "test"
-                    }
+                    json={"messages": [{"role": "user", "content": content}], "model": "test"},
                 )
                 assert response.status_code in [200, 400, 422, 500]
             except Exception:
@@ -152,16 +141,10 @@ class TestProxyFuzzing:
             "messages": [
                 {
                     "role": "user",
-                    "content": {
-                        "nested": {
-                            "deep": {
-                                "value": self._random_string(100)
-                            }
-                        }
-                    }
+                    "content": {"nested": {"deep": {"value": self._random_string(100)}}},
                 }
             ],
-            "model": "test"
+            "model": "test",
         }
 
         try:
@@ -187,10 +170,7 @@ class TestProxyFuzzing:
             try:
                 response = client.post(
                     "/api/v1/chat/completions",
-                    json={
-                        "messages": [{"role": "user", "content": content}],
-                        "model": "test"
-                    }
+                    json={"messages": [{"role": "user", "content": content}], "model": "test"},
                 )
                 assert response.status_code in [200, 400, 422, 500]
             except Exception:
@@ -203,10 +183,7 @@ class TestProxyFuzzing:
         try:
             response = client.post(
                 "/api/v1/chat/completions",
-                json={
-                    "messages": [{"role": "user", "content": content}],
-                    "model": "test"
-                }
+                json={"messages": [{"role": "user", "content": content}], "model": "test"},
             )
             assert response.status_code in [200, 400, 422, 500]
         except Exception:
@@ -220,10 +197,7 @@ class TestProxyFuzzing:
         try:
             response = client.post(
                 "/api/v1/chat/completions",
-                json={
-                    "messages": [{"role": "user", "content": content}],
-                    "model": "test"
-                }
+                json={"messages": [{"role": "user", "content": content}], "model": "test"},
             )
             assert response.status_code in [200, 400, 422, 500]
         except Exception:
@@ -243,10 +217,7 @@ class TestProxyFuzzing:
             try:
                 response = client.post(
                     "/api/v1/chat/completions",
-                    json={
-                        "messages": [{"role": "user", "content": content}],
-                        "model": "test"
-                    }
+                    json={"messages": [{"role": "user", "content": content}], "model": "test"},
                 )
                 assert response.status_code in [200, 400, 422, 500]
             except Exception:
@@ -267,10 +238,7 @@ class TestProxyFuzzing:
             try:
                 response = client.post(
                     "/api/v1/chat/completions",
-                    json={
-                        "messages": [{"role": "user", "content": content}],
-                        "model": "test"
-                    }
+                    json={"messages": [{"role": "user", "content": content}], "model": "test"},
                 )
                 assert response.status_code in [200, 400, 422, 500]
             except Exception:
@@ -307,8 +275,8 @@ class TestProxyFuzzing:
                         {"role": "assistant", "content": large_content},
                         {"role": "user", "content": large_content},
                     ],
-                    "model": "test"
-                }
+                    "model": "test",
+                },
             )
             assert response.status_code in [200, 400, 413, 422, 500]
         except Exception:

@@ -28,11 +28,7 @@ class TestSwarmAction:
         """Test SwarmAction initializes correctly."""
         from tui.widgets.swarm_monitor import SwarmAction
 
-        action = SwarmAction(
-            action="Navigating to URL",
-            agent="worker-1",
-            timestamp=1234567890.0
-        )
+        action = SwarmAction(action="Navigating to URL", agent="worker-1", timestamp=1234567890.0)
 
         assert action.action == "Navigating to URL"
         assert action.agent == "worker-1"
@@ -42,11 +38,7 @@ class TestSwarmAction:
         """Test SwarmAction formats timestamp correctly."""
         from tui.widgets.swarm_monitor import SwarmAction
 
-        action = SwarmAction(
-            action="Test",
-            agent="test",
-            timestamp=1234567890.0
-        )
+        action = SwarmAction(action="Test", agent="test", timestamp=1234567890.0)
 
         dt = datetime.fromtimestamp(1234567890.0)
         expected = dt.strftime("%H:%M:%S")
@@ -57,11 +49,7 @@ class TestSwarmAction:
         """Test SwarmAction time_str is HH:MM:SS format."""
         from tui.widgets.swarm_monitor import SwarmAction
 
-        action = SwarmAction(
-            action="Test",
-            agent="test",
-            timestamp=1700000000.0
-        )
+        action = SwarmAction(action="Test", agent="test", timestamp=1700000000.0)
 
         assert len(action.time_str) == 8
         assert ":" in action.time_str
@@ -74,6 +62,7 @@ class TestSwarmMonitorWidget:
     def widget(self):
         """Create a SwarmMonitorWidget instance."""
         from tui.widgets.swarm_monitor import SwarmMonitorWidget
+
         return SwarmMonitorWidget()
 
     def test_widget_initialization(self, widget):
@@ -108,8 +97,7 @@ class TestSwarmMonitorWidget:
     def test_add_status_respects_limit(self, widget):
         """Test _add_status doesn't exceed 50 actions."""
         widget._actions = [
-            type("Action", (), {"action": f"action_{i}", "agent": "test", "timestamp": i})()
-            for i in range(50)
+            type("Action", (), {"action": f"action_{i}", "agent": "test", "timestamp": i})() for i in range(50)
         ]
 
         widget._add_status("New status")
@@ -121,7 +109,16 @@ class TestSwarmMonitorWidget:
         """Test _update_display calls update on display widget."""
         widget._connected = True
         widget._actions = [
-            type("Action", (), {"action": "Test action", "agent": "test", "timestamp": time.time(), "time_str": lambda self: "12:00:00"})()
+            type(
+                "Action",
+                (),
+                {
+                    "action": "Test action",
+                    "agent": "test",
+                    "timestamp": time.time(),
+                    "time_str": lambda self: "12:00:00",
+                },
+            )()
         ]
 
         mock_display = MagicMock()
@@ -139,6 +136,7 @@ class TestSwarmMonitorWidgetWebSocket:
     def widget(self):
         """Create a SwarmMonitorWidget instance."""
         from tui.widgets.swarm_monitor import SwarmMonitorWidget
+
         return SwarmMonitorWidget()
 
     def test_start_websocket_sets_task(self, widget):
@@ -174,6 +172,7 @@ class TestSwarmMonitorWidgetAsync:
     def widget(self):
         """Create a SwarmMonitorWidget instance."""
         from tui.widgets.swarm_monitor import SwarmMonitorWidget
+
         return SwarmMonitorWidget()
 
     @pytest.mark.asyncio
@@ -182,10 +181,12 @@ class TestSwarmMonitorWidgetAsync:
         import websockets
 
         mock_ws = MagicMock()
-        mock_ws.recv = AsyncMock(side_effect=[
-            json.dumps({"type": "connected", "current_action": "idle", "timestamp": time.time()}),
-            websockets.exceptions.ConnectionClosed(None, None)
-        ])
+        mock_ws.recv = AsyncMock(
+            side_effect=[
+                json.dumps({"type": "connected", "current_action": "idle", "timestamp": time.time()}),
+                websockets.exceptions.ConnectionClosed(None, None),
+            ]
+        )
 
         with patch("websockets.connect", AsyncMock(return_value=mock_ws)) as mock_connect:
             with patch.object(widget, "_update_display"):
@@ -206,15 +207,17 @@ class TestSwarmMonitorWidgetAsync:
             "type": "action",
             "action": "DOM evaluated",
             "agent": "worker-1",
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         mock_ws = MagicMock()
-        mock_ws.recv = AsyncMock(side_effect=[
-            json.dumps({"type": "connected"}),
-            json.dumps(action_msg),
-            websockets.exceptions.ConnectionClosed(None, None)
-        ])
+        mock_ws.recv = AsyncMock(
+            side_effect=[
+                json.dumps({"type": "connected"}),
+                json.dumps(action_msg),
+                websockets.exceptions.ConnectionClosed(None, None),
+            ]
+        )
 
         with patch("websockets.connect", AsyncMock(return_value=mock_ws)):
             with patch.object(widget, "_update_display"):
@@ -247,6 +250,7 @@ class TestSwarmMonitorWidgetDisplay:
     def widget(self):
         """Create a SwarmMonitorWidget instance."""
         from tui.widgets.swarm_monitor import SwarmMonitorWidget
+
         return SwarmMonitorWidget()
 
     def test_update_display_shows_connected(self, widget):
@@ -279,8 +283,26 @@ class TestSwarmMonitorWidgetDisplay:
         """Test _update_display shows action list."""
         widget._connected = True
         widget._actions = [
-            type("Action", (), {"action": "Action 1", "agent": "agent1", "timestamp": 1000, "time_str": lambda s: "12:00:00"})(),
-            type("Action", (), {"action": "Action 2", "agent": "agent2", "timestamp": 2000, "time_str": lambda s: "12:01:00"})(),
+            type(
+                "Action",
+                (),
+                {
+                    "action": "Action 1",
+                    "agent": "agent1",
+                    "timestamp": 1000,
+                    "time_str": lambda s: "12:00:00",
+                },
+            )(),
+            type(
+                "Action",
+                (),
+                {
+                    "action": "Action 2",
+                    "agent": "agent2",
+                    "timestamp": 2000,
+                    "time_str": lambda s: "12:01:00",
+                },
+            )(),
         ]
 
         display = MagicMock()
@@ -301,6 +323,7 @@ class TestSwarmMonitorWidgetLifecycle:
     def widget(self):
         """Create a SwarmMonitorWidget instance."""
         from tui.widgets.swarm_monitor import SwarmMonitorWidget
+
         return SwarmMonitorWidget()
 
     def test_on_mount_starts_websocket(self, widget):

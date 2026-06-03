@@ -44,7 +44,7 @@ class ChatUser(HttpUser):
             json=payload,
             catch_response=True,
         ) as response:
-            elapsed = time.time() - start_time
+            time.time() - start_time
 
             if response.status_code == 200:
                 response.success()
@@ -180,9 +180,9 @@ def on_quitting(environment, **kwargs):
         max_time = max(request_times)
         min_time = min(request_times)
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Load Test Summary")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Total Requests: {success_count + error_count}")
         print(f"Successful: {success_count}")
         print(f"Failed: {error_count}")
@@ -192,4 +192,4 @@ def on_quitting(environment, **kwargs):
         print(f"  Average: {avg_time:.2f}")
         print(f"  Min: {min_time:.2f}")
         print(f"  Max: {max_time:.2f}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")

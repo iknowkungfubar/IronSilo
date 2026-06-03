@@ -27,5 +27,6 @@ class TestLoadTestsPlaceholder:
     def test_load_tests_available(self):
         """Verify load test framework is available."""
         import importlib.util
+
         spec = importlib.util.find_spec("locust")
         assert spec is not None, "locust not installed (pip install locust)"

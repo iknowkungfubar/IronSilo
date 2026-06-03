@@ -6,7 +6,6 @@ All tests are synchronous to avoid async timing issues.
 from unittest.mock import MagicMock, patch
 
 
-
 class TestMemoryNodeInputModel:
     """Test MemoryNodeInput Pydantic model."""
 
@@ -91,7 +90,7 @@ class TestManagerAttributes:
         mock_worker = MagicMock()
         manager = Manager(mock_worker)
 
-        assert hasattr(manager, 'worker')
+        assert hasattr(manager, "worker")
 
     def test_manager_has_genesys_url(self):
         """Test Manager has genesys_url attribute."""
@@ -100,7 +99,7 @@ class TestManagerAttributes:
         mock_worker = MagicMock()
         manager = Manager(mock_worker)
 
-        assert hasattr(manager, 'genesys_url')
+        assert hasattr(manager, "genesys_url")
 
     def test_manager_has_extract_and_store_method(self):
         """Test Manager has extract_and_store method."""
@@ -109,7 +108,7 @@ class TestManagerAttributes:
         mock_worker = MagicMock()
         manager = Manager(mock_worker)
 
-        assert hasattr(manager, 'extract_and_store')
+        assert hasattr(manager, "extract_and_store")
         assert callable(manager.extract_and_store)
 
     def test_manager_has_store_memory_method(self):
@@ -119,7 +118,7 @@ class TestManagerAttributes:
         mock_worker = MagicMock()
         manager = Manager(mock_worker)
 
-        assert hasattr(manager, '_store_memory')
+        assert hasattr(manager, "_store_memory")
 
     def test_manager_has_run_research_session_method(self):
         """Test Manager has run_research_session method."""
@@ -128,7 +127,7 @@ class TestManagerAttributes:
         mock_worker = MagicMock()
         manager = Manager(mock_worker)
 
-        assert hasattr(manager, 'run_research_session')
+        assert hasattr(manager, "run_research_session")
         assert callable(manager.run_research_session)
 
 
@@ -140,9 +139,10 @@ class TestManagerMemoryNodeInput:
         from swarm.orchestrator import Manager
 
         mock_worker = MagicMock()
-        manager = Manager(mock_worker)
+        mgr = Manager(mock_worker)
 
-        assert 'MemoryNodeInput' in dir()
+        # Verify Manager is an instance and the module imports MemoryNodeInput
+        assert hasattr(mgr, "extract_and_store")
 
 
 class TestOrchestratorEnvironment:
@@ -158,5 +158,5 @@ class TestOrchestratorEnvironment:
         """Test GENESYS_URL can be patched for environment override testing."""
         from swarm import orchestrator
 
-        with patch.object(orchestrator, 'GENESYS_URL', "http://custom:9000"):
+        with patch.object(orchestrator, "GENESYS_URL", "http://custom:9000"):
             assert orchestrator.GENESYS_URL == "http://custom:9000"

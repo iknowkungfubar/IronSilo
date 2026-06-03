@@ -34,18 +34,18 @@ def init_shutdown_handler() -> asyncio.Event:
     global _shutdown_event
     if _shutdown_event is None:
         _shutdown_event = asyncio.Event()
-        
+
         def signal_handler():
             logger.info("harness_worker_shutdown_requested")
             if _shutdown_event:
                 _shutdown_event.set()
-        
+
         try:
             for sig in (signal.SIGTERM, signal.SIGINT):
                 asyncio.get_event_loop().add_signal_handler(sig, signal_handler)
         except (NotImplementedError, OSError):
             pass
-    
+
     return _shutdown_event
 
 
@@ -115,11 +115,9 @@ class HarnessWorker:
     async def get_dom(self) -> str:
         logger.info("cwp_get_dom")
 
-        await self.ws.send(json.dumps({
-            "id": self._message_id + 1,
-            "method": "DOM.getDocument",
-            "params": {"depth": -1}
-        }))
+        await self.ws.send(
+            json.dumps({"id": self._message_id + 1, "method": "DOM.getDocument", "params": {"depth": -1}})
+        )
         self._message_id += 1
 
         result = await self._send_command("DOM.getDocument", {"depth": -1})
@@ -129,10 +127,10 @@ class HarnessWorker:
     async def click_element(self, selector: str) -> bool:
         logger.info("cwp_click_element", selector=selector)
 
-        query_result = await self._send_command("Runtime.evaluate", {
-            "expression": f'document.querySelector("{selector}")',
-            "returnByValue": False
-        })
+        query_result = await self._send_command(
+            "Runtime.evaluate",
+            {"expression": f'document.querySelector("{selector}")', "returnByValue": False},
+        )
 
         if not query_result.get("result") or not query_result["result"].get("objectId"):
             logger.warning("cwp_element_not_found", selector=selector)
@@ -140,11 +138,14 @@ class HarnessWorker:
 
         object_id = query_result["result"]["objectId"]
 
-        await self._send_command("Runtime.callFunctionOn", {
-            "objectId": object_id,
-            "functionDeclaration": "function() { this.click(); }",
-            "returnByValue": False
-        })
+        await self._send_command(
+            "Runtime.callFunctionOn",
+            {
+                "objectId": object_id,
+                "functionDeclaration": "function() { this.click(); }",
+                "returnByValue": False,
+            },
+        )
 
         logger.info("cwp_element_clicked", selector=selector)
         return True
@@ -158,11 +159,17 @@ class HarnessWorker:
                 json={
                     "model": "dom-analyzer",
                     "messages": [
-                        {"role": "system", "content": "You are a research data extractor. Analyze the provided DOM tree and extract structured research data in JSON format."},
-                        {"role": "user", "content": f"Extract research data from this DOM:\n{dom_content}"}
+                        {
+                            "role": "system",
+                            "content": "You are a research data extractor. Analyze the provided DOM tree and extract structured research data in JSON format.",
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Extract research data from this DOM:\n{dom_content}",
+                        },
                     ],
                     "temperature": 0.1,
-                    "max_tokens": 8000
+                    "max_tokens": 8000,
                 },
                 headers={"X-Bypass-Compression": "true"},
             )
@@ -185,10 +192,10 @@ async def main():
             dom = await worker.get_dom()
             research_data = await worker.evaluate_for_research(dom)
             print(research_data)
-            
+
             await asyncio.wait_for(shutdown_event.wait(), timeout=5.0)
             break
-            
+
     except asyncio.CancelledError:
         logger.info("main_cancelled")
     finally:

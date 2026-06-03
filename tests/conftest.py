@@ -14,6 +14,7 @@ def reset_rate_limiter():
     """Reset the rate limiter before each test to prevent rate limit issues during testing."""
     try:
         from security.middleware import _rate_limiter
+
         _rate_limiter._requests.clear()
     except (ImportError, AttributeError):
         pass

@@ -117,11 +117,13 @@ class SwarmMonitorWidget(Static):
 
     def _add_status(self, status: str) -> None:
         """Add a status message."""
-        self._actions.append(SwarmAction(
-            action=status,
-            agent="system",
-            timestamp=datetime.now().timestamp(),
-        ))
+        self._actions.append(
+            SwarmAction(
+                action=status,
+                agent="system",
+                timestamp=datetime.now().timestamp(),
+            )
+        )
         if len(self._actions) > 50:
             self._actions.pop(0)
 

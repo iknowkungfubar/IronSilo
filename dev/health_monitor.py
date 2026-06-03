@@ -9,6 +9,7 @@ import time
 import sys
 from typing import Dict, List, Tuple
 
+
 class HealthMonitor:
     def __init__(self):
         self.lemonade_url = "http://127.0.0.1:13305/api/v1"
@@ -19,6 +20,7 @@ class HealthMonitor:
         """Check if Lemonade server is running"""
         try:
             import requests
+
             response = requests.get(f"{self.lemonade_url}/models", timeout=5)
             if response.status_code == 200:
                 models = response.json().get("data", [])
@@ -30,22 +32,17 @@ class HealthMonitor:
     def check_mcp_servers(self) -> List[Dict]:
         """Check MCP server status via OpenCode CLI"""
         try:
-            result = subprocess.run(
-                ["opencode", "mcp", "list", "--json"],
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
+            result = subprocess.run(["opencode", "mcp", "list", "--json"], capture_output=True, text=True, timeout=30)
             # Parse MCP status from output
             # Format: ●  ✓ godot [90mconnected or ●  ✗ turinpai [91mdisconnected
-            lines = result.stdout.split('\n')
+            lines = result.stdout.split("\n")
             servers = []
             for line in lines:
-                if '✓' in line or 'connected' in line.lower():
-                    name = line.split()[1] if len(line.split()) > 1 else 'unknown'
+                if "✓" in line or "connected" in line.lower():
+                    name = line.split()[1] if len(line.split()) > 1 else "unknown"
                     servers.append({"name": name, "status": "connected"})
-                elif '✗' in line or 'disconnected' in line.lower() or 'error' in line.lower():
-                    name = line.split()[1] if len(line.split()) > 1 else 'unknown'
+                elif "✗" in line or "disconnected" in line.lower() or "error" in line.lower():
+                    name = line.split()[1] if len(line.split()) > 1 else "unknown"
                     servers.append({"name": name, "status": "disconnected"})
             return servers
         except Exception as e:
@@ -54,14 +51,9 @@ class HealthMonitor:
     def check_opencode_models(self) -> Tuple[bool, str]:
         """Check if OpenCode can list models"""
         try:
-            result = subprocess.run(
-                ["opencode", "models", "list"],
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
+            result = subprocess.run(["opencode", "models", "list"], capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')
+                lines = result.stdout.strip().split("\n")
                 return True, f"{len(lines)} models available"
             return False, "Failed to list models"
         except Exception as e:
@@ -75,15 +67,20 @@ class HealthMonitor:
             time.sleep(2)
 
             # Start as correct user with proper cache
-            env = {
-                "HF_HOME": "/run/media/turin/Data/TurinCode-PAI/lemonade-cache/huggingface"
-            }
+            env = {"HF_HOME": "/run/media/turin/Data/TurinCode-PAI/lemonade-cache/huggingface"}
             subprocess.Popen(
-                ["sudo", "-u", "turin", "nohup", "/usr/bin/lemond",
-                 "/run/media/turin/Data/TurinCode-PAI/lemonade-cache", "> /tmp/lemonade-turin.log 2>&1"],
+                [
+                    "sudo",
+                    "-u",
+                    "turin",
+                    "nohup",
+                    "/usr/bin/lemond",
+                    "/run/media/turin/Data/TurinCode-PAI/lemonade-cache",
+                    "> /tmp/lemonade-turin.log 2>&1",
+                ],
                 env={**env, **subprocess.os.environ},
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
             )
             time.sleep(5)
 
@@ -109,11 +106,7 @@ class HealthMonitor:
             time.sleep(1)
 
             # Restart
-            subprocess.Popen(
-                ["python3", scripts[mcp_name]],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
-            )
+            subprocess.Popen(["python3", scripts[mcp_name]], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             time.sleep(2)
             return True
         except Exception:
@@ -127,7 +120,7 @@ class HealthMonitor:
             "mcp_servers": [],
             "opencode_models": {"status": "unknown"},
             "fixes_attempted": [],
-            "fixes_succeeded": []
+            "fixes_succeeded": [],
         }
 
         # Check Lemonade
@@ -169,9 +162,9 @@ class HealthMonitor:
             try:
                 report = self.diagnose_and_fix()
 
-                print(f"\n{'='*60}")
+                print(f"\n{'=' * 60}")
                 print(f"Health Report - {report['timestamp']}")
-                print(f"{'='*60}")
+                print(f"{'=' * 60}")
 
                 # Lemonade status
                 lm = report["lemonade"]
@@ -218,9 +211,9 @@ def main():
         # Single check with auto-fix
         report = quick_check()
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Health Check Report")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # Lemonade
         lm = report["lemonade"]
@@ -240,7 +233,7 @@ def main():
             print(f"\n🔧 Auto-fixed: {', '.join(report['fixes_succeeded'])}")
 
         # Exit code
-        all_healthy = lm['healthy'] and len(disconnected) == 0
+        all_healthy = lm["healthy"] and len(disconnected) == 0
         sys.exit(0 if all_healthy else 1)
 
 

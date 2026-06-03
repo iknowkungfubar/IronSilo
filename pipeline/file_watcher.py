@@ -31,7 +31,7 @@ class TaskFileHandler(FileSystemEventHandler):
     and triggers callback functions.
     """
 
-    TASK_PATTERN = re.compile(r'^TASK.*\.(md|json)$', re.IGNORECASE)
+    TASK_PATTERN = re.compile(r"^TASK.*\.(md|json)$", re.IGNORECASE)
 
     def __init__(
         self,
@@ -129,9 +129,9 @@ class TaskFileHandler(FileSystemEventHandler):
 
     def stop(self) -> None:
         """Stop the debounce and watchdog processors."""
-        if hasattr(self, '_debounce_task') and self._debounce_task is not None:
+        if hasattr(self, "_debounce_task") and self._debounce_task is not None:
             self._debounce_task.cancel()
-        if hasattr(self, '_watchdog_task') and self._watchdog_task is not None:
+        if hasattr(self, "_watchdog_task") and self._watchdog_task is not None:
             self._watchdog_task.cancel()
 
     def _recovery_action(self) -> None:
@@ -276,7 +276,7 @@ class TaskDiscovery:
 
     def find_tasks(self) -> List[Path]:
         """Find all task files in workspace."""
-        patterns = ['TASK*.md', 'TASK*.json', 'task*.md', 'task*.json']
+        patterns = ["TASK*.md", "TASK*.json", "task*.md", "task*.json"]
         tasks = []
 
         for pattern in patterns:

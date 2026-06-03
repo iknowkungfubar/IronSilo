@@ -38,18 +38,18 @@ def init_shutdown_handler() -> asyncio.Event:
     global _shutdown_event
     if _shutdown_event is None:
         _shutdown_event = asyncio.Event()
-        
+
         def signal_handler():
             logger.info("orchestrator_shutdown_requested")
             if _shutdown_event:
                 _shutdown_event.set()
-        
+
         try:
             for sig in (signal.SIGTERM, signal.SIGINT):
                 asyncio.get_event_loop().add_signal_handler(sig, signal_handler)
         except (NotImplementedError, OSError):
             pass
-    
+
     return _shutdown_event
 
 
@@ -113,7 +113,7 @@ class Manager:
                 return await self._store_memory(memory)
             except Exception as e:
                 if attempt < max_retries - 1:
-                    delay = min(2 ** attempt, 10.0)
+                    delay = min(2**attempt, 10.0)
                     logger.warning(
                         "memory_retry",
                         memory_id=memory.id,
@@ -128,11 +128,13 @@ class Manager:
                         memory_id=memory.id,
                         error=str(e),
                     )
-                    DEAD_LETTER_QUEUE.append({
-                        "memory": memory.model_dump(),
-                        "failed_at": datetime.now(timezone.utc).isoformat(),
-                        "error": str(e),
-                    })
+                    DEAD_LETTER_QUEUE.append(
+                        {
+                            "memory": memory.model_dump(),
+                            "failed_at": datetime.now(timezone.utc).isoformat(),
+                            "error": str(e),
+                        }
+                    )
         return None
 
     async def run_research_session(self, queries: list[str]) -> list[dict[str, Any]]:
@@ -158,7 +160,7 @@ class Manager:
 
 
 async def main():
-    shutdown_event = init_shutdown_handler()
+    init_shutdown_handler()
     worker = HarnessWorker()
     manager = Manager(worker)
 

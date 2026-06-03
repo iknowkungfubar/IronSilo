@@ -17,6 +17,7 @@ class TestProxyPerformance:
         """Create test client."""
         from fastapi.testclient import TestClient
         from proxy.proxy import app
+
         return TestClient(app, raise_server_exceptions=False)
 
     def test_chat_completions_response_time(self, client):
@@ -171,7 +172,7 @@ class TestCompressionPerformance:
 
         start = time.time()
         for _ in range(1000):
-            result = _compress_content(short_content)
+            _compress_content(short_content)
         elapsed = time.time() - start
 
         assert elapsed < 1.0  # Short content should return quickly
@@ -184,7 +185,7 @@ class TestCompressionPerformance:
 
         start = time.time()
         for _ in range(10):
-            result = _compress_content(long_content)
+            _compress_content(long_content)
         elapsed = time.time() - start
 
         # Compression may be slower, but should still be reasonable

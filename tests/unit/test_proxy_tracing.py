@@ -50,7 +50,7 @@ class TestIronSiloTracer:
     def test_initialization_without_otel(self, mocker):
         """Tracer should handle missing OpenTelemetry gracefully when not installed."""
         import proxy.tracing as tracing_module
-        
+
         original_otel = tracing_module.OTEL_AVAILABLE
         try:
             tracing_module.OTEL_AVAILABLE = False
@@ -68,7 +68,7 @@ class TestIronSiloTracer:
     def test_create_span_returns_noop_when_no_tracer(self):
         """create_span should return NoOpSpan when not initialized."""
         import proxy.tracing as tracing_module
-        
+
         original_otel = tracing_module.OTEL_AVAILABLE
         try:
             tracing_module.OTEL_AVAILABLE = False
@@ -97,12 +97,12 @@ class TestTraceSpan:
     def test_trace_span_without_otel(self, mocker):
         """trace_span should work even without OpenTelemetry."""
         import proxy.tracing as tracing_module
-        
+
         original_otel = tracing_module.OTEL_AVAILABLE
         try:
             tracing_module.OTEL_AVAILABLE = False
             IronSiloTracer._instance = None
-            
+
             with trace_span("test-span") as span:
                 assert isinstance(span, NoOpSpan)
         finally:
@@ -112,12 +112,12 @@ class TestTraceSpan:
     def test_trace_span_with_headers(self, mocker):
         """trace_span should accept headers for context propagation."""
         import proxy.tracing as tracing_module
-        
+
         original_otel = tracing_module.OTEL_AVAILABLE
         try:
             tracing_module.OTEL_AVAILABLE = False
             IronSiloTracer._instance = None
-            
+
             headers = {"X-Request-ID": "test-123", "X-Trace-Parent": "test"}
             with trace_span("test-span", headers=headers) as span:
                 assert isinstance(span, NoOpSpan)
@@ -131,6 +131,7 @@ class TestTraceFunctionDecorator:
 
     def test_trace_sync_function(self):
         """trace_function should work with sync functions."""
+
         @trace_function("test-sync")
         def sync_func():
             return "result"
@@ -141,6 +142,7 @@ class TestTraceFunctionDecorator:
     @pytest.mark.asyncio
     async def test_trace_async_function(self):
         """trace_function should work with async functions."""
+
         @trace_function("test-async")
         async def async_func():
             return "result"
@@ -150,6 +152,7 @@ class TestTraceFunctionDecorator:
 
     def test_trace_function_without_name(self):
         """trace_function should use func name if not provided."""
+
         @trace_function()
         def my_named_func():
             return "named"
@@ -159,6 +162,7 @@ class TestTraceFunctionDecorator:
 
     def test_trace_function_passes_args(self):
         """trace_function should pass through function arguments."""
+
         @trace_function("test-args")
         def func_with_args(a, b, c=None):
             return f"{a}-{b}-{c}"
