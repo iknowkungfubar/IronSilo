@@ -272,7 +272,7 @@ def main():
     print("-"*70)
 
     for r in results:
-        status = "✅" if r["score"] >= 75 else "⚠️" if r["score"] >= 50 else "❌"
+        "✅" if r["score"] >= 75 else "⚠️" if r["score"] >= 50 else "❌"
         error_str = f" [{r['error']}]" if r["error"] else ""
         print(f"{r['model']:<40} {r['score']:>3}%{'':<5} {r['size']:<8} {r['tags']}{error_str}")
 

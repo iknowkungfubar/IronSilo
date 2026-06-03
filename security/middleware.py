@@ -101,7 +101,7 @@ async def request_id_middleware(request: Request, call_next: Callable) -> Respon
     request.state.request_id = request_id
     
     # Log with request ID
-    logger = structlog.get_logger(__name__).bind(request_id=request_id)
+    structlog.get_logger(__name__).bind(request_id=request_id)
     
     response = await call_next(request)
     

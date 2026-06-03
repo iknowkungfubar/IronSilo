@@ -49,7 +49,7 @@ class TestTaskFileHandlerWatchdog:
         from pipeline.file_watcher import TaskFileHandler
 
         processing_started = asyncio.Event()
-        watchdog_triggered = asyncio.Event()
+        asyncio.Event()
 
         async def slow_callback(path):
             await processing_started.set()

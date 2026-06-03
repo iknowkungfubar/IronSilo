@@ -208,11 +208,11 @@ def trace_function(name: Optional[str] = None):
         span_name = name or f"{func.__module__}.{func.__name__}"
 
         def sync_wrapper(*args, **kwargs):
-            with tracer.span(span_name) as span:
+            with tracer.span(span_name):
                 return func(*args, **kwargs)
 
         async def async_wrapper(*args, **kwargs):
-            with tracer.span(span_name) as span:
+            with tracer.span(span_name):
                 return await func(*args, **kwargs)
 
         if hasattr(func, '__wrapped__'):

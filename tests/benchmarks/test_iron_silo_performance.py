@@ -171,7 +171,7 @@ class TestCompressionPerformance:
 
         start = time.time()
         for _ in range(1000):
-            result = _compress_content(short_content)
+            _compress_content(short_content)
         elapsed = time.time() - start
 
         assert elapsed < 1.0  # Short content should return quickly
@@ -184,7 +184,7 @@ class TestCompressionPerformance:
 
         start = time.time()
         for _ in range(10):
-            result = _compress_content(long_content)
+            _compress_content(long_content)
         elapsed = time.time() - start
 
         # Compression may be slower, but should still be reasonable

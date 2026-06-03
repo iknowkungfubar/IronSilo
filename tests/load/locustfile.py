@@ -44,7 +44,7 @@ class ChatUser(HttpUser):
             json=payload,
             catch_response=True,
         ) as response:
-            elapsed = time.time() - start_time
+            time.time() - start_time
 
             if response.status_code == 200:
                 response.success()

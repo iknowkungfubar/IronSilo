@@ -140,7 +140,7 @@ class TestManagerMemoryNodeInput:
         from swarm.orchestrator import Manager
 
         mock_worker = MagicMock()
-        manager = Manager(mock_worker)
+        Manager(mock_worker)
 
         assert 'MemoryNodeInput' in dir()
 

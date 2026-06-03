@@ -98,7 +98,7 @@ class TestGenesysMCPExecuteTools:
         server = GenesysMCPServer()
         # Don't initialize - just test validation
         
-        with pytest.raises(MCPToolError) as exc_info:
+        with pytest.raises(MCPToolError):
             # Simulate the tool being called with empty content
             if "create_memory_node" in server._tools:
                 tool_func = server._tools["create_memory_node"]

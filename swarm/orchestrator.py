@@ -158,7 +158,7 @@ class Manager:
 
 
 async def main():
-    shutdown_event = init_shutdown_handler()
+    init_shutdown_handler()
     worker = HarnessWorker()
     manager = Manager(worker)
 

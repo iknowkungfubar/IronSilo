@@ -251,7 +251,7 @@ class TestHarnessWorker:
         worker = HarnessWorker()
         worker.ws = mock_ws
 
-        result = await worker.evaluate_for_research("<html>test</html>")
+        await worker.evaluate_for_research("<html>test</html>")
 
         mock_client.post.assert_called_once()
         call_kwargs = mock_client.post.call_args.kwargs

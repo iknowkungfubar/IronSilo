@@ -462,7 +462,6 @@ class TestWizardMissingCoverage:
             mock_configurator.validate_config.return_value = []
             mock_configurator.write_env_file.return_value = Path(tmpdir) / ".env"
             
-            original_platform = sys_module.platform
             
             with patch("setup.wizard.get_yes_no", return_value=True):
                 with patch("setup.wizard.Configurator", return_value=mock_configurator):

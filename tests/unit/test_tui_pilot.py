@@ -19,7 +19,7 @@ class TestTUIAppWithPilot:
         from tui.app import IronSiloTUI
         
         app = IronSiloTUI()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             assert app.is_running
             
             # Check that widgets exist
@@ -32,7 +32,7 @@ class TestTUIAppWithPilot:
         from tui.app import IronSiloTUI
         
         app = IronSiloTUI()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             assert app.title == "IronSilo Dashboard"
             assert app.sub_title == "Local AI Development Sandbox"
     
@@ -42,7 +42,7 @@ class TestTUIAppWithPilot:
         from tui.app import IronSiloTUI
         
         app = IronSiloTUI()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             app.update_status("Test Status")
             
             status_bar = app.query_one("#status-bar")
@@ -103,7 +103,7 @@ class TestContainerStatusWidgetWithPilot:
                 yield ContainerStatusWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", ContainerStatusWidget)
             assert widget is not None
     
@@ -117,7 +117,7 @@ class TestContainerStatusWidgetWithPilot:
                 yield ContainerStatusWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", ContainerStatusWidget)
             # Widget should be mounted and accessible
             assert widget is not None
@@ -134,7 +134,7 @@ class TestContainerStatusWidgetWithPilot:
                 yield ContainerStatusWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", ContainerStatusWidget)
             await widget.refresh_data()
             assert len(widget._containers) > 0
@@ -149,7 +149,7 @@ class TestContainerStatusWidgetWithPilot:
                 yield ContainerStatusWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", ContainerStatusWidget)
             await widget.refresh_data()
             rendered = widget.render()
@@ -169,7 +169,7 @@ class TestResourceMonitorWidgetWithPilot:
                 yield ResourceMonitorWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", ResourceMonitorWidget)
             assert widget is not None
             assert "cpu" in widget._metrics
@@ -201,7 +201,7 @@ class TestResourceMonitorWidgetWithPilot:
                 yield ResourceMonitorWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", ResourceMonitorWidget)
             await widget.refresh_data()
             assert widget._last_update is not None or len(widget._metrics) > 0
@@ -216,7 +216,7 @@ class TestResourceMonitorWidgetWithPilot:
                 yield ResourceMonitorWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", ResourceMonitorWidget)
             cpu = widget.get_metric("cpu")
             assert cpu is not None
@@ -232,7 +232,7 @@ class TestResourceMonitorWidgetWithPilot:
                 yield ResourceMonitorWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", ResourceMonitorWidget)
             await widget.refresh_data()
             rendered = widget.render()
@@ -252,7 +252,7 @@ class TestLogViewerWidgetWithPilot:
                 yield LogViewerWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", LogViewerWidget)
             assert widget is not None
             assert len(widget._logs) > 0
@@ -267,7 +267,7 @@ class TestLogViewerWidgetWithPilot:
                 yield LogViewerWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", LogViewerWidget)
             initial_count = len(widget._logs)
             
@@ -285,7 +285,7 @@ class TestLogViewerWidgetWithPilot:
                 yield LogViewerWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", LogViewerWidget)
             widget.clear()
             assert len(widget._logs) == 0
@@ -300,7 +300,7 @@ class TestLogViewerWidgetWithPilot:
                 yield LogViewerWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", LogViewerWidget)
             widget.set_filter(level="INFO", container="proxy")
             assert widget._filter_level == "INFO"
@@ -316,7 +316,7 @@ class TestLogViewerWidgetWithPilot:
                 yield LogViewerWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", LogViewerWidget)
             widget.set_search("test")
             assert widget._search_term == "test"
@@ -331,7 +331,7 @@ class TestLogViewerWidgetWithPilot:
                 yield LogViewerWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", LogViewerWidget)
             await widget.refresh_data()
             assert widget._last_update is not None
@@ -347,7 +347,7 @@ class TestLogViewerWidgetWithPilot:
                 yield LogViewerWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", LogViewerWidget)
             
             # Simulate input change
@@ -370,7 +370,7 @@ class TestLogViewerWidgetWithPilot:
                 yield LogViewerWidget(id="test-widget")
         
         app = TestApp()
-        async with app.run_test() as pilot:
+        async with app.run_test():
             widget = app.query_one("#test-widget", LogViewerWidget)
             rendered = widget.render()
             assert "Logs" in rendered

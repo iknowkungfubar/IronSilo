@@ -32,7 +32,7 @@ class TestDatabase:
         """Test database initialization creates tables."""
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = Path(tmpdir) / "test.db"
-            db = Database(db_path)
+            Database(db_path)
             
             assert db_path.exists()
     

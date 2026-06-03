@@ -273,7 +273,7 @@ class TestProcessMessagesExtended:
             value = "custom"
         
         # Manually create a message dict with custom role
-        msg_dict = {"role": CustomRole(), "content": "test"}
+        {"role": CustomRole(), "content": "test"}
         
         # We need to test the hasattr branch in _process_messages
         # This requires modifying the message dict before processing

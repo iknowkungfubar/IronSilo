@@ -391,7 +391,7 @@ class TestKeyManager:
             key_id, key_bytes = manager.generate_key()
             
             # Key should be stored encrypted
-            key_path = key_dir_path / f"{key_id}.key"
+            key_dir_path / f"{key_id}.key"
             # Manager creates keystore but may not save key file until explicitly needed
             assert manager._master_encryptor is not None
 

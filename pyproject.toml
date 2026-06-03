@@ -103,6 +103,12 @@ ironsilo-setup = "setup.wizard:main"
 [tool.setuptools.packages.find]
 include = ["proxy*", "genesys*", "mcp*", "pipeline*", "security*", "cache*", "tui*", "setup*", "search*"]
 
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+per-file-ignores = {"dev/*" = ["E722"], "security/*" = ["E402"], "tests/*" = ["E402", "E741", "F811"]}
+
 [tool.mypy]
 python_version = "3.11"
 warn_return_any = true

@@ -518,9 +518,9 @@ class TestLifespan:
             value = "custom_role"
         
         # Create message with mock role
-        msg = Message(role=Role.USER, content="test")
+        Message(role=Role.USER, content="test")
         # Manually set role to test the hasattr branch
-        msg_dict = {"role": MockRole(), "content": "test"}
+        {"role": MockRole(), "content": "test"}
         
         # This tests the hasattr(role, "value") branch
         # We need to call _process_messages with properly formatted messages
@@ -613,9 +613,9 @@ class TestLifespan:
             value = "custom_role"
         
         # Create message with mock role
-        msg = Message(role=Role.USER, content="test")
+        Message(role=Role.USER, content="test")
         # Manually set role to test the hasattr branch
-        msg_dict = {"role": MockRole(), "content": "test"}
+        {"role": MockRole(), "content": "test"}
         
         # This tests the hasattr(role, "value") branch
         # We need to call _process_messages with properly formatted messages
