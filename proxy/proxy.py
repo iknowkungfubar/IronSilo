@@ -70,9 +70,10 @@ except ImportError:
         # Fallback if security module not available
         def sanitize_error_message(error: Exception) -> str:
             return "Internal server error"
-        
+
         def setup_security_middleware(app: FastAPI) -> None:
             pass
+
 
 # Configure structured logging
 structlog.configure(
@@ -114,8 +115,10 @@ def _get_kv_cache():
     global _kv_cache
     if _kv_cache is None:
         from cache.kv_store import create_kv_cache
+
         _kv_cache = create_kv_cache(max_size=KV_CACHE_MAX_SIZE)
     return _kv_cache
+
 
 CIRCUIT_BREAKER_FAILURE_THRESHOLD = int(os.getenv("CIRCUIT_BREAKER_FAILURE_THRESHOLD", "5"))
 CIRCUIT_BREAKER_TIMEOUT = float(os.getenv("CIRCUIT_BREAKER_TIMEOUT", "30.0"))
@@ -236,7 +239,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         from llmlingua import PromptCompressor
 
-        logger.info("loading_llmlingua", model="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank")
+        logger.info(
+            "loading_llmlingua",
+            model="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
+        )
 
         _compressor = PromptCompressor(
             model_name="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
@@ -304,12 +310,12 @@ def _sanitize_content(content: str) -> str:
 
     import re
 
-    content = content.replace('\x00', '')
-    content = content.replace('\u0000', '')
+    content = content.replace("\x00", "")
+    content = content.replace("\u0000", "")
 
-    content = re.sub(r'[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]', '', content)
+    content = re.sub(r"[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]", "", content)
 
-    content = re.sub(r'[\ud800-\udfff]', '', content)
+    content = re.sub(r"[\ud800-\udfff]", "", content)
 
     return content.strip()
 
@@ -317,12 +323,12 @@ def _sanitize_content(content: str) -> str:
 def _compress_content(content: str, compressor: Any = None, enabled: bool = False) -> str:
     """
     Compress content using LLMLingua if available.
-    
+
     Args:
         content: Original content to compress
         compressor: LLMLingua compressor instance (uses module-level _compressor if None)
         enabled: Whether compression is enabled (uses module-level _compression_enabled if False)
-        
+
     Returns:
         Compressed content, or original if compression fails/disabled
     """
@@ -331,28 +337,28 @@ def _compress_content(content: str, compressor: Any = None, enabled: bool = Fals
         compressor = _compressor
     if enabled is False:
         enabled = _compression_enabled
-    
+
     if not enabled or not compressor:
         return content
-    
+
     if len(content) <= COMPRESSION_THRESHOLD:
         return content
-    
+
     try:
         start_time = time.time()
-        
+
         result = compressor.compress_prompt(
             content,
             rate=COMPRESSION_RATE,
             force_tokens=["system", "user", "assistant", "```", "def", "class"],
         )
-        
+
         compressed = result.get("compressed_prompt", content)
         original_len = len(content)
         compressed_len = len(compressed)
         ratio = compressed_len / original_len if original_len > 0 else 1.0
         elapsed = time.time() - start_time
-        
+
         logger.info(
             "compression_complete",
             original_chars=original_len,
@@ -360,15 +366,20 @@ def _compress_content(content: str, compressor: Any = None, enabled: bool = Fals
             compression_ratio=f"{ratio:.2%}",
             elapsed_ms=f"{elapsed * 1000:.1f}",
         )
-        
+
         return compressed
-        
+
     except Exception as e:
         logger.warning("compression_failed", error=str(e))
         return content
 
 
-def _process_messages(messages: list[Message], compressor: Any = None, enabled: bool = False, bypass_compression: bool = False) -> list[Dict[str, Any]]:
+def _process_messages(
+    messages: list[Message],
+    compressor: Any = None,
+    enabled: bool = False,
+    bypass_compression: bool = False,
+) -> list[Dict[str, Any]]:
     """
     Process messages, applying compression where needed.
 
@@ -438,55 +449,57 @@ async def metrics() -> JSONResponse:
     uptime = time.time() - getattr(app.state, "start_time", time.time())
     cb = circuit_breaker
 
-    return JSONResponse({
-        "metrics": {
-            "info": {
-                "version": PROXY_VERSION,
-                "compression_enabled": getattr(app.state, "compression_enabled", False),
-                "llm_endpoint": LLM_ENDPOINT,
-            },
-            "uptime_seconds": uptime,
-            "circuit_breaker": cb.status,
-            "compression": {
-                "threshold": COMPRESSION_THRESHOLD,
-                "rate": COMPRESSION_RATE,
-            },
-            "retry": {
-                "max_attempts": RETRY_MAX_ATTEMPTS,
-                "base_delay": RETRY_BASE_DELAY,
-                "max_delay": RETRY_MAX_DELAY,
-            },
-            "timestamp": time.time(),
+    return JSONResponse(
+        {
+            "metrics": {
+                "info": {
+                    "version": PROXY_VERSION,
+                    "compression_enabled": getattr(app.state, "compression_enabled", False),
+                    "llm_endpoint": LLM_ENDPOINT,
+                },
+                "uptime_seconds": uptime,
+                "circuit_breaker": cb.status,
+                "compression": {
+                    "threshold": COMPRESSION_THRESHOLD,
+                    "rate": COMPRESSION_RATE,
+                },
+                "retry": {
+                    "max_attempts": RETRY_MAX_ATTEMPTS,
+                    "base_delay": RETRY_BASE_DELAY,
+                    "max_delay": RETRY_MAX_DELAY,
+                },
+                "timestamp": time.time(),
+            }
         }
-    })
+    )
 
 
 @app.post("/api/v1/chat/completions", response_model=None)
 async def chat_completions(request: Request):
     """
     OpenAI-compatible chat completions endpoint.
-    
+
     This endpoint:
     1. Validates the request using Pydantic models
     2. Compresses long messages using LLMLingua
     3. Forwards to the upstream LLM
     4. Returns the response in OpenAI format
-    
+
     Args:
         request: The incoming HTTP request
-        
+
     Returns:
         Chat completion response (streaming or non-streaming)
     """
     request_start = time.time()
     request_id = f"req-{request_start:.0f}"
-    
+
     logger.info("request_received", request_id=request_id, path=request.url.path)
-    
+
     try:
         # Parse and validate request body
         body = await request.json()
-        
+
         try:
             req = ChatCompletionRequest(**body)
         except Exception as e:
@@ -507,14 +520,24 @@ async def chat_completions(request: Request):
             logger.info("compression_bypassed", request_id=request_id, reason="X-Bypass-Compression header")
         elif req.model and any(keyword in req.model.lower() for keyword in ["vision", "dom"]):
             bypass_compression = True
-            logger.info("compression_bypassed", request_id=request_id, reason="model contains vision/dom", model=req.model)
+            logger.info(
+                "compression_bypassed",
+                request_id=request_id,
+                reason="model contains vision/dom",
+                model=req.model,
+            )
 
         # Build upstream request payload
         upstream_payload: Dict[str, Any] = {
-            "messages": _process_messages(req.messages, app.state.compressor, app.state.compression_enabled, bypass_compression),
+            "messages": _process_messages(
+                req.messages,
+                app.state.compressor,
+                app.state.compression_enabled,
+                bypass_compression,
+            ),
             "stream": req.stream,
         }
-        
+
         # Add optional parameters
         if req.model:
             upstream_payload["model"] = req.model
@@ -530,10 +553,10 @@ async def chat_completions(request: Request):
             upstream_payload["presence_penalty"] = req.presence_penalty
         if req.frequency_penalty is not None:
             upstream_payload["frequency_penalty"] = req.frequency_penalty
-        
+
         # Add any extra fields from passthrough
         upstream_payload.update(req.extra_fields)
-        
+
         logger.info(
             "forwarding_request",
             request_id=request_id,
@@ -541,7 +564,7 @@ async def chat_completions(request: Request):
             stream=req.stream,
             message_count=len(req.messages),
         )
-        
+
         # Handle streaming vs non-streaming
         if req.stream:
             return StreamingResponse(
@@ -555,16 +578,16 @@ async def chat_completions(request: Request):
             )
         else:
             response = await _non_stream_request(upstream_payload, request_id, request.app.state.http_client)
-            
+
             elapsed = time.time() - request_start
             logger.info(
                 "request_complete",
                 request_id=request_id,
                 elapsed_ms=f"{elapsed * 1000:.1f}",
             )
-            
+
             return JSONResponse(content=response)
-            
+
     except Exception as e:
         logger.error("request_failed", request_id=request_id, error=str(e), exc_info=True)
         safe_message = sanitize_error_message(e)
@@ -611,7 +634,7 @@ async def _retry_with_backoff(
 
             if response.status_code in RETRY_STATUS_CODES:
                 if attempt < RETRY_MAX_ATTEMPTS - 1:
-                    delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
+                    delay = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
                     logger.warning(
                         "retry_attempt",
                         request_id=request_id,
@@ -634,7 +657,7 @@ async def _retry_with_backoff(
         except httpx.TimeoutException as e:
             last_exception = e
             if attempt < RETRY_MAX_ATTEMPTS - 1:
-                delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
+                delay = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
                 logger.warning(
                     "retry_timeout",
                     request_id=request_id,
@@ -646,7 +669,7 @@ async def _retry_with_backoff(
         except Exception as e:
             last_exception = e
             if attempt < RETRY_MAX_ATTEMPTS - 1:
-                delay = min(RETRY_BASE_DELAY * (2 ** attempt), RETRY_MAX_DELAY)
+                delay = min(RETRY_BASE_DELAY * (2**attempt), RETRY_MAX_DELAY)
                 logger.warning(
                     "retry_error",
                     request_id=request_id,
@@ -784,7 +807,7 @@ _start_time = 0.0
 def _sync_from_app_state() -> None:
     """Sync module-level variables from app.state if available."""
     global _compressor, _compression_enabled, _start_time
-    
+
     if hasattr(app.state, "compressor") and app.state.compressor is not None:
         _compressor = app.state.compressor
     if hasattr(app.state, "compression_enabled"):

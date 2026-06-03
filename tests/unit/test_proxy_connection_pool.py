@@ -15,11 +15,15 @@ class TestProxyConnectionPooling:
         with TestClient(app) as client:
             response = client.get("/health")
             assert response.status_code == 200
-            assert hasattr(app.state, 'http_client'), "App should have http_client in state"
+            assert hasattr(app.state, "http_client"), "App should have http_client in state"
 
     def test_http_client_configuration_logged(self):
         """Test that HTTP client is configured with expected settings."""
-        from proxy.proxy import HTTP_CLIENT_MAX_CONNECTIONS, HTTP_CLIENT_MAX_KEEPALIVE, HTTP_CLIENT_TIMEOUT
+        from proxy.proxy import (
+            HTTP_CLIENT_MAX_CONNECTIONS,
+            HTTP_CLIENT_MAX_KEEPALIVE,
+            HTTP_CLIENT_TIMEOUT,
+        )
 
         assert HTTP_CLIENT_MAX_CONNECTIONS == 100
         assert HTTP_CLIENT_MAX_KEEPALIVE == 20

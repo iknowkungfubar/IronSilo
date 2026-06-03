@@ -15,7 +15,7 @@ from textual.widgets import DataTable, Static
 class ContainerStatusWidget(Static):
     """
     Widget displaying Docker container status.
-    
+
     Shows:
     - Container name
     - Status (running/stopped)
@@ -23,22 +23,22 @@ class ContainerStatusWidget(Static):
     - CPU/Memory usage
     - Uptime
     """
-    
+
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self._containers: List[Dict[str, Any]] = []
         self._last_update: Optional[datetime] = None
-    
+
     def compose(self) -> ComposeResult:
         """Create child widgets."""
         yield DataTable(id="container-table")
-    
+
     def on_mount(self) -> None:
         """Called when widget is mounted."""
         table = self.query_one("#container-table", DataTable)
         table.add_columns("Container", "Status", "Health", "CPU", "Memory", "Uptime")
         asyncio.create_task(self.refresh_data())
-    
+
     async def refresh_data(self) -> None:
         """Refresh container status data."""
         try:
@@ -47,11 +47,11 @@ class ContainerStatusWidget(Static):
             self._update_table()
         except Exception as e:
             self._update_error(f"Error: {str(e)[:30]}")
-    
+
     async def _get_container_status(self) -> List[Dict[str, Any]]:
         """
         Get Docker container status.
-        
+
         In production, this would call Docker API.
         For now, returns simulated data.
         """
@@ -114,22 +114,22 @@ class ContainerStatusWidget(Static):
                 "uptime": "2h 30m",
             },
         ]
-    
+
     def _update_table(self) -> None:
         """Update the data table with container status."""
         try:
             table = self.query_one("#container-table", DataTable)
             table.clear()
-            
+
             for container in self._containers:
                 # Add status indicator
                 status_icon = "●" if container["status"] == "running" else "○"
                 status_color = "green" if container["status"] == "running" else "red"
-                
+
                 # Add health indicator
                 health_icon = "✓" if container["health"] == "healthy" else "✗"
                 health_color = "green" if container["health"] == "healthy" else "yellow"
-                
+
                 table.add_row(
                     container["name"],
                     f"[{status_color}]{status_icon} {container['status']}[/{status_color}]",
@@ -138,18 +138,18 @@ class ContainerStatusWidget(Static):
                     container["memory"],
                     container["uptime"],
                 )
-            
+
         except Exception as e:
             self._update_error(f"Table error: {str(e)[:20]}")
-    
+
     def _update_error(self, message: str) -> None:
         """Display error message."""
         self.update(f"[red]Error: {message}[/red]")
-    
+
     def render(self) -> str:
         """Render the widget."""
         if not self._containers:
             return "[yellow]Loading container status...[/yellow]"
-        
+
         update_time = self._last_update.strftime("%H:%M:%S") if self._last_update else "N/A"
         return f"Container Status (Updated: {update_time})"

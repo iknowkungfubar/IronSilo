@@ -21,11 +21,11 @@ class TestMCPFrameworkContracts:
         """Test MCPServerBase has required abstract methods."""
         from mcp.framework import MCPServerBase
 
-        assert hasattr(MCPServerBase, 'initialize')
-        assert hasattr(MCPServerBase, 'shutdown')
-        assert hasattr(MCPServerBase, 'register_tool')
-        assert hasattr(MCPServerBase, 'execute_tool')
-        assert hasattr(MCPServerBase, 'get_server_info')
+        assert hasattr(MCPServerBase, "initialize")
+        assert hasattr(MCPServerBase, "shutdown")
+        assert hasattr(MCPServerBase, "register_tool")
+        assert hasattr(MCPServerBase, "execute_tool")
+        assert hasattr(MCPServerBase, "get_server_info")
 
     def test_mcp_fastapi_wrapper_creates_valid_app(self):
         """Test MCPFastAPIWrapper creates a valid FastAPI app."""

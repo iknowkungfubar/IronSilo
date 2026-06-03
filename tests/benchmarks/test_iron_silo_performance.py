@@ -17,6 +17,7 @@ class TestProxyPerformance:
         """Create test client."""
         from fastapi.testclient import TestClient
         from proxy.proxy import app
+
         return TestClient(app, raise_server_exceptions=False)
 
     def test_chat_completions_response_time(self, client):

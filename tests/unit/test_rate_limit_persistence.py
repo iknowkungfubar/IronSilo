@@ -1,4 +1,5 @@
 """Tests for rate limiting persistence."""
+
 import pytest
 
 

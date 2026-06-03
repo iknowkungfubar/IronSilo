@@ -19,7 +19,7 @@ DEFAULT_SETTINGS: Dict[str, Dict] = {
         "repeat_penalty": 1.15,
         "frequency_penalty": 0.1,
         "presence_penalty": 0.0,
-        "max_tokens": 2048
+        "max_tokens": 2048,
     },
     "coding": {
         "temperature": 0.25,
@@ -28,7 +28,7 @@ DEFAULT_SETTINGS: Dict[str, Dict] = {
         "repeat_penalty": 1.15,
         "frequency_penalty": 0.05,
         "presence_penalty": 0.0,
-        "max_tokens": 3072
+        "max_tokens": 3072,
     },
     "reasoning": {
         "temperature": 0.4,
@@ -37,7 +37,7 @@ DEFAULT_SETTINGS: Dict[str, Dict] = {
         "repeat_penalty": 1.08,
         "frequency_penalty": 0.0,
         "presence_penalty": 0.0,
-        "max_tokens": 4096
+        "max_tokens": 4096,
     },
     "creative": {
         "temperature": 0.7,
@@ -46,8 +46,8 @@ DEFAULT_SETTINGS: Dict[str, Dict] = {
         "repeat_penalty": 1.1,
         "frequency_penalty": 0.05,
         "presence_penalty": 0.0,
-        "max_tokens": 2048
-    }
+        "max_tokens": 2048,
+    },
 }
 
 SYSTEM_PROMPTS: Dict[str, str] = {
@@ -85,28 +85,19 @@ SYSTEM_PROMPTS: Dict[str, str] = {
         "1. Still avoid factual claims you don't believe are true\n"
         "2. Clearly mark creative speculation as such (use 'perhaps' or 'maybe')\n"
         "3. Engage imagination while remaining grounded in what's plausible"
-    )
+    ),
 }
 
 
 def chat(model: str, messages: list, settings: dict, system: str = "") -> dict:
     """Send chat request to Lemonade"""
     headers = {"Content-Type": "application/json"}
-    payload = {
-        "model": model,
-        "messages": messages,
-        **settings
-    }
+    payload = {"model": model, "messages": messages, **settings}
     if system:
         payload["messages"] = [{"role": "system", "content": system}] + messages
 
     try:
-        response = requests.post(
-            f"{LEMONADE_URL}/chat/completions",
-            json=payload,
-            headers=headers,
-            timeout=120
-        )
+        response = requests.post(f"{LEMONADE_URL}/chat/completions", json=payload, headers=headers, timeout=120)
         response.raise_for_status()
         return response.json()
     except Exception as e:
@@ -116,7 +107,12 @@ def chat(model: str, messages: list, settings: dict, system: str = "") -> dict:
 def test_factuality(model: str, settings: dict) -> Tuple[bool, str]:
     """Test if model knows what it doesn't know"""
     system = SYSTEM_PROMPTS["factual"]
-    messages = [{"role": "user", "content": "What is the capital of North Korea? Answer only with the city name."}]
+    messages = [
+        {
+            "role": "user",
+            "content": "What is the capital of North Korea? Answer only with the city name.",
+        }
+    ]
 
     result = chat(model, messages, settings, system)
     if "error" in result:
@@ -131,7 +127,12 @@ def test_factuality(model: str, settings: dict) -> Tuple[bool, str]:
 def test_code_accuracy(model: str, settings: dict) -> Tuple[bool, str]:
     """Test if model produces valid code"""
     system = SYSTEM_PROMPTS["coding"]
-    messages = [{"role": "user", "content": "Write a Python function that returns the nth Fibonacci number using only the standard library. Include type hints."}]
+    messages = [
+        {
+            "role": "user",
+            "content": "Write a Python function that returns the nth Fibonacci number using only the standard library. Include type hints.",
+        }
+    ]
 
     result = chat(model, messages, settings, system)
     if "error" in result:
@@ -148,7 +149,7 @@ def test_context_retention(model: str, settings: dict) -> Tuple[bool, str]:
     system = "You are a precise assistant. When asked about the conversation context, use only information from the provided context. If the information isn't there, say so."
     messages = [
         {"role": "user", "content": "My favorite color is blue. Remember this."},
-        {"role": "user", "content": "What is my favorite color?"}
+        {"role": "user", "content": "What is my favorite color?"},
     ]
 
     result = chat(model, messages, settings, system)
@@ -164,14 +165,27 @@ def test_context_retention(model: str, settings: dict) -> Tuple[bool, str]:
 def test_uncertainty(model: str, settings: dict) -> Tuple[bool, str]:
     """Test if model expresses uncertainty appropriately"""
     system = SYSTEM_PROMPTS["factual"]
-    messages = [{"role": "user", "content": "What exactly did the 2024 Nobel Prize in Physics go to? If you're not certain of the exact details, say so."}]
+    messages = [
+        {
+            "role": "user",
+            "content": "What exactly did the 2024 Nobel Prize in Physics go to? If you're not certain of the exact details, say so.",
+        }
+    ]
 
     result = chat(model, messages, settings, system)
     if "error" in result:
         return False, f"Error: {result['error']}"
 
     response = result["choices"][0]["message"]["content"].lower()
-    uncertain_phrases = ["don't know", "not certain", "not sure", "unclear", "i'm not", "i am not", "uncertain"]
+    uncertain_phrases = [
+        "don't know",
+        "not certain",
+        "not sure",
+        "unclear",
+        "i'm not",
+        "i am not",
+        "uncertain",
+    ]
     passed = any(phrase in response for phrase in uncertain_phrases) or "2024" in response
 
     return passed, response[:300]
@@ -181,11 +195,11 @@ def run_tests(model: str, preset: str = "factual") -> list:
     """Run all tests with given preset"""
     settings = DEFAULT_SETTINGS[preset].copy()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Testing Model: {model}")
     print(f"Preset: {preset}")
     print(f"Settings: {json.dumps(settings, indent=2)}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     tests = [
         ("Factuality", lambda: test_factuality(model, settings)),
@@ -203,9 +217,9 @@ def run_tests(model: str, preset: str = "factual") -> list:
         print(f"  Output: {output[:150]}...")
         results.append((name, passed))
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"SUMMARY: {sum(1 for _, p in results if p)}/{len(results)} tests passed")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     return results
 

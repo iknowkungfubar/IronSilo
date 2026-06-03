@@ -130,6 +130,7 @@ STRUCTURED_INPUT = """Process requests in this format:
 
 Then provide your response following the specified format."""
 
+
 def get_prompt(name: str) -> str:
     """Get a prompt by name"""
     prompts = {
@@ -149,9 +150,22 @@ def get_prompt(name: str) -> str:
     }
     return prompts.get(name, FACTUAL_ASSISTANT)
 
+
 if __name__ == "__main__":
     print("Available prompts:")
-    for name in ["factual", "code", "reasoning", "creative", "json", "data",
-                 "summarizer", "context", "reasoning_models", "factor_check",
-                 "truth_check", "no_hallucination", "structured_input"]:
+    for name in [
+        "factual",
+        "code",
+        "reasoning",
+        "creative",
+        "json",
+        "data",
+        "summarizer",
+        "context",
+        "reasoning_models",
+        "factor_check",
+        "truth_check",
+        "no_hallucination",
+        "structured_input",
+    ]:
         print(f"  - {name}")

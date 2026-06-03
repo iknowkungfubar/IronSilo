@@ -39,6 +39,7 @@ try:
     from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
     from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
     from opentelemetry.trace import Status, StatusCode
+
     OTEL_AVAILABLE = True
 except ImportError:
     OTEL_AVAILABLE = False
@@ -71,13 +72,18 @@ class IronSiloTracer:
     def initialize(self, service_name: str = SERVICE_NAME_VAL) -> None:
         """Initialize the tracer provider."""
         if not OTEL_AVAILABLE:
-            logger.warning("opentelemetry_not_installed", message="Install opentelemetry-api and opentelemetry-sdk packages for tracing")
+            logger.warning(
+                "opentelemetry_not_installed",
+                message="Install opentelemetry-api and opentelemetry-sdk packages for tracing",
+            )
             return
 
-        resource = Resource.create({
-            SERVICE_NAME: service_name,
-            SERVICE_VERSION: os.getenv("OTEL_SERVICE_VERSION", "2.1.0"),
-        })
+        resource = Resource.create(
+            {
+                SERVICE_NAME: service_name,
+                SERVICE_VERSION: os.getenv("OTEL_SERVICE_VERSION", "2.1.0"),
+            }
+        )
 
         provider = TracerProvider(resource=resource)
 
@@ -150,6 +156,7 @@ class SpanContextManager:
             if OTEL_AVAILABLE and self._span is not None:
                 if exc_type is not None:
                     from opentelemetry.trace import Status, StatusCode
+
                     self._span.set_status(Status(StatusCode.ERROR, str(exc_val)))
                     self._span.record_exception(exc_val)
                 self._span.end()
@@ -204,6 +211,7 @@ def trace_span(name: str, headers: Optional[Dict[str, str]] = None):
 
 def trace_function(name: Optional[str] = None):
     """Decorator to trace a function."""
+
     def decorator(func):
         span_name = name or f"{func.__module__}.{func.__name__}"
 
@@ -215,10 +223,11 @@ def trace_function(name: Optional[str] = None):
             with tracer.span(span_name):
                 return await func(*args, **kwargs)
 
-        if hasattr(func, '__wrapped__'):
+        if hasattr(func, "__wrapped__"):
             return func
 
         import asyncio
+
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         return sync_wrapper
@@ -258,20 +267,25 @@ class TracingMiddleware:
             await send(message)
 
         from fastapi import Request
+
         request = Request(scope, tracing_receive)
 
         try:
             response = await self._call_app(request)
-            await tracing_send({
-                "type": "http.response.start",
-                "status": response.status_code,
-                "headers": response.headers.items(),
-            })
+            await tracing_send(
+                {
+                    "type": "http.response.start",
+                    "status": response.status_code,
+                    "headers": response.headers.items(),
+                }
+            )
             body = response.body
-            await tracing_send({
-                "type": "http.response.body",
-                "body": body,
-            })
+            await tracing_send(
+                {
+                    "type": "http.response.body",
+                    "body": body,
+                }
+            )
         except Exception as e:
             span.set_status(Status(StatusCode.ERROR, str(e)))
             span.record_exception(e)

@@ -117,15 +117,19 @@ class TestGenesysConfiguration:
     def test_database_url_default_empty(self):
         """Test DATABASE_URL defaults to empty string when not set."""
         import os
+
         with patch.dict(os.environ, {}, clear=True):
             from genesys.app import DATABASE_URL
+
             assert DATABASE_URL == ""
 
     def test_use_postgres_false_without_url(self):
         """Test USE_POSTGRES is False without DATABASE_URL."""
         import os
+
         with patch.dict(os.environ, {}, clear=True):
             from genesys.app import USE_POSTGRES
+
             assert USE_POSTGRES is False
 
 
@@ -153,6 +157,7 @@ class TestCreateMemory:
     async def test_create_memory_in_memory_mode(self):
         """Test create_memory stores in memory when no PostgreSQL."""
         import genesys.app
+
         genesys.app._pool = None
 
         from genesys.app import MemoryNode, create_memory
@@ -175,6 +180,7 @@ class TestCreateMemory:
         mock_pool.acquire = MagicMock(return_value=mock_conn)
 
         import genesys.app
+
         genesys.app._pool = mock_pool
 
         from genesys.app import MemoryNode, create_memory
@@ -196,6 +202,7 @@ class TestGetMemory:
     async def test_get_memory_in_memory_mode_found(self):
         """Test get_memory returns memory when found in memory mode."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {"test-id": {"id": "test-id", "content": "Found"}}
 
@@ -209,6 +216,7 @@ class TestGetMemory:
     async def test_get_memory_in_memory_mode_not_found(self):
         """Test get_memory raises 404 when not found in memory mode."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {}
 
@@ -240,6 +248,7 @@ class TestGetMemory:
         mock_pool.acquire = MagicMock(return_value=mock_conn)
 
         import genesys.app
+
         genesys.app._pool = mock_pool
 
         from genesys.app import get_memory
@@ -260,6 +269,7 @@ class TestUpdateMemory:
     async def test_update_memory_in_memory_mode(self):
         """Test update_memory modifies memory in memory mode."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {"test-id": {"id": "test-id", "content": "Original"}}
 
@@ -273,6 +283,7 @@ class TestUpdateMemory:
     async def test_update_memory_not_found(self):
         """Test update_memory raises 404 when memory doesn't exist."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {}
 
@@ -289,6 +300,7 @@ class TestDeleteMemory:
     async def test_delete_memory_in_memory_mode(self):
         """Test delete_memory removes from memory."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {"test-id": {"id": "test-id", "content": "To delete"}}
 
@@ -303,6 +315,7 @@ class TestDeleteMemory:
     async def test_delete_memory_not_found(self):
         """Test delete_memory raises 404 when not found."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {}
 
@@ -323,6 +336,7 @@ class TestDeleteMemory:
         mock_pool.acquire = MagicMock(return_value=mock_conn)
 
         import genesys.app
+
         genesys.app._pool = mock_pool
 
         from genesys.app import delete_memory
@@ -342,6 +356,7 @@ class TestSearchMemories:
     async def test_search_memories_in_memory_mode(self):
         """Test search_memories finds matching in memory."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {
             "1": {"id": "1", "content": "Python code", "memory_type": "semantic"},
@@ -359,6 +374,7 @@ class TestSearchMemories:
     async def test_search_memories_with_type_filter(self):
         """Test search_memories filters by memory_type."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {
             "1": {"id": "1", "content": "Research data", "memory_type": "research"},
@@ -376,10 +392,10 @@ class TestSearchMemories:
     async def test_search_memories_limit(self):
         """Test search_memories respects limit."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._memories = {
-            str(i): {"id": str(i), "content": "Content " + str(i), "memory_type": "semantic"}
-            for i in range(20)
+            str(i): {"id": str(i), "content": "Content " + str(i), "memory_type": "semantic"} for i in range(20)
         }
 
         from genesys.app import search_memories
@@ -396,6 +412,7 @@ class TestCreateEdge:
     async def test_create_edge_in_memory_mode(self):
         """Test create_edge stores in memory when no PostgreSQL."""
         import genesys.app
+
         genesys.app._pool = None
 
         from genesys.app import CausalEdge, create_edge
@@ -420,6 +437,7 @@ class TestCreateEdge:
         mock_pool.acquire = MagicMock(return_value=mock_conn)
 
         import genesys.app
+
         genesys.app._pool = mock_pool
 
         from genesys.app import CausalEdge, create_edge
@@ -441,6 +459,7 @@ class TestGetCausalChain:
     async def test_get_causal_chain_in_memory_mode(self):
         """Test get_causal_chain finds edges in memory."""
         import genesys.app
+
         genesys.app._pool = None
         genesys.app._edges = {
             "edge-1": {"id": "edge-1", "source_id": "node-1", "target_id": "node-2"},
@@ -470,6 +489,7 @@ class TestGetCausalChain:
         mock_pool.acquire = MagicMock(return_value=mock_conn)
 
         import genesys.app
+
         genesys.app._pool = mock_pool
 
         from genesys.app import get_causal_chain
@@ -488,6 +508,7 @@ class TestCreateSession:
     async def test_create_session_in_memory_mode(self):
         """Test create_session stores in memory when no PostgreSQL."""
         import genesys.app
+
         genesys.app._pool = None
 
         from genesys.app import create_session
@@ -501,6 +522,7 @@ class TestCreateSession:
     async def test_create_session_with_default_type(self):
         """Test create_session uses default type."""
         import genesys.app
+
         genesys.app._pool = None
 
         from genesys.app import create_session
@@ -521,6 +543,7 @@ class TestCreateSession:
         mock_pool.acquire = MagicMock(return_value=mock_conn)
 
         import genesys.app
+
         genesys.app._pool = mock_pool
 
         from genesys.app import create_session

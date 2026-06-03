@@ -17,7 +17,13 @@ from fastapi.testclient import TestClient
 mock_llmlingua = MagicMock()
 sys.modules["llmlingua"] = mock_llmlingua
 
-from proxy.proxy import app, _sanitize_content, _process_messages, _compress_content, circuit_breaker
+from proxy.proxy import (
+    app,
+    _sanitize_content,
+    _process_messages,
+    _compress_content,
+    circuit_breaker,
+)
 from proxy.models import Message, Role
 
 
@@ -55,9 +61,7 @@ class TestProxyIntegration:
     def test_chat_completions_with_mocked_upstream(self, client):
         """Test complete flow with mocked upstream LLM."""
         valid_request = {
-            "messages": [
-                {"role": "user", "content": "Hello, world!"}
-            ],
+            "messages": [{"role": "user", "content": "Hello, world!"}],
             "model": "test-model",
             "temperature": 0.7,
             "max_tokens": 100,
@@ -206,11 +210,7 @@ class TestErrorResponsesIntegration:
         """Test error when role is invalid."""
         response = client.post(
             "/api/v1/chat/completions",
-            json={
-                "messages": [
-                    {"role": "invalid_role", "content": "test"}
-                ]
-            },
+            json={"messages": [{"role": "invalid_role", "content": "test"}]},
         )
 
         assert response.status_code == 422

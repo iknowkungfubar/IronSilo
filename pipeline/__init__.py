@@ -34,11 +34,9 @@ __all__ = [
     "ImplementationNote",
     "load_task_from_file",
     "save_task_to_file",
-    
     # File watcher
     "FileWatcher",
     "TaskDiscovery",
-    
     # Agent bridge
     "AgentBridge",
     "TaskSubmission",

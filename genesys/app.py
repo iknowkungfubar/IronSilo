@@ -28,6 +28,7 @@ USE_POSTGRES = bool(DATABASE_URL and os.getenv("GENESYS_BACKEND") == "postgres")
 # Try to import asyncpg for PostgreSQL
 try:
     import asyncpg
+
     HAS_ASYNCPG = True
 except ImportError:
     HAS_ASYNCPG = False
@@ -46,7 +47,7 @@ _pool = None
 async def lifespan(app: FastAPI):
     """Application lifespan - initialize database if available."""
     global _pool
-    
+
     if USE_POSTGRES and HAS_ASYNCPG:
         try:
             _pool = await asyncpg.create_pool(
@@ -55,7 +56,7 @@ async def lifespan(app: FastAPI):
                 max_size=10,
                 command_timeout=30,
             )
-            
+
             # Create tables if they don't exist
             async with _pool.acquire() as conn:
                 await conn.execute("""
@@ -89,16 +90,16 @@ async def lifespan(app: FastAPI):
                     CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source_id);
                     CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id);
                 """)
-            
+
             logger.info("PostgreSQL connected", database_url=DATABASE_URL.split("@")[-1])
-            
+
         except Exception as e:
             logger.error("PostgreSQL connection failed, using in-memory", error=str(e))
             _pool = None
-    
+
     logger.info("Genesys Memory API started", backend="postgres" if _pool else "memory")
     yield
-    
+
     # Cleanup
     if _pool:
         await _pool.close()
@@ -126,6 +127,7 @@ app.add_middleware(
 
 class MemoryNode(BaseModel):
     """A memory node in the causal graph."""
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     content: str
     memory_type: str = "semantic"
@@ -137,6 +139,7 @@ class MemoryNode(BaseModel):
 
 class CausalEdge(BaseModel):
     """A causal relationship between memory nodes."""
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     source_id: str
     target_id: str
@@ -147,6 +150,7 @@ class CausalEdge(BaseModel):
 
 class Session(BaseModel):
     """A memory session."""
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     session_type: str = "default"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
@@ -157,7 +161,7 @@ class Session(BaseModel):
 async def health_check():
     """Health check endpoint."""
     db_status = "connected" if _pool else "disconnected"
-    
+
     # Get counts
     if _pool:
         async with _pool.acquire() as conn:
@@ -166,7 +170,7 @@ async def health_check():
     else:
         mem_count = len(_memories)
         edge_count = len(_edges)
-    
+
     return {
         "status": "healthy",
         "service": "genesys-memory",
@@ -183,11 +187,19 @@ async def create_memory(memory: MemoryNode):
     """Create a new memory node."""
     if _pool:
         async with _pool.acquire() as conn:
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO memories (id, content, memory_type, importance, tags, created_at, metadata)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
-            """, memory.id, memory.content, memory.memory_type, memory.importance,
-                 json.dumps(memory.tags), memory.created_at, json.dumps(memory.metadata))
+            """,
+                memory.id,
+                memory.content,
+                memory.memory_type,
+                memory.importance,
+                json.dumps(memory.tags),
+                memory.created_at,
+                json.dumps(memory.metadata),
+            )
     else:
         _memories[memory.id] = memory.model_dump()
 
@@ -210,11 +222,11 @@ async def get_memory(memory_id: str):
             row = await conn.fetchrow("SELECT * FROM memories WHERE id = $1", memory_id)
             if not row:
                 raise HTTPException(status_code=404, detail="Memory not found")
-            
+
             # Convert row to dict, parse JSON fields
             result = dict(row)
-            result['tags'] = json.loads(result['tags']) if result.get('tags') else []
-            result['metadata'] = json.loads(result['metadata']) if result.get('metadata') else {}
+            result["tags"] = json.loads(result["tags"]) if result.get("tags") else []
+            result["metadata"] = json.loads(result["metadata"]) if result.get("metadata") else {}
             return result
     else:
         if memory_id not in _memories:
@@ -230,22 +242,22 @@ async def update_memory(memory_id: str, content: Optional[str] = None, **kwargs)
             row = await conn.fetchrow("SELECT * FROM memories WHERE id = $1", memory_id)
             if not row:
                 raise HTTPException(status_code=404, detail="Memory not found")
-            
+
             updates = []
             params = [memory_id]
             param_idx = 2
-            
+
             if content is not None:
                 updates.append(f"content = ${param_idx}")
                 params.append(content)
                 param_idx += 1
-            
+
             for k, v in kwargs.items():
-                if v is not None and k in ['memory_type', 'importance']:
+                if v is not None and k in ["memory_type", "importance"]:
                     updates.append(f"{k} = ${param_idx}")
                     params.append(v)
                     param_idx += 1
-            
+
             if updates:
                 query = f"UPDATE memories SET {', '.join(updates)} WHERE id = $1"
                 await conn.execute(query, *params)
@@ -253,8 +265,8 @@ async def update_memory(memory_id: str, content: Optional[str] = None, **kwargs)
             # Return updated row
             row = await conn.fetchrow("SELECT * FROM memories WHERE id = $1", memory_id)
             result = dict(row)
-            result['tags'] = json.loads(result['tags']) if result.get('tags') else []
-            result['metadata'] = json.loads(result['metadata']) if result.get('metadata') else {}
+            result["tags"] = json.loads(result["tags"]) if result.get("tags") else []
+            result["metadata"] = json.loads(result["metadata"]) if result.get("metadata") else {}
     else:
         if memory_id not in _memories:
             raise HTTPException(status_code=404, detail="Memory not found")
@@ -307,32 +319,41 @@ async def search_memories(
     if _pool:
         async with _pool.acquire() as conn:
             if memory_type:
-                rows = await conn.fetch("""
+                rows = await conn.fetch(
+                    """
                     SELECT * FROM memories 
                     WHERE memory_type = $1 AND content ILIKE $2
                     ORDER BY importance DESC
                     LIMIT $3
-                """, memory_type, f"%{query}%", limit)
+                """,
+                    memory_type,
+                    f"%{query}%",
+                    limit,
+                )
             else:
-                rows = await conn.fetch("""
+                rows = await conn.fetch(
+                    """
                     SELECT * FROM memories 
                     WHERE content ILIKE $1
                     ORDER BY importance DESC
                     LIMIT $2
-                """, f"%{query}%", limit)
-            
+                """,
+                    f"%{query}%",
+                    limit,
+                )
+
             results = []
             for row in rows:
                 result = dict(row)
-                result['tags'] = json.loads(result['tags']) if result.get('tags') else []
-                result['metadata'] = json.loads(result['metadata']) if result.get('metadata') else {}
+                result["tags"] = json.loads(result["tags"]) if result.get("tags") else []
+                result["metadata"] = json.loads(result["metadata"]) if result.get("metadata") else {}
                 results.append(result)
-            
+
             return {"memories": results, "count": len(results)}
     else:
         results = []
         query_lower = query.lower()
-        
+
         for memory in _memories.values():
             if memory_type and memory.get("memory_type") != memory_type:
                 continue
@@ -340,7 +361,7 @@ async def search_memories(
                 results.append(memory)
             if len(results) >= limit:
                 break
-        
+
         return {"memories": results, "count": len(results)}
 
 
@@ -349,13 +370,21 @@ async def create_edge(edge: CausalEdge):
     """Create a causal edge between memories."""
     if _pool:
         async with _pool.acquire() as conn:
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO edges (id, source_id, target_id, relationship, strength, created_at)
                 VALUES ($1, $2, $3, $4, $5, $6)
-            """, edge.id, edge.source_id, edge.target_id, edge.relationship, edge.strength, edge.created_at)
+            """,
+                edge.id,
+                edge.source_id,
+                edge.target_id,
+                edge.relationship,
+                edge.strength,
+                edge.created_at,
+            )
     else:
         _edges[edge.id] = edge.model_dump()
-    
+
     logger.info("Edge created", edge_id=edge.id)
     return edge
 
@@ -365,10 +394,13 @@ async def get_causal_chain(memory_id: str):
     """Get the causal chain for a memory."""
     if _pool:
         async with _pool.acquire() as conn:
-            rows = await conn.fetch("""
+            rows = await conn.fetch(
+                """
                 SELECT * FROM edges 
                 WHERE source_id = $1 OR target_id = $1
-            """, memory_id)
+            """,
+                memory_id,
+            )
             chain = [dict(row) for row in rows]
             return {"chain": chain, "count": len(chain)}
     else:
@@ -383,16 +415,22 @@ async def get_causal_chain(memory_id: str):
 async def create_session(session_type: str = "default"):
     """Create a new session."""
     session = Session(session_type=session_type)
-    
+
     if _pool:
         async with _pool.acquire() as conn:
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO sessions (id, session_type, created_at, metadata)
                 VALUES ($1, $2, $3, $4)
-            """, session.id, session.session_type, session.created_at, json.dumps(session.metadata))
+            """,
+                session.id,
+                session.session_type,
+                session.created_at,
+                json.dumps(session.metadata),
+            )
     else:
         _sessions[session.id] = session.model_dump()
-    
+
     logger.info("Session created", session_id=session.id)
     return session
 

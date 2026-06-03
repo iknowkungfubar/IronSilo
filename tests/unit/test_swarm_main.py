@@ -23,6 +23,7 @@ class TestHealthEndpoint:
     def client(self):
         """Create test client."""
         from swarm.main import app
+
         return TestClient(app)
 
     def test_health_returns_healthy(self, client):
@@ -92,6 +93,7 @@ class TestStatusEndpoint:
     def client(self):
         """Create test client."""
         from swarm.main import app
+
         return TestClient(app)
 
     def test_status_returns_running(self, client):
@@ -137,6 +139,7 @@ class TestHistoryEndpoint:
     def client(self):
         """Create test client."""
         from swarm.main import app
+
         return TestClient(app)
 
     def test_history_returns_list(self, client):
@@ -167,10 +170,9 @@ class TestHistoryEndpoint:
         from swarm.main import state
 
         state.action_history = []
-        state.action_history.extend([
-            {"action": f"action_{i}", "timestamp": i * 1000, "agent": "test"}
-            for i in range(60)
-        ])
+        state.action_history.extend(
+            [{"action": f"action_{i}", "timestamp": i * 1000, "agent": "test"} for i in range(60)]
+        )
 
         response = client.get("/history")
 
@@ -187,6 +189,7 @@ class TestWebSocketEndpoint:
     def client(self):
         """Create test client."""
         from swarm.main import app
+
         return TestClient(app)
 
     @pytest.mark.asyncio
@@ -206,11 +209,7 @@ class TestWebSocketEndpoint:
         state.current_action = "idle"
 
         with client.websocket_connect("/ws/swarm") as ws:
-            ws.send_json({
-                "type": "action",
-                "action": "Navigating to URL",
-                "agent": "test-agent"
-            })
+            ws.send_json({"type": "action", "action": "Navigating to URL", "agent": "test-agent"})
 
             await asyncio.sleep(0.2)
 
@@ -220,15 +219,12 @@ class TestWebSocketEndpoint:
     async def test_websocket_receives_action_broadcast(self, client):
         """Test WebSocket action updates shared state."""
         from swarm.main import state
+
         state.action_history = []
         state.current_action = "idle"
 
         with client.websocket_connect("/ws/swarm") as ws:
-            ws.send_json({
-                "type": "action",
-                "action": "Test action",
-                "agent": "test"
-            })
+            ws.send_json({"type": "action", "action": "Test action", "agent": "test"})
 
             await asyncio.sleep(0.2)
 
