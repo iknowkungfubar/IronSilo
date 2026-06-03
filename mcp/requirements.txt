@@ -2,15 +2,15 @@
 # Used by both mcp-genesys and mcp-khoj containers
 
 # Web framework
-fastapi==0.109.0
-uvicorn==0.27.0
+fastapi>=0.109.0,<1
+uvicorn>=0.27.0,<1
 
 # HTTP client (for calling external APIs)
-httpx==0.25.2
+httpx>=0.25.0,<1
 
 # Logging
-structlog==24.1.0
+structlog>=24.1.0,<25
 
 # Data validation
-pydantic==2.6.1
-pydantic-settings==2.1.0
+pydantic>=2.6.0,<3
+pydantic-settings>=2.1.0,<3
