@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import sqlite3
 from contextlib import asynccontextmanager
 from datetime import datetime
@@ -227,12 +228,14 @@ class AgentBridge:
             lifespan=lifespan,
         )
         
-        # Add CORS middleware
+        # Add CORS middleware — restrict origins via BRIDGE_CORS_ORIGINS env var
+        # Never use wildcard in production.
+        _cors_origins = os.getenv("BRIDGE_CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080")
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
+            allow_origins=[o.strip() for o in _cors_origins.split(",") if o.strip()],
             allow_credentials=True,
-            allow_methods=["*"],
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
             allow_headers=["*"],
         )
         

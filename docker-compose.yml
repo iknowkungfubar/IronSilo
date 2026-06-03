@@ -11,9 +11,17 @@ services:
     container_name: traefik
     restart: unless-stopped
     ports:
-      - "8080:8080"
-      - "8443:8443"
+      # Binding to 127.0.0.1 prevents external network exposure.
+      # Remove 127.0.0.1 prefix and expose through a reverse proxy
+      # (e.g., Caddy, Nginx) for public internet access.
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8443:8443"
     volumes:
+      # SECURITY: Docker socket access grants host-level container control.
+      # Read-only mode prevents container breakout via socket writes but
+      # still allows Traefik to discover containers for routing.
+      # For multi-tenant environments, consider using a dedicated proxy
+      # network or Traefik's file-based provider instead.
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
       - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
@@ -212,6 +220,10 @@ services:
       - searxng-data:/etc/searxng
     environment:
       - SEARXNG_BASE_URL=http://localhost:8080/search
+      # SECURITY: SEARXNG_SECRET_KEY must be set in .env; if unset, searxng
+      # will fail to start with a clear error. Generate with:
+      #   python3 -c "import secrets; print(secrets.token_hex(32))"
+      - SEARXNG_SECRET_KEY=${SEARXNG_SECRET_KEY:?SEARXNG_SECRET_KEY must be set in .env}
     networks:
       - internal_bridge
     deploy:

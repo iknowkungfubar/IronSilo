@@ -23,7 +23,7 @@ brand:
 server:
   port: 8080
   bind_address: "0.0.0.0"
-  secret_key: "ultrasecretkey"  # Change this in production
+  secret_key: "${SEARXNG_SECRET_KEY}"  # Must be set via SEARXNG_SECRET_KEY env var in production
   limiter: false
   image_proxy: true
   # Public URL for the instance
