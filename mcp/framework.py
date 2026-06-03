@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
@@ -294,12 +295,14 @@ class MCPFastAPIWrapper:
             lifespan=lifespan,
         )
         
-        # Add CORS middleware
+        # Add CORS middleware — restrict origins via MCP_CORS_ORIGINS env var
+        # Never use wildcard in production; this env var defaults to localhost only.
+        _cors_origins = os.getenv("MCP_CORS_ORIGINS", "http://localhost:8080,http://127.0.0.1:8080")
         app.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],  # Configure appropriately for production
+            allow_origins=[o.strip() for o in _cors_origins.split(",") if o.strip()],
             allow_credentials=True,
-            allow_methods=["*"],
+            allow_methods=["GET", "POST", "PUT", "DELETE"],
             allow_headers=["*"],
         )
         

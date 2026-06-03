@@ -41,6 +41,28 @@ providers:
 
 http:
   middlewares:
+    # ──────────────────────────────────────────────────────────
+    # WARNING: The silk-road-auth middleware below is a PLACEHOLDER.
+    #
+    # Current implementation returns 401 unless the correct
+    # SILO_AUTH_TOKEN env var value is presented as Bearer token
+    # in the Authorization header. This is a simple shared-secret
+    # model intended for development / single-user deployments.
+    #
+    # PRODUCTION HARDENING REQUIRED:
+    #   Replace this with a forwardAuth middleware pointing to an
+    #   external auth service (OAuth2, OIDC, LDAP, etc.).
+    #   Never rely on a static shared secret in a shared-secret
+    #   model for multi-user or internet-facing deployments.
+    #
+    #   Example forwardAuth (uncomment and configure):
+    #   forward-auth:
+    #     forwardAuth:
+    #       address: "http://auth-service:8089/verify"
+    #       authResponseHeaders:
+    #         - "X-Auth-User"
+    #         - "X-Auth-Roles"
+    # ──────────────────────────────────────────────────────────
     silk-road-auth:
       headers:
         customRequestHeaders:
