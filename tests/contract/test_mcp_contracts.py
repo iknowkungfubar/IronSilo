@@ -64,7 +64,7 @@ class TestMCPModelsContracts:
 
     def test_mcp_response_model(self):
         """Test MCPResponse model with result."""
-        from mcp.models import MCPRequest, MCPResponse, MCPMessageType
+        from mcp.models import MCPResponse, MCPMessageType
 
         response = MCPResponse(
             id="test-123",
@@ -79,7 +79,7 @@ class TestMCPModelsContracts:
 
     def test_mcp_error_model(self):
         """Test MCPResponse model with error."""
-        from mcp.models import MCPRequest, MCPResponse, MCPMessageType, MCPError
+        from mcp.models import MCPResponse, MCPMessageType, MCPError
 
         response = MCPResponse(
             id="test-123",

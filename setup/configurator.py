@@ -6,11 +6,10 @@ Generates .env files and configuration for IronSilo deployment.
 
 from __future__ import annotations
 
-import os
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from .detector import LLMHost, HostInfo
 

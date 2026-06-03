@@ -16,7 +16,7 @@ import json
 import time
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 import structlog

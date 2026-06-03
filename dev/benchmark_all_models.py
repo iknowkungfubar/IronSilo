@@ -8,7 +8,7 @@ import requests
 import json
 import time
 import sys
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, Tuple, List
 
 LEMONADE_URL = "http://127.0.0.1:13305/api/v1"
 TIMEOUT = 180  # seconds per model for loading + test
@@ -110,7 +110,7 @@ def load_model(model: str) -> bool:
             timeout=TIMEOUT
         )
         return response.status_code == 200
-    except Exception as e:
+    except Exception:
         return False
 
 
@@ -187,7 +187,7 @@ def benchmark_model(model: str, preset: str, tags: str) -> Dict:
     print(f"{'='*60}")
 
     # Load model first
-    print(f"Loading model...", end=" ", flush=True)
+    print("Loading model...", end=" ", flush=True)
     if not load_model(model):
         print("FAILED TO LOAD")
         return {

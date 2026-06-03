@@ -8,9 +8,7 @@ Phase 4: Optimization
 - Safe concurrent model limits
 """
 import json
-import os
 import subprocess
-import time
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
@@ -65,7 +63,7 @@ class ResourceManager:
                 if "OpenGL renderer" in line:
                     self.gpu_name = line.split(":")[-1].strip()
                     break
-        except Exception as e:
+        except Exception:
             self.gpu_name = "Unknown"
     
     def get_status(self) -> Dict[str, Any]:

@@ -2,12 +2,9 @@
 Comprehensive tests for security/key_manager.py to achieve 100% coverage.
 """
 
-import base64
-import json
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch, mock_open
 
 import pytest
 
@@ -15,7 +12,6 @@ from security.encryption import AESEncryptor, KeyError
 from security.key_manager import (
     KeyInfo,
     KeyManager,
-    KeyStore,
     create_key_manager,
 )
 

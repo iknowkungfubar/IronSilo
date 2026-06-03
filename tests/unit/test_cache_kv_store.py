@@ -15,12 +15,9 @@ Tests cover:
 """
 
 import asyncio
-import pickle
 import tempfile
 import time
 from pathlib import Path
-from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch
 
 import pytest
 

@@ -8,7 +8,6 @@ for the encryption system.
 from __future__ import annotations
 
 import json
-import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -17,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field
 import structlog
 
-from .encryption import AESEncryptor, EncryptionError, KeyError
+from .encryption import AESEncryptor, KeyError
 
 logger = structlog.get_logger(__name__)
 

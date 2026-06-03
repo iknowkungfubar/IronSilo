@@ -3,10 +3,9 @@ Tests for file watcher watchdog timer functionality.
 """
 
 import asyncio
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 

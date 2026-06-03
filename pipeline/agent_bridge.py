@@ -7,21 +7,18 @@ enabling task submission, status polling, and webhook notifications.
 
 from __future__ import annotations
 
-import asyncio
-import json
 import os
 import sqlite3
 from contextlib import asynccontextmanager
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import structlog
 
-from .task_schema import Task, TaskList, TaskPriority, TaskStatus, save_task_to_file
+from .task_schema import Task, TaskPriority, TaskStatus, save_task_to_file
 
 logger = structlog.get_logger(__name__)
 

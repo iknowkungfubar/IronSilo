@@ -8,7 +8,6 @@ Aider execution when tasks are detected.
 from __future__ import annotations
 
 import asyncio
-import os
 import re
 import threading
 from datetime import datetime

@@ -14,12 +14,11 @@ import json
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from watchdog.events import FileCreatedEvent, FileModifiedEvent
 
-from pipeline.file_watcher import FileWatcher, TaskDiscovery, TaskFileHandler
+from pipeline.file_watcher import FileWatcher, TaskDiscovery
 from pipeline.task_schema import Task, TaskStatus
 
 

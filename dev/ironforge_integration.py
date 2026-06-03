@@ -12,9 +12,7 @@ Phase 1: Foundation
 """
 import json
 import os
-import sys
 import subprocess
-from pathlib import Path
 from typing import Optional, Dict, Any
 
 # Configuration paths
@@ -56,7 +54,7 @@ class ForgeGodIntegration:
     def _check_sochdb(self) -> bool:
         """Check if SochDB is available."""
         try:
-            import sochdb
+            import sochdb  # noqa: F401 — intentional availability check
             return True
         except ImportError:
             return False

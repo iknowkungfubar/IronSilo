@@ -2,7 +2,6 @@
 Tests for proxy connection pooling.
 """
 
-import pytest
 from starlette.testclient import TestClient
 
 

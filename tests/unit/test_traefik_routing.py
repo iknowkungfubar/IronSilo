@@ -8,11 +8,10 @@ Tests verify that:
 - Health check endpoints are defined
 """
 
-import os
 import pytest
 import yaml
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 
 class TestTraefikConfiguration:

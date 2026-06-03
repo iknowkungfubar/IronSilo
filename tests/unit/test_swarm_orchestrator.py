@@ -9,8 +9,6 @@ Tests cover:
 - run_research_session batch processing
 """
 
-import json
-from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -220,7 +218,7 @@ class TestManager:
     @pytest.mark.asyncio
     async def test_store_memory_sets_research_tags(self, mock_httpx_client):
         """Test extract_and_store includes research query in tags."""
-        from swarm.orchestrator import Manager, MemoryNodeInput
+        from swarm.orchestrator import Manager
 
         mock_response = MagicMock()
         mock_response.json.return_value = {"id": "mem-101"}

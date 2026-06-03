@@ -1,5 +1,4 @@
 """Tests for input sanitization in proxy."""
-import pytest
 
 
 class TestProxySanitization:

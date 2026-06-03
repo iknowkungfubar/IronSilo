@@ -1,5 +1,4 @@
 """Tests for SQL injection prevention in genesys."""
-import pytest
 
 
 class TestGenesysSQLInjection:

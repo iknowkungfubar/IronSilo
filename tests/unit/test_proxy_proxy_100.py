@@ -9,8 +9,7 @@ Tests cover:
 """
 
 import json
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
 
 import pytest
@@ -22,9 +21,6 @@ mock_llmlingua = MagicMock()
 sys.modules["llmlingua"] = mock_llmlingua
 
 from proxy.models import (
-    ChatCompletionRequest,
-    ErrorResponse,
-    HealthResponse,
     Message,
     Role,
 )

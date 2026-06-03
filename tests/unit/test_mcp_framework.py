@@ -9,16 +9,9 @@ Tests the core MCP server framework functionality including:
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-import asyncio
 
 from mcp.framework import MCPServerBase, MCPToolError, create_mcp_app
 from mcp.models import (
-    MCPError,
-    MCPMessageType,
-    MCPRequest,
-    MCPResponse,
-    MCPTool,
     MCPToolType,
     MCPServerInfo,
 )

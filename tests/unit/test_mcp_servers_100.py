@@ -3,19 +3,12 @@ Comprehensive tests for mcp/genesys_server.py to achieve 100% coverage.
 Tests use mocked HTTP client to avoid real network calls.
 """
 
-import asyncio
-import json
-import tempfile
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 import httpx
 
-from mcp.framework import MCPServerBase, MCPToolError
-from mcp.models import MCPMessageType, MCPToolType
+from mcp.framework import MCPToolError
 
 
 class TestGenesysMCPServer:

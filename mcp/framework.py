@@ -8,12 +8,11 @@ endpoints as MCP tools for IronClaw integration.
 from __future__ import annotations
 
 import asyncio
-import logging
 import os
 import time
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
-from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware

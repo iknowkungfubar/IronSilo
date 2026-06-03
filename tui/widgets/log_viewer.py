@@ -4,9 +4,8 @@ Log Viewer Widget for IronSilo TUI.
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime
-from typing import Any, Deque, Dict, List, Optional
+from typing import Any, Deque, Optional
 from collections import deque
 
 from textual.app import ComposeResult

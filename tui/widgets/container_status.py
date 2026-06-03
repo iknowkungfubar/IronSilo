@@ -5,7 +5,6 @@ Container Status Widget for IronSilo TUI.
 from __future__ import annotations
 
 import asyncio
-import subprocess
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
