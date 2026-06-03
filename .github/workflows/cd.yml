@@ -134,10 +134,7 @@ jobs:
       contents: read
     needs: [build-and-push, create-release]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     if: always()
-    permissions: {}
     steps:
     - name: Notify on failure
       if: needs.build-and-push.result == 'failure' || needs.create-release.result == 'failure'

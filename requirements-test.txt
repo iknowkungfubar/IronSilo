@@ -1,4 +1,7 @@
-# Test dependencies for IronSilo
+# DEPRECATED: Test dependencies are now managed in pyproject.toml under [project.optional-dependencies] dev
+# Use: pip install -e ".[dev]"
+# This file is kept for backward compatibility only.
+
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 httpx>=0.25.0
