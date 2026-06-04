@@ -9,7 +9,7 @@ Warning... this is a work in progress, needs more development and testing.
     <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
   </a>
   <a href="https://github.com/iknowkungfubar/IronSilo/releases">
-    <img src="https://img.shields.io/badge/Version-2.1.0-success.svg?style=flat-square" alt="Version 2.1.0">
+    <img src="https://img.shields.io/badge/Version-2.1.1-success.svg?style=flat-square" alt="Version 2.1.1">
   </a>
   <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md">
     <img src="https://img.shields.io/badge/Docs-Simple_Manual-orange.svg?style=flat-square" alt="Simple Manual">
