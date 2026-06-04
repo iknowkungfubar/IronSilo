@@ -1,6 +1,6 @@
 # IronSilo Architecture Document
 
-## Version: 2.1.0 (True Silo with Browser Swarm)
+## Version: 2.1.1 (True Silo with Browser Swarm)
 
 ---
 
@@ -351,6 +351,6 @@ See [ROADMAP.md](ROADMAP.md) for planned features:
 
 ---
 
-*Document Version: 2.1.0*
+*Document Version: 2.1.1*
 *Last Updated: 2026-04-30*
 *Maintained by: Autonomous Swarm*

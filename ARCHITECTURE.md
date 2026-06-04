@@ -276,7 +276,7 @@ Health check endpoint.
 ```json
 {
   "status": "healthy",
-  "version": "2.0.0",
+  "version": "2.1.1",
   "compression_enabled": true,
   "llm_endpoint": "http://host.docker.internal:8000/v1/chat/completions",
   "uptime_seconds": 3600.5

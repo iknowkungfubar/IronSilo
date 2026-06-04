@@ -25,7 +25,7 @@ Open LM Studio (or Ollama/Lemonade) on your computer and start your model. **Not
 Your tools are now natively waiting for you:
 * **To Code (Aider):** Aider runs natively in your terminal. Open your terminal in your project directory and run:
   ```bash
-  export OPENAI_API_BASE="[http://127.0.0.1:8001/api/v1](http://127.0.0.1:8001/api/v1)"
+  export OPENAI_API_BASE="http://127.0.0.1:8001/api/v1"
   export OPENAI_API_KEY="local-sandbox"
   aider
   ```

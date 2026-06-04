@@ -1,6 +1,6 @@
 # IronSilo API Documentation
 
-## Version: 2.1.0
+## Version: 2.1.1
 
 This document describes the API endpoints exposed through the Traefik API Gateway on port 8080.
 
