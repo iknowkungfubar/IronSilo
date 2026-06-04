@@ -179,28 +179,13 @@ When adding new features:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on our development process, coding standards, PR workflow, and code of conduct.
 
-### Development Setup
+## License
 
-```bash
-# Clone the repository
-git clone https://github.com/iknowkungfubar/IronSilo.git
-cd IronSilo
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-
-# Install dependencies
-pip install -e ".[dev]"
-
-# Run pre-commit hooks
-pre-commit install
-pre-commit run --all-files
-```
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
