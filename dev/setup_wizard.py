@@ -126,18 +126,32 @@ class SetupWizard:
         return {"auth_enabled": False, "password": "", "encryption": False}
 
     def save_config(self):
-        """Save configuration to file."""
+        """Save configuration to file.
+        
+        Sensitive values (API keys, passwords) are NOT written to disk.
+        They should be set via environment variables at runtime.
+        """
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
+
+        sensitive_keys = {"api_key", "password"}
 
         with open(self.config_file, "w") as f:
             f.write("# IronSilo Configuration\n")
+            f.write("# Sensitive values (API keys, passwords) are excluded.\n")
+            f.write("# Set them via environment variables at runtime.\n")
             for key, value in self.config.items():
                 if isinstance(value, dict):
                     f.write(f"\n# {key}\n")
                     for k, v in value.items():
-                        f.write(f"{k.upper()}={v}\n")
+                        if k in sensitive_keys:
+                            f.write(f"# {k.upper()}=<set via environment variable>\n")
+                        else:
+                            f.write(f"{k.upper()}={v}\n")
                 else:
-                    f.write(f"{key.upper()}={value}\n")
+                    if key in sensitive_keys:
+                        f.write(f"# {key.upper()}=<set via environment variable>\n")
+                    else:
+                        f.write(f"{key.upper()}={value}\n")
 
         print(f"\nConfiguration saved to: {self.config_file}")
 

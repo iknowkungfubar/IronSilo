@@ -25,7 +25,7 @@ class IronSiloConfig:
         self.enable_searxng: bool = True
         self.memory_limit_mb: int = 4096
         self.cpu_limit: float = 4.0
-        self.postgres_password: str = "silo_password"
+        self.postgres_password: str = ""  # Must be set via env var
         self.postgres_db: str = "ironsilo_vault"
         self.postgres_user: str = "silo_admin"
         self.custom_settings: Dict[str, str] = {}

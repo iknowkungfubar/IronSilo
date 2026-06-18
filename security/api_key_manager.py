@@ -7,6 +7,7 @@ Provides runtime API key rotation without service restart.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import os
 import secrets
 from typing import Any, Dict, Optional
@@ -28,7 +29,7 @@ def _is_rotation_enabled() -> bool:
 
 def _get_api_key_hash(key: str) -> str:
     """Get SHA256 hash of API key for comparison."""
-    return hashlib.sha256(key.encode()).hexdigest()
+    return hashlib.blake2b(key.encode(), digest_size=32).hexdigest()
 
 
 def _generate_api_key() -> str:
