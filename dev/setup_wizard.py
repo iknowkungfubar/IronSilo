@@ -133,11 +133,25 @@ class SetupWizard:
         """
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
 
-        sensitive_keys = {"api_key", "password"}
+        unsafe_keys = {"api_key", "password"}
+
+        # Check if config has any sensitive data that shouldn't be written
+        has_sensitive = any(
+            k in unsafe_keys or (isinstance(v, dict) and any(
+                sk in unsafe_keys for sk in v
+            ))
+            for k, v in self.config.items()
+        )
+
+        if has_sensitive:
+            # Refuse to write sensitive data to config files
+            print("WARNING: Configuration contains sensitive API keys or passwords.")
+            print("These will NOT be written to disk. Set them via environment variables.")
+            print(f"Only non-sensitive config saved to: {self.config_file}")
 
         with open(self.config_file, "w") as f:
             f.write("# IronSilo Configuration\n")
-            f.write("# Sensitive values (API keys, passwords) are excluded.\n")
+            f.write("# SENSITIVE VALUES (API keys, passwords) ARE NOT WRITTEN TO DISK.\n")
             f.write("# Set them via environment variables at runtime.\n")
             for key, value in self.config.items():
                 if isinstance(value, dict):
