@@ -7,7 +7,6 @@ Provides runtime API key rotation without service restart.
 from __future__ import annotations
 
 import hashlib
-import hmac
 import os
 import secrets
 from typing import Any, Dict, Optional
