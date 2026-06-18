@@ -6,6 +6,7 @@ This wizard guides users through initial configuration,
 LLM host selection, and security setup.
 """
 
+import os
 from pathlib import Path
 from typing import Optional, Callable
 
@@ -149,8 +150,11 @@ class SetupWizard:
             print("These will NOT be written to disk. Set them via environment variables.")
             print(f"Only non-sensitive config saved to: {self.config_file}")
 
-        with open(self.config_file, "w") as f:
-            f.write("# IronSilo Configuration\n")
+        # Restrict config file permissions to owner-only
+        original_umask = os.umask(0o077)
+        try:
+            with open(self.config_file, "w") as f:
+                f.write("# IronSilo Configuration\n")
             f.write("# SENSITIVE VALUES (API keys, passwords) ARE NOT WRITTEN TO DISK.\n")
             f.write("# Set them via environment variables at runtime.\n")
             for key, value in self.config.items():
@@ -166,6 +170,9 @@ class SetupWizard:
                         f.write(f"# {key.upper()}=<set via environment variable>\n")
                     else:
                         f.write(f"{key.upper()}={value}\n")
+
+        finally:
+            os.umask(original_umask)
 
         print(f"\nConfiguration saved to: {self.config_file}")
 
