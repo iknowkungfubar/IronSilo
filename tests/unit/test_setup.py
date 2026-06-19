@@ -29,7 +29,7 @@ class TestIronSiloConfig:
         assert config.enable_searxng is True
         assert config.memory_limit_mb == 4096
         assert config.cpu_limit == 4.0
-        assert config.postgres_password == "silo_password"
+        assert config.postgres_password == ""  # Must be set via env var
         assert config.postgres_db == "ironsilo_vault"
         assert config.postgres_user == "silo_admin"
         assert config.custom_settings == {}
