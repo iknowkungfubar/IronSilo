@@ -153,6 +153,7 @@ class SetupWizard:
         # Restrict config file permissions to owner-only
         original_umask = os.umask(0o077)
         try:
+            sensitive_keys = {"api_key", "password", "secret", "token", "private_key"}
             with open(self.config_file, "w") as f:
                 f.write("# IronSilo Configuration\n")
             f.write("# SENSITIVE VALUES (API keys, passwords) ARE NOT WRITTEN TO DISK.\n")
