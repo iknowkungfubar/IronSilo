@@ -31,3 +31,9 @@ hf-cache/
 
 # Hermes agent artifacts
 .hermes/
+
+# OpenCode agent config
+.opencode/
+
+# Audit artifacts
+SECURITY_AUDIT_FINDINGS.md
