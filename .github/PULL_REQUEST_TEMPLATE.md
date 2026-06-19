@@ -1,17 +1,21 @@
 ## Description
-Please include a summary of the change and which issue is fixed. Include relevant motivation and context. 
+<!-- Provide a brief description of the changes in this PR -->
 
-Fixes # (issue number)
+## Related Issue
+<!-- Link to the issue this PR addresses, if applicable -->
+Fixes #
 
-## Type of change
-Please delete options that are not relevant.
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
 - [ ] Documentation update
+- [ ] Refactoring
 
-## Checklist:
-- [ ] I have performed a self-review of my own code.
-- [ ] I have tested these changes locally (Docker spins up properly).
-- [ ] I have updated the documentation (Manuals/README) if necessary.
-- [ ] My changes generate no new errors or warnings in the proxy.
+## Testing
+- [ ] Tests pass locally
+- [ ] Lint/format checks pass
+- [ ] Manual testing completed
+
+## Additional Notes
+<!-- Any other information reviewers should know -->

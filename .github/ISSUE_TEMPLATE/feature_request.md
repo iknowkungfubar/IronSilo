@@ -1,7 +1,7 @@
 ---
 name: Feature request
-about: Suggest an idea for IronSilo
-title: "[FEATURE] "
+about: Suggest an idea for this project
+title: ''
 labels: enhancement
 assignees: ''
 ---
@@ -10,10 +10,10 @@ assignees: ''
 A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
 
 **Describe the solution you'd like**
-A clear and concise description of what you want to happen. Are we adding a new agent? Tweaking the proxy? Adding a UI?
+A clear and concise description of what you want to happen.
 
 **Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or workarounds you've already tried.
+A clear and concise description of any alternative solutions or features you've considered.
 
 **Additional context**
-Add any other context, links to documentation, or mockups about the feature request here.
+Add any other context or screenshots about the feature request here.
