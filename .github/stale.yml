@@ -1,0 +1,30 @@
+# Number of days of inactivity before an issue or PR is marked as stale
+daysUntilStale: 90
+
+# Number of days of inactivity after being marked stale before closing
+daysUntilClose: 14
+
+# Issues/PRs with these labels will never be considered stale
+exemptLabels:
+  - security
+  - pinned
+  - critical
+  - enhancement
+  - "help wanted"
+
+# Label to use when marking as stale
+staleLabel: stale
+
+# Comment to post when marking as stale
+markComment: >
+  This issue has been automatically marked as stale because it has been inactive
+  for 90 days. It will be closed in 14 days if no further activity occurs.
+  If this is still relevant, please comment or update it. Thank you!
+
+# Comment to post when closing a stale issue
+closeComment: >
+  This issue has been automatically closed due to inactivity.
+  Feel free to reopen if it's still relevant.
+
+# Limit the number of actions per run
+limitPerRun: 30
