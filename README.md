@@ -29,6 +29,8 @@ IronSilo is a completely local, cross-platform (Windows, macOS, Linux) AI develo
 
 It runs on low-to-mid spec machines by strictly limiting background RAM to ~4GB, dedicating 100% of your GPU to your actual AI model.
 
+> **CLI namespace:** All TurinTech tools are also available under the `turintech-` prefix for consistency. Use `turintech-ironsilo` interchangeably with `ironsilo`. The prefixed name is the canonical entry point across the portfolio.
+
 ---
 
 ## 📦 What's in the Box?
@@ -150,6 +152,18 @@ ironsilo dashboard
 
 # Run diagnostics
 ironsilo health
+```
+
+All commands also have `turintech-` prefixed aliases for portfolio consistency:
+
+```bash
+# Same commands with Turintech prefix
+turintech-ironsilo status
+turintech-ironsilo logs
+turintech-ironsilo dashboard
+turintech-ironsilo health
+turintech-ironsilo-setup
+turintech-ironsilo-monitor
 ```
 
 ### Web Dashboard

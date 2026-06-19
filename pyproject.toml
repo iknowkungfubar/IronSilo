@@ -7,7 +7,7 @@ name = "ironsilo"
 version = "2.1.1"
 description = "A local-first, cross-platform AI development sandbox"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.10"
 authors = [
     {name = "IronSilo Contributors", email = "dev@ironsilo.dev"}
@@ -16,7 +16,6 @@ keywords = ["ai", "local", "sandbox", "docker", "llm"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -100,6 +99,9 @@ Changelog = "https://github.com/iknowkungfubar/IronSilo/blob/main/CHANGELOG.md"
 ironsilo = "tui.cli:main"
 ironsilo-monitor = "tui.cli:monitor"
 ironsilo-setup = "setup.wizard:main"
+turintech-ironsilo = "tui.cli:main"
+turintech-ironsilo-monitor = "tui.cli:monitor"
+turintech-ironsilo-setup = "setup.wizard:main"
 
 [tool.setuptools.packages.find]
 include = ["proxy*", "genesys*", "mcp*", "pipeline*", "security*", "cache*", "tui*", "setup*", "search*"]
