@@ -9,7 +9,7 @@ Warning... this is a work in progress, needs more development and testing.
     <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT">
   </a>
   <a href="https://github.com/iknowkungfubar/IronSilo/releases">
-    <img src="https://img.shields.io/badge/Version-2.1.1-success.svg?style=flat-square" alt="Version 2.1.1">
+    <img src="https://img.shields.io/github/v/release/iknowkungfubar/IronSilo?style=flat-square&sort=semver" alt="GitHub Release">
   </a>
   <a href="https://github.com/iknowkungfubar/IronSilo/blob/main/docs/SIMPLE_MANUAL.md">
     <img src="https://img.shields.io/badge/Docs-Simple_Manual-orange.svg?style=flat-square" alt="Simple Manual">
@@ -18,8 +18,9 @@ Warning... this is a work in progress, needs more development and testing.
     <img src="https://img.shields.io/badge/Docs-Advanced_Architecture-red.svg?style=flat-square" alt="Advanced Architecture">
   </a>
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg?style=flat-square" alt="Supported Platforms">
-  <img src="https://img.shields.io/badge/Tests-600%2B%20passed-brightgreen.svg?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/Coverage-100%25-brightgreen.svg?style=flat-square" alt="Coverage">
+  <a href="https://github.com/iknowkungfubar/IronSilo/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/iknowkungfubar/IronSilo/ci.yml?style=flat-square&label=CI" alt="CI">
+  </a>
 </p>
 
 **Turn your PC into a private, autonomous AI lab, without melting your GPU.**
@@ -138,8 +139,7 @@ pytest tests/unit/test_proxy_proxy.py -v
 
 ### Test Coverage
 
-- **Total Tests:** 600+ tests (all passing)
-- **Code Coverage:** 100%
+- **Total Tests:** 933 (all passing, 4 skipped)
 - **Test Types:**
   - Unit tests for all core modules
   - Integration tests for proxy and security
