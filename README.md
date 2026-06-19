@@ -59,165 +59,183 @@ If you are starting from a fresh computer, you must install these core tools fir
 ### 2. Docker (The Sandbox Engine)
 You need Docker to run the background databases and proxies safely.
 * **Windows & macOS:** Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/). *Windows users: Ensure WSL2 is enabled during installation.* Open the app and make sure it is running in your system tray.
-* **Linux (Ubuntu/Debian):** Run `sudo apt install docker.io docker-compose-v2` and start the daemon with `sudo systemctl enable --now docker`.
-* **Linux (Arch/CachyOS):** Run `sudo pacman -S docker docker-compose` and start the daemon with `sudo systemctl enable --now docker`.
+* **Linux (tested on Ubuntu 24.04):** Do not install Docker Desktop. Install Docker Engine directly: `sudo apt install docker.io docker-compose-v2`. Then add your user to the `docker` group: `sudo usermod -aG docker $USER`. Log out and back in.
 
-### 3. A Local AI Host (The Brain)
-You need a program running on your computer to host your AI model (we highly recommend downloading the **Qwen 2.5 Coder 7B** model). Install one of the following:
-* **[LM Studio](https://lmstudio.ai/):** Best for Windows/Mac beginners. Features a great UI.
-* **[Ollama](https://ollama.com/):** Best for command-line users. (Run `ollama run qwen2.5-coder`).
-* **Lemonade:** Best for Arch Linux/AMD GPU users seeking maximum ROCm performance. (Arch users: `yay -S lemonade-bin`).
+### 3. NVIDIA Container Toolkit (Linux only, for GPU acceleration)
+* Install the NVIDIA Container Toolkit: `sudo apt install nvidia-container-toolkit`
+* Restart Docker: `sudo systemctl restart docker`
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Step 1: Quick Start
 
-Once your prerequisites are installed, you are ready to go.
-
-**Step 1: Start your AI Model**
-Open your AI Host and start a local server. *(By default, our proxy looks for an AI running on port `8000`. See the 'Documentation' section below if using Ollama, which uses port `11434`).*
-
-**Step 2: Boot the Workspace**
-* **Windows:** Double-click `Start_Workspace.bat`
-* **Mac/Linux:** Open a terminal in this folder and run `./Start_Workspace.sh`
-*(Note: The very first time you do this, Docker will download the required tools. It will be instant next time).*
-
-**Step 3: Access Your Services**
-All services are now available through the **single API Gateway on port 8080**:
-
-| Service | URL | Description |
-|---------|-----|-------------|
-| **API Gateway** | http://localhost:8080 | Single entry point for all services |
-| LLM Proxy | http://localhost:8080/api/v1 | OpenAI-compatible API for your LLM |
-| Khoj Wiki | http://localhost:8080/khoj | Private RAG wiki interface |
-| Search | http://localhost:8080/search | Private web search |
-| Swarm | http://localhost:8080/swarm | Browser swarm orchestrator |
-| Swarm WS | ws://localhost:8080/ws/swarm | Browser swarm WebSocket |
-
-**Step 4: Code with Aider!**
 ```bash
-export OPENAI_API_BASE="http://localhost:8080/api/v1"
-export OPENAI_API_KEY="local-sandbox"
-aider
+# 1. Clone the repository
+git clone https://github.com/iknowkungfubar/IronSilo.git
+cd IronSilo
+
+# 2. Make the launch script executable
+chmod +x ironsilo.sh
+
+# 3. Run the setup wizard
+python3 setup/wizard.py
+
+# 4. Start the stack
+docker compose up -d
+
+# 5. Check status
+python3 -m ironsilo status
 ```
 
----
-
-## 🛑 Shutting Down
-
-When you are done working, get your computer's RAM back:
-* **Windows:** Double-click `Stop_Workspace.bat`
-* **Mac/Linux:** Run `./Stop_Workspace.sh`
+**Power Tip:** Add this alias to your `~/.bashrc` or `~/.zshrc`:
+```bash
+alias ironsilo='python3 -m ironsilo'
+```
 
 ---
 
 ## 🧪 Testing
 
-IronSilo includes comprehensive unit and integration tests to ensure reliability.
+IronSilo uses pytest for comprehensive testing. Tests are organized in:
 
-### Running Tests
+| Directory | Purpose |
+|-----------|---------|
+| `tests/unit/` | Unit tests for individual modules |
+| `tests/integration/` | Integration tests for cross-module workflows |
+| `tests/fuzz/` | Fuzz testing for edge cases and security |
 
 ```bash
-# Install test dependencies
+# Install dev dependencies
 pip install -e ".[dev]"
 
 # Run all tests
-pytest tests/ -v
+pytest tests/
 
 # Run unit tests only
-pytest tests/unit/ -v
-
-# Run integration tests only
-pytest tests/integration/ -v
-
-# Run with coverage report
-pytest --cov=. --cov-report=html
+pytest tests/unit/
 
 # Run specific test file
-pytest tests/unit/test_proxy_proxy.py -v
+pytest tests/unit/test_proxy_proxy.py
+
+# Run with coverage
+pytest --cov=.
 ```
 
 ### Test Coverage
 
-- **Total Tests:** 933 (all passing, 4 skipped)
+- **Total Tests:** 933+ tests (933 passing, 4 skipped)
+- **Code Coverage:** 82%
 - **Test Types:**
   - Unit tests for all core modules
   - Integration tests for proxy and security
-  - Mock-based testing for external dependencies
-  - TUI Pilot tests for headless interface testing
-  - MCP server tests with mocked HTTP clients
-  - Traefik routing configuration tests
+  - Fuzz testing for input edge cases
 
-### Security
+---
 
-IronSilo includes a comprehensive security framework:
-- **AES-256-GCM encryption** for data at rest
-- **PBKDF2 key derivation** with 100,000 iterations
-- **Secure key management** with rotation support
-- **Input validation** via Pydantic models
-- **Traefik API Gateway** with single-port exposure
-- **X-Silo-Auth header** middleware on all routes
-- See [SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md) for full security assessment
+## 💡 Usage
 
-### Contributing to Tests
+### Command Line Interface
 
-When adding new features:
-1. Write tests first (TDD approach)
-2. Ensure tests pass: `pytest tests/`
-3. Check coverage: `pytest --cov=.`
-4. Coverage must be 100% for all new code
+IronSilo provides a CLI for managing your AI development environment:
+
+```bash
+# Show status of all services
+ironsilo status
+
+# View real-time logs
+ironsilo logs
+
+# Access the web dashboard
+ironsilo dashboard
+
+# Run diagnostics
+ironsilo health
+```
+
+### Web Dashboard
+
+Once the stack is running, access the monitoring dashboard:
+
+* **Health Dashboard:** http://localhost:8080/health
+* **Khoj Wiki:** http://localhost:8080/khoj
+* **Prometheus Metrics:** http://localhost:8080/metrics
+
+### Configuration
+
+Environment variables can be set in a `.env` file or exported directly:
+
+```bash
+# LLM Configuration
+export LLM_API_KEY=your_key          # API key for LLM provider
+export LLM_MODEL=gpt-4               # Model name to use
+export LLM_PROVIDER=openai           # Provider (openai, anthropic, ollama, etc.)
+
+# Infrastructure Paths
+export IRON_SILO_ROOT=/path/to/data  # Where IronSilo stores data (default: ~/.ironsilo/)
+
+# Debugging
+export IRONSILO_DEBUG=true           # Enable verbose logging
+```
 
 ---
 
 ## 📚 Documentation
 
-- [Simple Manual](docs/SIMPLE_MANUAL.md) - Getting started guide
-- [Advanced Architecture](docs/ADVANCED_MANUAL.md) - Technical deep dive
-- [Roadmap](ROADMAP.md) - Future improvements
-- [Architecture](ARCHITECTURE.md) - System design overview
-- [Security Audit Report](SECURITY_AUDIT_REPORT.md) - Enterprise security assessment
+| Document | Description |
+|----------|-------------|
+| [Simple Manual](docs/SIMPLE_MANUAL.md) | Getting started guide for new users |
+| [Advanced Architecture](docs/ADVANCED_MANUAL.md) | Deep dive into components and internals |
+| [OpenCode Integration](.opencode/README.md) | Using IronSilo with OpenCode IDE |
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on our development process, coding standards, PR workflow, and code of conduct.
+We welcome contributions! Here's how to get started:
 
-## License
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Install dev dependencies: `pip install -e ".[dev]"`
+4. Make your changes
+5. Run tests: `pytest tests/`
+6. Check coverage: `pytest --cov=.`
+7. Commit your changes (`git commit -m 'Add amazing feature'`)
+8. Push to the branch (`git push origin feature/amazing-feature`)
+9. Open a Pull Request
 
-MIT — see [LICENSE](LICENSE) for details.
+### Code Style
+- We use `ruff` for linting and formatting
+- Run `ruff check .` before committing
+- Type hints are required for all public APIs
+
+### Commit Guidelines
+- Use conventional commit format: `type(scope): description`
+- Types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`, `security`
+- Keep commits focused on a single change
+
+### Testing Guidelines
+- Write tests for all new features
+- Ensure existing tests continue to pass
+- Aim for >80% coverage on new code
+
+### Reporting Issues
+Found a bug? Open an issue with:
+- Clear description of the problem
+- Steps to reproduce
+- Expected vs actual behavior
+- Environment details (OS, Python version, Docker version)
 
 ---
 
-## 🔒 True Silo Architecture
+## 📄 License
 
-IronSilo uses a "True Silo" security model:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     HOST MACHINE                           │
-│                                                             │
-│   Port 8080 only ←────────── Traefik API Gateway           │
-│         ↓                                                 │
-│   ┌─────────────────────────────────────────────────────┐   │
-│   │           DOCKER CONTAINER (internal_bridge)       │   │
-│   │                                                     │   │
-│   │   /api/v1  ──→  LLM Proxy (:8001)                 │   │
-│   │   /khoj    ──→  Khoj (:42110)                     │   │
-│   │   /genesys ──→  Genesys Memory (:8000)             │   │
-│   │   /search  ──→  SearxNG (:8080)                   │   │
-│   │   /swarm   ──→  Swarm Service (:8095)             │   │
-│   │   /ws/swarm ──→  Swarm WebSocket (:8095)          │   │
-│   │                                                     │   │
-│   └─────────────────────────────────────────────────────┘   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-All internal services are hidden behind the gateway. No direct port exposure to your network.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-<p align="center">
-  Built with ❤️ for privacy-first AI development
-</p>
+## 🔒 Security
+
+**Important:** IronSilo is designed for local, single-user environments. It has not been audited for multi-user or public-facing security. Running it on a network exposes internal services to potential attacks.
+
+### Reporting Security Issues
+If you discover a security vulnerability, please open a draft security advisory on GitHub rather than a public issue.
