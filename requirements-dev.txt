@@ -36,7 +36,7 @@ testcontainers==3.7.1
 
 # Documentation
 mkdocs==1.5.3
-mkdocs-material==9.5.3
+mkdocs-material==9.7.6
 mkdocstrings[python]==0.24.0
 
 # Development server
