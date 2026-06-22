@@ -40,7 +40,7 @@ mkdocs-material==9.7.6
 mkdocstrings[python]==0.24.0
 
 # Development server
-watchdog==3.0.0
+watchdog==6.0.0
 python-dotenv==1.2.2
 
 # Pre-commit
