@@ -16,6 +16,7 @@ class SetupWizard:
 
     def __init__(self):
         self.config = {}
+        self._password = ""  # Stored separately — never written to disk
         self.config_file = Path.home() / ".config" / "ironsilo" / "config.env"
 
     def print_header(self):
@@ -105,70 +106,59 @@ class SetupWizard:
         return profiles.get(choice, profiles["1"])
 
     def configure_security(self) -> dict:
-        """Step 5: Configure security."""
+        """Step 5: Configure security.
+
+        Password is stored on the wizard object, NOT in the returned config,
+        so save_config() never writes it to disk.
+        """
         self.print_step(5, 5, "Configure Security")
 
         print("Enable authentication? (recommended for network access)")
         choice = self.get_input("Enable Auth (y/N)", "n")
 
+        self._password = ""
         if choice.lower() == "y":
             print("Enter master password:")
-            password = self.get_input("Password", "")
+            self._password = self.get_input("Password", "")
 
             print("Enable encryption for stored data?")
             encrypt = self.get_input("Enable Encryption (y/N)", "y")
 
             return {
                 "auth_enabled": True,
-                "password": password,
                 "encryption": encrypt.lower() == "y",
             }
 
-        return {"auth_enabled": False, "password": "", "encryption": False}
+        return {"auth_enabled": False, "encryption": False}
 
     def save_config(self):
         """Save configuration to file.
-        
-        Sensitive values (API keys, passwords) are NOT written to disk.
-        They should be set via environment variables at runtime.
+
+        Only known non-sensitive configuration keys are written to disk.
+        The master password is stored in self._password and NEVER written here.
         """
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
-
-        unsafe_keys = {"api_key", "password"}
-
-        # Check if config has any sensitive data that shouldn't be written
-        has_sensitive = any(
-            k in unsafe_keys or (isinstance(v, dict) and any(
-                sk in unsafe_keys for sk in v
-            ))
-            for k, v in self.config.items()
-        )
-
-        if has_sensitive:
-            # Refuse to write sensitive data to config files
-            print("WARNING: Configuration contains sensitive API keys or passwords.")
-            print("These will NOT be written to disk. Set them via environment variables.")
-            print(f"Only non-sensitive config saved to: {self.config_file}")
 
         # Restrict config file permissions to owner-only
         original_umask = os.umask(0o077)
         try:
-            sensitive_keys = {"api_key", "password", "secret", "token", "private_key"}
+            # Whitelist of keys that are safe to persist
+            SAFE_KEYS = {"llm_endpoint", "ports", "resources", "auth_enabled", "encryption"}
+
             with open(self.config_file, "w") as f:
                 f.write("# IronSilo Configuration\n")
-            f.write("# SENSITIVE VALUES (API keys, passwords) ARE NOT WRITTEN TO DISK.\n")
-            f.write("# Set them via environment variables at runtime.\n")
-            for key, value in self.config.items():
-                if isinstance(value, dict):
-                    f.write(f"\n# {key}\n")
-                    for k, v in value.items():
-                        if k in sensitive_keys:
-                            f.write(f"# {k.upper()}=<set via environment variable>\n")
-                        else:
+                f.write("# Master password is stored separately and never written here.\n")
+                f.write("# Set it via IRONSILO_PASSWORD environment variable at runtime.\n")
+                f.write("\n")
+                for key, value in self.config.items():
+                    if key not in SAFE_KEYS:
+                        continue  # Skip anything not in the whitelist
+                    if isinstance(value, dict):
+                        f.write(f"\n# {key}\n")
+                        for k, v in value.items():
+                            if k not in SAFE_KEYS:
+                                continue
                             f.write(f"{k.upper()}={v}\n")
-                else:
-                    if key in sensitive_keys:
-                        f.write(f"# {key.upper()}=<set via environment variable>\n")
                     else:
                         f.write(f"{key.upper()}={value}\n")
 
@@ -184,10 +174,10 @@ class SetupWizard:
         if non_interactive:
             self.config = {
                 "llm_endpoint": "http://localhost:11434",
-                "api_key": "local-sandbox",
+                "api_key": "***",
                 "ports": {"traefik": "8080", "khoj": "42110"},
                 "resources": {"ram": "4G", "cpus": "1.0"},
-                "security": {"auth_enabled": False, "password": "", "encryption": True},
+                "security": {"auth_enabled": False, "encryption": True},
             }
             print("Running in non-interactive mode with defaults...")
         else:
