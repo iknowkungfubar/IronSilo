@@ -16,7 +16,8 @@ class SetupWizard:
 
     def __init__(self):
         self.config = {}
-        self._password = ""  # Stored separately — never written to disk
+        self._api_key = ""     # Never written to disk — use env var IRONSILO_API_KEY
+        self._password = ""    # Never written to disk — use env var IRONSILO_PASSWORD
         self.config_file = Path.home() / ".config" / "ironsilo" / "config.env"
 
     def print_header(self):
@@ -108,7 +109,7 @@ class SetupWizard:
     def configure_security(self) -> dict:
         """Step 5: Configure security.
 
-        Password is stored on the wizard object, NOT in the returned config,
+        Password is stored on self._password, NEVER in the returned config dict,
         so save_config() never writes it to disk.
         """
         self.print_step(5, 5, "Configure Security")
@@ -132,32 +133,26 @@ class SetupWizard:
         return {"auth_enabled": False, "encryption": False}
 
     def save_config(self):
-        """Save configuration to file.
+        """Save configuration to disk.
 
-        Only known non-sensitive configuration keys are written to disk.
-        The master password is stored in self._password and NEVER written here.
+        Only non-sensitive configuration keys are written (no API keys or passwords).
+        Those are stored in self._api_key and self._password and NEVER written to disk.
+        Set them via IRONSILO_API_KEY and IRONSILO_PASSWORD environment variables at runtime.
         """
         self.config_file.parent.mkdir(parents=True, exist_ok=True)
 
         # Restrict config file permissions to owner-only
         original_umask = os.umask(0o077)
         try:
-            # Whitelist of keys that are safe to persist
-            SAFE_KEYS = {"llm_endpoint", "ports", "resources", "auth_enabled", "encryption"}
-
             with open(self.config_file, "w") as f:
                 f.write("# IronSilo Configuration\n")
-                f.write("# Master password is stored separately and never written here.\n")
-                f.write("# Set it via IRONSILO_PASSWORD environment variable at runtime.\n")
+                f.write("# API keys and passwords are NOT stored in this file.\n")
+                f.write("# Set them via IRONSILO_API_KEY and IRONSILO_PASSWORD env vars.\n")
                 f.write("\n")
                 for key, value in self.config.items():
-                    if key not in SAFE_KEYS:
-                        continue  # Skip anything not in the whitelist
                     if isinstance(value, dict):
                         f.write(f"\n# {key}\n")
                         for k, v in value.items():
-                            if k not in SAFE_KEYS:
-                                continue
                             f.write(f"{k.upper()}={v}\n")
                     else:
                         f.write(f"{key.upper()}={value}\n")
@@ -174,16 +169,16 @@ class SetupWizard:
         if non_interactive:
             self.config = {
                 "llm_endpoint": "http://localhost:11434",
-                "api_key": "***",
                 "ports": {"traefik": "8080", "khoj": "42110"},
                 "resources": {"ram": "4G", "cpus": "1.0"},
                 "security": {"auth_enabled": False, "encryption": True},
             }
+            self._api_key = "local-sandbox"
             print("Running in non-interactive mode with defaults...")
         else:
+            self._api_key = self.configure_api_key()
             self.config = {
                 "llm_endpoint": self.select_llm_host(),
-                "api_key": self.configure_api_key(),
                 "ports": self.configure_ports(),
                 "resources": self.configure_resources(),
                 "security": self.configure_security(),
