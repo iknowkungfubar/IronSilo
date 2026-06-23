@@ -33,8 +33,17 @@ hf-cache/
 # Hermes agent artifacts
 .hermes/
 
-# OpenCode agent config
+# AI agent artifacts (local context — never committed)
+CLAUDE.md
+AGENTS.md
+RULES.md
+SOUL.md
+.cursor/
+.cursorrules
+.windsurfrules
 .opencode/
+COPILOT_INSTRUCTIONS.md
+.claude/
 
 # Audit artifacts
 SECURITY_AUDIT_FINDINGS.md
