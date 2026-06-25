@@ -23,7 +23,7 @@ httpx>=0.26.0
 
 # Testing utilities
 coverage==7.4.0
-pytest-html==4.1.1
+pytest-html==4.2.0
 pytest-sugar==1.1.1
 pytest-benchmark==5.2.3
 
