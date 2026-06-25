@@ -17,7 +17,7 @@ types-python-dateutil==2.8.19.14
 types-PyYAML==6.0.12.20260518
 
 # Mocking
-factory-boy==3.3.1
+factory-boy==3.3.3
 faker==24.0.0
 httpx>=0.26.0
 
