@@ -1,0 +1,10 @@
+# gitleaks.toml — suppress false positives in test/dev files
+title = "IronSilo gitleaks config"
+
+[allowlist]
+description = "Known safe patterns and paths"
+paths = [
+    "tests/",
+    "docs/",
+    "*.md",
+]
