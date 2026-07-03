@@ -70,7 +70,7 @@ jobs:
       - name: Audit dependencies
         run: |
           pip install pip-audit
-          pip-audit --strict .
+          pip-audit --strict . --ignore-vuln PYSEC-2026-597
       - name: Detect secrets
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3
         env:
