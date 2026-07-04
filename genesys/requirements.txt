@@ -1,5 +1,5 @@
 # Genesys Memory API Requirements
-fastapi==0.109.0
+fastapi==0.139.0
 uvicorn==0.27.0
 pydantic==2.13.4
 structlog==26.1.0
