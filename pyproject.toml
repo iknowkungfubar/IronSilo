@@ -78,7 +78,6 @@ cache = [
 ]
 
 search = [
-    "searxng-client>=0.3.0",
 ]
 
 security = [
