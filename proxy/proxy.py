@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import os
 import time
-from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict
 
 import httpx
@@ -43,7 +42,6 @@ try:
         Choice,  # noqa: F401
         ErrorResponse,
         HealthResponse,
-        Message,
         ResponseMessage,  # noqa: F401
     )
 except ImportError:
@@ -51,7 +49,6 @@ except ImportError:
         ChatCompletionRequest,
         ErrorResponse,
         HealthResponse,
-        Message,
     )
 
 # Import security middleware
@@ -216,7 +213,7 @@ app = FastAPI(
 setup_security_middleware(app)
 
 
-from proxy.compression import _sanitize_content, process_messages
+from proxy.compression import process_messages
 # Backward compatibility re-exports for tests
 _process_messages = process_messages
 
