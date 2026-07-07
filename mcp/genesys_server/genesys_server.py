@@ -12,8 +12,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 import structlog
 
-from .framework import MCPServerBase, MCPToolError, create_mcp_app
-from .models import (
+from mcp.framework import MCPServerBase, MCPToolError, create_mcp_app
+from mcp.models import (
     MCPToolType,
     MemoryEdge,
     MemoryNode,
