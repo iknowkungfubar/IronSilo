@@ -129,87 +129,14 @@ HTTP_CLIENT_MAX_KEEPALIVE = int(os.getenv("HTTP_CLIENT_MAX_KEEPALIVE", "20"))
 HTTP_CLIENT_TIMEOUT = float(os.getenv("HTTP_CLIENT_TIMEOUT", "60.0"))
 
 
-class CircuitBreaker:
-    """
-    Circuit breaker pattern implementation for proxy reliability.
 
-    States:
-    - CLOSED: Normal operation, requests pass through
-    - OPEN: Too many failures, requests fail fast
-    - HALF_OPEN: Testing if service recovered
-    """
+from proxy.circuit_breaker import CircuitBreaker
 
-    CLOSED = "closed"
-    OPEN = "open"
-    HALF_OPEN = "half_open"
-
-    def __init__(self, failure_threshold: int = 5, timeout: float = 30.0):
-        self.failure_threshold = failure_threshold
-        self.timeout = timeout
-        self.failure_count = 0
-        self.last_failure_time: float = 0.0
-        self.state = self.CLOSED
-        self._lock = __import__("asyncio").Lock()
-
-    async def can_proceed(self) -> bool:
-        """Check if request can proceed through circuit breaker."""
-        async with self._lock:
-            if self.state == self.CLOSED:
-                return True
-
-            if self.state == self.OPEN:
-                if __import__("time").time() - self.last_failure_time >= self.timeout:
-                    self.state = self.HALF_OPEN
-                    logger.info("circuit_breaker_half_open")
-                    return True
-                return False
-
-            if self.state == self.HALF_OPEN:
-                return True
-
-            return False
-
-    async def record_success(self) -> None:
-        """Record successful request."""
-        async with self._lock:
-            if self.state == self.HALF_OPEN:
-                self.state = self.CLOSED
-                self.failure_count = 0
-                logger.info("circuit_breaker_closed")
-            else:
-                self.failure_count = 0
-
-    async def record_failure(self) -> None:
-        """Record failed request."""
-        async with self._lock:
-            self.failure_count += 1
-            self.last_failure_time = __import__("time").time()
-
-            if self.state == self.HALF_OPEN:
-                self.state = self.OPEN
-                logger.warning("circuit_breaker_reopened")
-            elif self.failure_count >= self.failure_threshold:
-                self.state = self.OPEN
-                logger.warning("circuit_breaker_opened", failures=self.failure_count)
-
-    @property
-    def status(self) -> dict[str, Any]:
-        """Return circuit breaker status for monitoring."""
-        return {
-            "state": self.state,
-            "failure_count": self.failure_count,
-            "failure_threshold": self.failure_threshold,
-            "timeout_seconds": self.timeout,
-        }
+# Singleton circuit breaker instance
+circuit_breaker = CircuitBreaker()
 
 
-circuit_breaker = CircuitBreaker(
-    failure_threshold=CIRCUIT_BREAKER_FAILURE_THRESHOLD,
-    timeout=CIRCUIT_BREAKER_TIMEOUT,
-)
 
-
-@asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application lifespan manager.
@@ -289,137 +216,28 @@ app = FastAPI(
 setup_security_middleware(app)
 
 
-def _sanitize_content(content: str) -> str:
-    """
-    Sanitize user content by removing dangerous characters.
-
-    Removes:
-    - Null bytes (\\x00)
-    - Control characters (except newline, tab, carriage return)
-    - Vertical tab, form feed
-    - Invalid Unicode surrogates
-
-    Args:
-        content: Raw user content
-
-    Returns:
-        Sanitized content safe for LLM
-    """
-    if not content:
-        return content
-
-    import re
-
-    content = content.replace("\x00", "")
-    content = content.replace("\u0000", "")
-
-    content = re.sub(r"[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]", "", content)
-
-    content = re.sub(r"[\ud800-\udfff]", "", content)
-
-    return content.strip()
+from proxy.compression import _sanitize_content, process_messages
+# Backward compatibility re-exports for tests
+_process_messages = process_messages
 
 
-def _compress_content(content: str, compressor: Any = None, enabled: bool = False) -> str:
-    """
-    Compress content using LLMLingua if available.
-
-    Args:
-        content: Original content to compress
-        compressor: LLMLingua compressor instance (uses module-level _compressor if None)
-        enabled: Whether compression is enabled (uses module-level _compression_enabled if False)
-
-    Returns:
-        Compressed content, or original if compression fails/disabled
-    """
-    # Use module-level defaults if not explicitly provided
-    if compressor is None:
-        compressor = _compressor
-    if enabled is False:
+def _compress_content(content: str, compressor: Any = None, enabled: bool | None = None) -> str:
+    """Compress content — uses module-level _compressor for test compat."""
+    if enabled is None:
         enabled = _compression_enabled
-
-    if not enabled or not compressor:
+    if not enabled or not content:
         return content
-
-    if len(content) <= COMPRESSION_THRESHOLD:
+    comp = compressor or _compressor
+    if comp is None:
         return content
-
     try:
-        start_time = time.time()
-
-        result = compressor.compress_prompt(
-            content,
-            rate=COMPRESSION_RATE,
-            force_tokens=["system", "user", "assistant", "```", "def", "class"],
-        )
-
-        compressed = result.get("compressed_prompt", content)
-        original_len = len(content)
-        compressed_len = len(compressed)
-        ratio = compressed_len / original_len if original_len > 0 else 1.0
-        elapsed = time.time() - start_time
-
-        logger.info(
-            "compression_complete",
-            original_chars=original_len,
-            compressed_chars=compressed_len,
-            compression_ratio=f"{ratio:.2%}",
-            elapsed_ms=f"{elapsed * 1000:.1f}",
-        )
-
-        return compressed
-
+        compressed = comp.compress_prompt(content, target_token=512)
+        result = compressed["compressed_prompt"] if isinstance(compressed, dict) else str(compressed)
+        logger.debug("Compressed %d -> %d chars", len(content), len(result))
+        return result
     except Exception as e:
-        logger.warning("compression_failed", error=str(e))
+        logger.warning("Compression failed: %s — returning uncompressed", e)
         return content
-
-
-def _process_messages(
-    messages: list[Message],
-    compressor: Any = None,
-    enabled: bool = False,
-    bypass_compression: bool = False,
-) -> list[Dict[str, Any]]:
-    """
-    Process messages, applying compression where needed.
-
-    Args:
-        messages: List of validated Message objects
-        compressor: LLMLingua compressor instance
-        enabled: Whether compression is enabled
-        bypass_compression: If True, skip compression entirely
-
-    Returns:
-        List of message dicts ready for upstream
-    """
-    try:
-        from .models import Role
-    except ImportError:
-        from models import Role
-
-    processed = []
-
-    for msg in messages:
-        msg_dict = msg.model_dump(exclude_none=True)
-
-        # Convert role enum to string value (e.g., Role.USER -> "user")
-        if "role" in msg_dict:
-            role = msg_dict["role"]
-            if isinstance(role, Role):
-                msg_dict["role"] = role.value
-            elif hasattr(role, "value"):
-                msg_dict["role"] = role.value
-
-        # Sanitize content first, then compress if long enough (unless bypass is set)
-        if msg_dict.get("content"):
-            msg_dict["content"] = _sanitize_content(msg_dict["content"])
-            if not bypass_compression and len(msg_dict["content"]) > COMPRESSION_THRESHOLD:
-                msg_dict["content"] = _compress_content(msg_dict["content"], compressor, enabled)
-
-        processed.append(msg_dict)
-
-    return processed
-
 
 @app.get("/health")
 async def health_check() -> HealthResponse:
@@ -794,7 +612,7 @@ async def _stream_generator(
 
 
 # Re-export for testing
-__all__ = ["app", "_compress_content", "_process_messages", "circuit_breaker", "CircuitBreaker"]
+__all__ = ["app", "circuit_breaker", "CircuitBreaker"]
 
 
 # Module-level variables for backward compatibility with tests
