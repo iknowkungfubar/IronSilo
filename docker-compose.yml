@@ -6,26 +6,24 @@ x-resources: &default-limits
         memory: 512M
 
 services:
-  traefik:
-    image: traefik:v2.10
-    container_name: traefik
+  # Phase 4: Replaced Traefik with Caddy
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
     restart: unless-stopped
     ports:
       - "127.0.0.1:8080:8080"
-      - "127.0.0.1:8443:8443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
     networks:
       - internal_bridge
     deploy:
       resources:
         limits:
-          cpus: '0.5'
-          memory: 128M
+          cpus: '0.25'
+          memory: 64M
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/ping"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -49,7 +47,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Phase 2: Replaced Khoj with LightRAG
   rag:
     build: ./rag
     container_name: ironsilo-rag
@@ -64,12 +61,6 @@ services:
         limits:
           cpus: '1.0'
           memory: 512M
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.rag.rule=PathPrefix(`/rag`)"
-      - "traefik.http.routers.rag.entrypoints=web"
-      - "traefik.http.routers.rag.service=rag"
-      - "traefik.http.services.rag.loadbalancer.server.url=http://rag:8010"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
       interval: 30s
@@ -77,7 +68,6 @@ services:
       retries: 3
       start_period: 10s
 
-  # Phase 2: Replaces genesys-memory custom build
   memory:
     build: ./memory
     container_name: ironsilo-memory
@@ -90,12 +80,6 @@ services:
     networks:
       - internal_bridge
     <<: *default-limits
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.memory.rule=PathPrefix(`/memory`)"
-      - "traefik.http.routers.memory.entrypoints=web"
-      - "traefik.http.routers.memory.service=memory"
-      - "traefik.http.services.memory.loadbalancer.server.url=http://memory:8020"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8020/health"]
       interval: 30s
@@ -123,13 +107,6 @@ services:
         limits:
           cpus: '2.0'
           memory: 3G
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api-proxy.rule=PathPrefix(`/api/v1`)"
-      - "traefik.http.routers.api-proxy.entrypoints=web"
-      - "traefik.http.routers.api-proxy.service=llm-proxy"
-      - "traefik.http.routers.api-proxy.middlewares=silk-road-auth"
-      - "traefik.http.services.llm-proxy.loadbalancer.server.url=http://llm-proxy:8001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
@@ -137,7 +114,6 @@ services:
       retries: 3
       start_period: 20s
 
-  # Phase 2: MCP server for RAG (replaces mcp-khoj)
   mcp-rag:
     build:
       context: .
@@ -157,12 +133,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mcp-rag.rule=PathPrefix(`/mcp/rag`)"
-      - "traefik.http.routers.mcp-rag.entrypoints=web"
-      - "traefik.http.routers.mcp-rag.service=mcp-rag"
-      - "traefik.http.services.mcp-rag.loadbalancer.server.url=http://mcp-rag:8000"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -186,12 +156,6 @@ services:
         limits:
           cpus: '0.5'
           memory: 256M
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.searxng.rule=PathPrefix(`/search`)"
-      - "traefik.http.routers.searxng.entrypoints=web"
-      - "traefik.http.routers.searxng.service=searxng"
-      - "traefik.http.services.searxng.loadbalancer.server.url=http://searxng:8080"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
       interval: 30s
@@ -237,15 +201,6 @@ services:
         limits:
           cpus: '1.0'
           memory: 1G
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.swarm.rule=PathPrefix(`/swarm`)"
-      - "traefik.http.routers.swarm.entrypoints=web"
-      - "traefik.http.routers.swarm.service=swarm-service"
-      - "traefik.http.routers.swarm-ws.rule=PathPrefix(`/ws/swarm`)"
-      - "traefik.http.routers.swarm-ws.entrypoints=web"
-      - "traefik.http.routers.swarm-ws.service=swarm-service"
-      - "traefik.http.services.swarm-service.loadbalancer.server.url=http://swarm-service:8095"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8095/health"]
       interval: 30s

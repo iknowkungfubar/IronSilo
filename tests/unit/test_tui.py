@@ -368,7 +368,7 @@ class TestContainerStatusWidget:
 
         containers = asyncio.run(test())
 
-        assert len(containers) == 7
+        assert len(containers) == 6
         assert all("name" in c for c in containers)
         assert all("status" in c for c in containers)
         assert any(c["name"] == "llm-proxy" for c in containers)

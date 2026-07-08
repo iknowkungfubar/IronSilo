@@ -12,7 +12,7 @@ Main Components:
 Environment Variables:
 - CDP_URL: Chrome DevTools Protocol WebSocket URL (default: ws://browser-node:9222)
 - OPENAI_API_BASE: LLM Proxy endpoint (default: http://llm-proxy:8001/api/v1)
-- GENESYS_URL: Genesys memory service URL (default: http://genesys-memory:8000)
+- MEMORY_URL: Memory service URL (default: http://memory:8020)
 """
 
 from swarm.harness_worker import HarnessWorker

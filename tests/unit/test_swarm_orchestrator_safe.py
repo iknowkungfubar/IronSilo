@@ -59,25 +59,25 @@ class TestManagerInit:
 
         assert manager.worker is mock_worker
 
-    def test_manager_default_genesys_url(self):
-        """Test Manager has correct default genesys_url."""
-        from swarm.orchestrator import Manager, GENESYS_URL
+    def test_manager_default_memory_url(self):
+        """Test Manager has correct default memory_url."""
+        from swarm.orchestrator import Manager, MEMORY_URL
 
         mock_worker = MagicMock()
         manager = Manager(mock_worker)
 
-        assert manager.genesys_url == GENESYS_URL
+        assert manager.memory_url == MEMORY_URL
 
 
 class TestManagerConfig:
     """Test Manager configuration."""
 
-    def test_genesys_url_default(self):
-        """Test GENESYS_URL has valid default."""
-        from swarm.orchestrator import GENESYS_URL
+    def test_memory_url_default(self):
+        """Test MEMORY_URL has valid default."""
+        from swarm.orchestrator import MEMORY_URL
 
-        assert "genesys-memory" in GENESYS_URL or "localhost" in GENESYS_URL
-        assert "8000" in GENESYS_URL
+        assert "memory" in MEMORY_URL or "localhost" in MEMORY_URL
+        assert "8020" in MEMORY_URL
 
 
 class TestManagerAttributes:
@@ -92,14 +92,14 @@ class TestManagerAttributes:
 
         assert hasattr(manager, "worker")
 
-    def test_manager_has_genesys_url(self):
-        """Test Manager has genesys_url attribute."""
+    def test_manager_has_memory_url(self):
+        """Test Manager has memory_url attribute."""
         from swarm.orchestrator import Manager
 
         mock_worker = MagicMock()
         manager = Manager(mock_worker)
 
-        assert hasattr(manager, "genesys_url")
+        assert hasattr(manager, "memory_url")
 
     def test_manager_has_extract_and_store_method(self):
         """Test Manager has extract_and_store method."""
@@ -148,15 +148,15 @@ class TestManagerMemoryNodeInput:
 class TestOrchestratorEnvironment:
     """Test environment variable configuration."""
 
-    def test_genesys_url_default(self):
-        """Test GENESYS_URL defaults to genesys-memory:8000."""
-        from swarm.orchestrator import GENESYS_URL
+    def test_memory_url_default(self):
+        """Test MEMORY_URL defaults to memory:8020."""
+        from swarm.orchestrator import MEMORY_URL
 
-        assert GENESYS_URL == "http://genesys-memory:8000"
+        assert MEMORY_URL == "http://memory:8020"
 
-    def test_genesys_url_from_environment_patched(self):
-        """Test GENESYS_URL can be patched for environment override testing."""
+    def test_memory_url_from_environment_patched(self):
+        """Test MEMORY_URL can be patched for environment override testing."""
         from swarm import orchestrator
 
-        with patch.object(orchestrator, "GENESYS_URL", "http://custom:9000"):
-            assert orchestrator.GENESYS_URL == "http://custom:9000"
+        with patch.object(orchestrator, "MEMORY_URL", "http://custom:9000"):
+            assert orchestrator.MEMORY_URL == "http://custom:9000"

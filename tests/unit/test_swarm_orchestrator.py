@@ -80,7 +80,7 @@ class TestManager:
         manager = Manager(mock_worker)
 
         assert manager.worker == mock_worker
-        assert manager.genesys_url == "http://genesys-memory:8000"
+        assert manager.memory_url == "http://memory:8020"
 
     @pytest.mark.asyncio
     async def test_extract_and_store_success(self, mock_worker, mock_httpx_client):
@@ -289,17 +289,17 @@ class TestManager:
 class TestOrchestratorEnvironment:
     """Test environment variable configuration."""
 
-    def test_genesys_url_default(self):
-        """Test GENESYS_URL defaults to genesys-memory:8000."""
-        from swarm.orchestrator import GENESYS_URL
+    def test_memory_url_default(self):
+        """Test MEMORY_URL defaults to memory:8020."""
+        from swarm.orchestrator import MEMORY_URL
 
-        assert GENESYS_URL == "http://genesys-memory:8000"
+        assert MEMORY_URL == "http://memory:8020"
 
-    def test_genesys_url_from_environment(self):
-        """Test GENESYS_URL can be overridden via environment."""
+    def test_memory_url_from_environment(self):
+        """Test MEMORY_URL can be overridden via environment."""
         import os
         from swarm import orchestrator
 
-        with patch.dict(os.environ, {"GENESYS_URL": "http://custom-gene:9000"}):
-            with patch.object(orchestrator, "GENESYS_URL", "http://custom-gene:9000"):
-                assert orchestrator.GENESYS_URL == "http://custom-gene:9000"
+        with patch.dict(os.environ, {"MEMORY_URL": "http://custom-gene:9000"}):
+            with patch.object(orchestrator, "MEMORY_URL", "http://custom-gene:9000"):
+                assert orchestrator.MEMORY_URL == "http://custom-gene:9000"

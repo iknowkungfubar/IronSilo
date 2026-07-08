@@ -1,0 +1,56 @@
+# IronSilo Caddyfile — replaces Traefik
+# Simpler config, lower memory (~20MB vs ~50MB for Traefik)
+#
+# Usage: caddy run --config Caddyfile
+# Or in Docker: caddy run --config /etc/caddy/Caddyfile
+
+{
+	admin off
+	debug false
+	servers :8080 {
+		trusted_proxies static private_ranges
+	}
+}
+
+:8080 {
+	route /api/v1/* {
+		uri strip_prefix /api/v1
+		reverse_proxy llm-proxy:8001
+	}
+
+	route /rag/* {
+		uri strip_prefix /rag
+		reverse_proxy rag:8010
+	}
+
+	route /memory/* {
+		uri strip_prefix /memory
+		reverse_proxy memory:8020
+	}
+
+	route /mcp/rag/* {
+		uri strip_prefix /mcp/rag
+		reverse_proxy mcp-rag:8000
+	}
+
+	route /search/* {
+		uri strip_prefix /search
+		reverse_proxy searxng:8080
+	}
+
+	route /swarm/* {
+		uri strip_prefix /swarm
+		reverse_proxy swarm-service:8095
+	}
+
+	route /ws/swarm/* {
+		uri strip_prefix /ws/swarm
+		reverse_proxy swarm-service:8095
+	}
+
+	# Default response
+	handle {
+		header Content-Type "application/json"
+		respond `{"status":"healthy","gateway":"caddy"}`
+	}
+}

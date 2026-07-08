@@ -82,10 +82,11 @@ class SetupWizard:
         """Step 3: Configure ports."""
         self.print_step(3, 5, "Configure Ports")
 
-        traefik = self.get_input("Traefik Web UI Port", "8080")
-        khoj = self.get_input("Khoj UI Port", "42110")
+        caddy_port = self.get_input("Caddy Gateway Port", "8080")
+        rag_port = self.get_input("RAG Service Port", "8010")
+        memory_port = self.get_input("Memory Service Port", "8020")
 
-        return {"traefik": traefik, "khoj": khoj}
+        return {"caddy": caddy_port, "rag": rag_port, "memory": memory_port}
 
     def configure_resources(self) -> dict:
         """Step 4: Configure resource limits."""
@@ -169,7 +170,7 @@ class SetupWizard:
         if non_interactive:
             self.config = {
                 "llm_endpoint": "http://localhost:11434",
-                "ports": {"traefik": "8080", "khoj": "42110"},
+                "ports": {"caddy": "8080", "rag": "8010", "memory": "8020"},
                 "resources": {"ram": "4G", "cpus": "1.0"},
                 "security": {"auth_enabled": False, "encryption": True},
             }

@@ -86,15 +86,15 @@ class LogViewerWidget(Static):
         """Generate sample log entries for demo."""
         sample_logs = [
             ("INFO", "llm-proxy", "Request received: /api/v1/chat/completions"),
-            ("INFO", "genesys-memory", "Connected to PostgreSQL"),
-            ("INFO", "khoj", "Index loaded: 156 documents"),
+            ("INFO", "memory", "Connected to sqlite-vec"),
+            ("INFO", "rag", "LightRAG index initialized"),
             ("WARNING", "llm-proxy", "High latency detected: 2.5s"),
-            ("INFO", "mcp-genesys", "MCP tool registered: create_memory_node"),
+            ("INFO", "mcp-rag", "MCP tool registered: search_documents"),
             ("DEBUG", "ironclaw-db", "Query executed: SELECT * FROM memories"),
             ("INFO", "llm-proxy", "Cache hit ratio: 78.5%"),
             ("ERROR", "searxng", "Search engine timeout: google"),
-            ("INFO", "llm-proxy", "Compression ratio: 42.3%"),
-            ("INFO", "mcp-khoj", "Document uploaded: report.pdf"),
+            ("INFO", "llm-proxy", "Headroom compression active"),
+            ("INFO", "mcp-rag", "Document indexed successfully"),
         ]
 
         base_time = datetime.now()

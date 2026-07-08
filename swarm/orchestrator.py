@@ -27,7 +27,7 @@ structlog.configure(
 
 logger = structlog.get_logger(__name__)
 
-GENESYS_URL = os.getenv("GENESYS_URL", "http://genesys-memory:8000")
+MEMORY_URL = os.getenv("MEMORY_URL", "http://memory:8020")
 RETRY_QUEUE: list[dict[str, Any]] = []
 DEAD_LETTER_QUEUE: list[dict[str, Any]] = []
 _shutdown_event: Optional[asyncio.Event] = None
@@ -66,7 +66,7 @@ class MemoryNodeInput(BaseModel):
 class Manager:
     def __init__(self, worker: HarnessWorker):
         self.worker = worker
-        self.genesys_url = GENESYS_URL
+        self.memory_url = MEMORY_URL
 
     async def extract_and_store(self, research_query: str) -> dict[str, Any]:
         logger.info("manager_extract_start", query=research_query)
@@ -96,11 +96,11 @@ class Manager:
         return result
 
     async def _store_memory(self, memory: MemoryNodeInput) -> dict[str, Any]:
-        logger.info("manager_storing_memory", url=f"{self.genesys_url}/api/v1/memories")
+        logger.info("manager_storing_memory", url=f"{self.memory_url}/api/v1/memories")
 
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                f"{self.genesys_url}/api/v1/memories",
+                f"{self.memory_url}/api/v1/memories",
                 json=memory.model_dump(),
             )
             response.raise_for_status()
