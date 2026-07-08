@@ -19,11 +19,11 @@ sys.modules["llmlingua"] = mock_llmlingua
 
 from proxy.proxy import (
     app,
-    _sanitize_content,
     _process_messages,
     _compress_content,
     circuit_breaker,
 )
+from proxy.compression import _sanitize_content
 from proxy.models import Message, Role
 
 
@@ -79,8 +79,8 @@ class TestCircuitBreakerIntegration:
     """Integration tests for circuit breaker pattern."""
 
     def test_circuit_breaker_status_is_dict(self):
-        """Test circuit breaker status is a dict with expected keys."""
-        status = circuit_breaker.status
+        """Test that circuit breaker returns a dict status."""
+        status = circuit_breaker.status()
 
         assert isinstance(status, dict)
         assert "state" in status

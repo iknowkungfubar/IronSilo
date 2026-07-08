@@ -14,8 +14,11 @@ _compressor: Any = None
 
 
 def _sanitize_content(content: str) -> str:
-    """Sanitize content before compression."""
-    return content.replace("\x00", "").strip()
+    """Sanitize content before compression. Strips control characters."""
+    import re
+    # Strip null bytes, control characters (0x00-0x1F, 0x7F), and normalize whitespace
+    content = re.sub(r"[\x00-\x1f\x7f]", "", content)
+    return content.strip()
 
 
 def _compress_content(content: str, compressor: Any = None, enabled: bool = False) -> str:

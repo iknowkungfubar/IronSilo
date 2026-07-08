@@ -49,7 +49,7 @@ class TestSanitizationPerformance:
 
     def test_sanitize_short_content_performance(self):
         """Test sanitization performance of short content."""
-        from proxy.proxy import _sanitize_content
+        from proxy.compression import _sanitize_content
 
         content = "Hello, world!"
 
@@ -62,7 +62,7 @@ class TestSanitizationPerformance:
 
     def test_sanitize_long_content_performance(self):
         """Test sanitization performance of long content."""
-        from proxy.proxy import _sanitize_content
+        from proxy.compression import _sanitize_content
 
         content = "x" * 10000
 
@@ -137,7 +137,7 @@ class TestCircuitBreakerPerformance:
 
         start = time.time()
         for _ in range(10000):
-            status = cb.status
+            status = cb.status()
             assert isinstance(status, dict)
         elapsed = time.time() - start
 

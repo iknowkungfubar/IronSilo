@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import os
 import time
+from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Dict
 
 import httpx
@@ -134,6 +135,7 @@ circuit_breaker = CircuitBreaker()
 
 
 
+@asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application lifespan manager.
@@ -273,7 +275,7 @@ async def metrics() -> JSONResponse:
                     "llm_endpoint": LLM_ENDPOINT,
                 },
                 "uptime_seconds": uptime,
-                "circuit_breaker": cb.status,
+                "circuit_breaker": cb.status(),
                 "compression": {
                     "threshold": COMPRESSION_THRESHOLD,
                     "rate": COMPRESSION_RATE,
