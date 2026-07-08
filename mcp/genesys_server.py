@@ -1,8 +1,12 @@
 """
-Genesys MCP server for IronSilo.
+Memory MCP server for IronSilo.
 
-This module provides MCP tools for integrating IronClaw with the Genesys
-memory system, enabling causal graph memory operations.
+Replaces Genesys with IronSilo Memory Service (sqlite-vec backed).
+Provides memory operations, session management, and vector search
+with zero Docker infrastructure requirements.
+
+Integration path: Stash (single Go binary, MCP-native) can replace this
+when 8-stage consolidation pipeline is needed.
 """
 
 from __future__ import annotations
@@ -24,22 +28,22 @@ from .models import (
 logger = structlog.get_logger(__name__)
 
 
-class GenesysMCPServer(MCPServerBase):
-    """MCP server for Genesys memory system integration."""
+class MemoryMCPServer(MCPServerBase):
+    """MCP server for IronSilo Memory Service."""
 
     def __init__(
         self,
-        genesys_api_url: str = "http://genesys-memory:8000",
+        memory_api_url: str = "http://memory:8020",
         timeout: float = 30.0,
     ):
         super().__init__(
-            name="genesys-mcp",
-            version="1.0.0",
-            description="MCP server for Genesys causal graph memory system",
-            capabilities=["memory", "causal-graph", "session"],
+            name="memory-mcp",
+            version="2.0.0",
+            description="MCP server for IronSilo Memory Service (replaces Genesys)",
+            capabilities=["memory", "session", "vector-search"],
         )
 
-        self.genesys_api_url = genesys_api_url.rstrip("/")
+        self.memory_api_url = memory_api_url.rstrip("/")
         self.timeout = timeout
         self._client: Optional[httpx.AsyncClient] = None
 
@@ -47,9 +51,9 @@ class GenesysMCPServer(MCPServerBase):
         self._register_tools()
 
     async def initialize(self) -> None:
-        """Initialize HTTP client and verify Genesys connection."""
+        """Initialize HTTP client and verify Memory API connection."""
         self._client = httpx.AsyncClient(
-            base_url=self.genesys_api_url,
+            base_url=self.memory_api_url,
             timeout=self.timeout,
             headers={"Content-Type": "application/json"},
         )
@@ -58,9 +62,9 @@ class GenesysMCPServer(MCPServerBase):
         try:
             response = await self._client.get("/health")
             response.raise_for_status()
-            self.logger.info("Connected to Genesys API")
+            self.logger.info("Connected to Memory API")
         except Exception as e:
-            self.logger.error("Failed to connect to Genesys API", error=str(e))
+            self.logger.error("Failed to connect to Memory API", error=str(e))
             raise
 
     async def shutdown(self) -> None:
@@ -679,13 +683,18 @@ class GenesysMCPServer(MCPServerBase):
 
 
 # Create FastAPI app
-def create_genesys_mcp_app(
-    genesys_api_url: str = "http://genesys-memory:8000",
+def create_memory_mcp_app(
+    memory_api_url: str = "http://memory:8020",
 ) -> Any:
-    """Create FastAPI app for Genesys MCP server."""
-    server = GenesysMCPServer(genesys_api_url=genesys_api_url)
+    """Create FastAPI app for Memory MCP server."""
+    server = MemoryMCPServer(memory_api_url=memory_api_url)
     return create_mcp_app(server)
 
 
 # For uvicorn
-app = create_genesys_mcp_app()
+app = create_memory_mcp_app()
+
+
+# Backward-compatible alias
+GenesysMCPServer = MemoryMCPServer
+create_genesys_mcp_app = create_memory_mcp_app

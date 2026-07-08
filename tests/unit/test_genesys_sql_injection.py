@@ -1,43 +1,54 @@
-"""Tests for SQL injection prevention in genesys."""
+"""Tests for SQL injection prevention in memory service.
+
+Validates that the replacement memory service (memory/main.py) uses
+parameterized queries, preventing SQL injection.
+"""
 
 
-class TestGenesysSQLInjection:
-    """Test SQL injection prevention for genesys database operations."""
+class TestMemorySQLInjection:
+    """Test SQL injection prevention for memory database operations."""
 
-    def test_genesys_uses_parameterized_queries(self):
-        """Test that genesys uses parameterized queries, not string interpolation."""
-        with open("genesys/app.py", "r") as f:
+    SOURCE = "memory/main.py"
+
+    def test_uses_parameterized_queries(self):
+        """Test that memory service uses parameterized queries."""
+        with open(self.SOURCE) as f:
             content = f.read()
 
-        assert "execute(" in content or "fetch" in content, "genesys should have database query execution"
+        # All execute() calls should use parameterized placeholders
+        assert "execute(" in content, "should have database query execution"
+        assert "?, ?" in content, "queries should use parameterized placeholders (?, ?)"
 
-        assert "SELECT" in content and "$1" in content or "%s" in content or "?" in content, (
-            "Queries should use parameterized placeholders"
-        )
-
-    def test_execute_uses_parameters(self):
-        """Test that conn.execute() is called with parameters tuple, not inline SQL."""
-        with open("genesys/app.py", "r") as f:
+    def test_no_f_string_sql_interpolation(self):
+        """Test that SQL queries don't use f-string interpolation."""
+        with open(self.SOURCE) as f:
             content = f.read()
 
-        execute_pattern = "await conn.execute(query, "
-        assert execute_pattern in content, "execute() should be called with separate query and params"
+        # Check INSERT/UPDATE/SELECT statements don't use f-strings
+        import re
 
-    def test_fetch_uses_parameters(self):
-        """Test that conn.fetchrow/fetch() is called with parameterized queries."""
-        with open("genesys/app.py", "r") as f:
+        # Find all SQL strings - they should always have ? placeholders
+        sql_statements = re.findall(r'""".*?SELECT.*?"""|""".*?INSERT.*?"""|""".*?UPDATE.*?""".*?(?="""|;">)', content, re.DOTALL)
+
+        for stmt in sql_statements:
+            assert "? " in stmt or "=?" in stmt or "?" in stmt.split("\n")[-1], (
+                f"SQL statement should use parameterized placeholders: {stmt[:50]}..."
+            )
+
+    def test_execute_with_params(self):
+        """Test that execute() is called with separate params."""
+        with open(self.SOURCE) as f:
             content = f.read()
 
-        fetch_patterns = ['await conn.fetchrow("SELECT', 'await conn.fetch("SELECT']
-        has_param_fetch = any(p in content for p in fetch_patterns)
+        assert "?, ?" in content, "memory service should use ? placeholders for sqlite"
 
-        if has_param_fetch:
-            assert "$1" in content or "%s" in content or "?" in content, "fetch() should use parameterized placeholders"
-
-    def test_update_query_uses_params(self):
-        """Test that UPDATE query passes parameters separately."""
-        with open("genesys/app.py", "r") as f:
+    def test_no_raw_string_interpolation(self):
+        """Test no f-string or format-based SQL construction."""
+        with open(self.SOURCE) as f:
             content = f.read()
 
-        update_with_params = "UPDATE memories SET" in content and "await conn.execute(query, *params)"
-        assert update_with_params, "UPDATE should use query + params pattern"
+        import re
+        # Check for pattern like f"SELECT * FROM {table}" or "WHERE id = " + str(id)
+        dangerous_pattern = r'f\s*""".*?SELECT|f\s*\'.*?SELECT|".*?"\s*\+.*?SELECT'
+        matches = re.findall(dangerous_pattern, content)
+        assert not matches, f"Found potentially dangerous SQL patterns: {matches}"

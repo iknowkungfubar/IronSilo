@@ -1,13 +1,17 @@
 """
 MCP (Model Context Protocol) integration for IronSilo.
 
-This package provides MCP servers for integrating IronClaw with various
-services like Genesys memory and Khoj RAG engine.
+Provides MCP servers for:
+- rag_memory: Memory operations (replaces Genesys)
+- rag_search: RAG search (replaces Khoj)
+
+Backward-compatible aliases are maintained so existing tests
+and imports continue to work.
 """
 
 from .framework import MCPServerBase, MCPFastAPIWrapper, MCPToolError, create_mcp_app
-from .genesys_server import GenesysMCPServer, create_genesys_mcp_app
-from .khoj_server import KhojMCPServer, create_khoj_mcp_app
+from .genesys_server import MemoryMCPServer, create_memory_mcp_app
+from .khoj_server import RAGMCPServer, create_rag_mcp_app
 from .models import (
     DocumentInfo,
     MCPError,
@@ -26,7 +30,7 @@ from .models import (
     Session,
 )
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 
 __all__ = [
     # Framework
@@ -34,7 +38,12 @@ __all__ = [
     "MCPFastAPIWrapper",
     "MCPToolError",
     "create_mcp_app",
-    # Servers
+    # New names
+    "MemoryMCPServer",
+    "create_memory_mcp_app",
+    "RAGMCPServer",
+    "create_rag_mcp_app",
+    # Backward-compatible aliases
     "GenesysMCPServer",
     "create_genesys_mcp_app",
     "KhojMCPServer",
