@@ -29,24 +29,6 @@ services:
       retries: 3
       start_period: 5s
 
-  ironclaw-db:
-    image: pgvector/pgvector:pg15
-    container_name: ironclaw-db
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB:-ironsilo_vault}
-      POSTGRES_USER: ${POSTGRES_USER:-silo_admin}
-      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD must be set in .env file}"
-    volumes:
-      - ironclaw-pg-data:/var/lib/postgresql/data
-    networks:
-      - internal_bridge
-    <<: *default-limits
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-silo_admin} -d ${POSTGRES_DB:-ironsilo_vault}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   rag:
     build: ./rag
     container_name: ironsilo-rag
@@ -71,12 +53,11 @@ services:
   memory:
     build: ./memory
     container_name: ironsilo-memory
-    depends_on:
-      ironclaw-db:
-        condition: service_healthy
     environment:
       - MEMORY_BACKEND=sqlite
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-silo_admin}:${POSTGRES_PASSWORD:-}@ironclaw-db:5432/${POSTGRES_DB:-ironsilo_vault}
+      - MEMORY_DB_PATH=/data/memory/memory.db
+    volumes:
+      - memory-data:/data/memory
     networks:
       - internal_bridge
     <<: *default-limits
@@ -215,7 +196,6 @@ networks:
     name: internal_bridge
 
 volumes:
-  ironclaw-pg-data:
   rag-data:
   memory-data:
   hf-cache:

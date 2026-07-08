@@ -59,9 +59,12 @@ class HarnessWorker:
     async def connect(self) -> None:
         logger.info("cwp_connecting", url=self.cdp_url)
         self.ws = await websockets.connect(self.cdp_url, extra_headers={"Origin": "chrome://inspect"})
+        self._receive_task = asyncio.create_task(self._receive_loop())
         logger.info("cwp_connected", url=self.cdp_url)
 
     async def disconnect(self) -> None:
+        if hasattr(self, '_receive_task') and self._receive_task:
+            self._receive_task.cancel()
         if self.ws:
             await self.ws.close()
             self.ws = None
