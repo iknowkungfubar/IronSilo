@@ -1,14 +1,13 @@
-"""
-IronSilo LLM Proxy - LLMLingua-based prompt compression proxy.
+"""IronSilo LLM Proxy - Headroom-powered prompt compression proxy.
 
 This module provides an OpenAI-compatible API proxy that:
 1. Intercepts chat completion requests
-2. Compresses prompts using LLMLingua to reduce token usage
+2. Compresses prompts using Headroom (CPU/ONNX, no GPU required)
 3. Forwards compressed requests to the upstream LLM endpoint
 4. Returns responses in OpenAI-compatible format
 
 Architecture:
-    Client -> Proxy (LLMLingua compression) -> Upstream LLM (LM Studio/Ollama/Lemonade)
+    Client -> Proxy (Headroom compression, CPU) -> Upstream LLM
 
 Features:
     - Automatic prompt compression for messages > 1000 chars
@@ -163,31 +162,24 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("http_client_initialized", max_connections=HTTP_CLIENT_MAX_CONNECTIONS)
 
     try:
-        from llmlingua import PromptCompressor
+        from headroom import Compressor
 
-        logger.info(
-            "loading_llmlingua",
-            model="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
-        )
+        logger.info("loading_headroom")
 
-        _compressor = PromptCompressor(
-            model_name="microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
-            use_llmlingua2=True,
-            device_map="cpu",
-        )
+        _compressor = Compressor()
         app.state.compressor = _compressor
         _compression_enabled = True
         app.state.compression_enabled = True
 
-        logger.info("llmlingua_loaded", compression_enabled=True)
+        logger.info("headroom_loaded", compression_enabled=True)
 
     except ImportError as e:
-        logger.warning("llmlingua_not_available", error=str(e), compression_enabled=False)
+        logger.warning("headroom_not_available", error=str(e), compression_enabled=False)
         app.state.compression_enabled = False
         _compression_enabled = False
 
     except Exception as e:
-        logger.error("llmlingua_load_failed", error=str(e), exc_info=True)
+        logger.error("headroom_load_failed", error=str(e), exc_info=True)
         app.state.compression_enabled = False
         _compression_enabled = False
 
@@ -215,13 +207,19 @@ app = FastAPI(
 setup_security_middleware(app)
 
 
-from proxy.compression import process_messages
-# Backward compatibility re-exports for tests
+from proxy.compression import process_messages, _sanitize_content
+
 _process_messages = process_messages
 
 
+# Backward-compat shim — delegates to Headroom via process_messages
 def _compress_content(content: str, compressor: Any = None, enabled: bool | None = None) -> str:
-    """Compress content — uses module-level _compressor for test compat."""
+    """Compress a single string using Headroom (backward compat).
+
+    Wraps content into a message list, compresses via process_messages,
+    and extracts the result. This maintains API compatibility for tests
+    that import _compress_content directly.
+    """
     if enabled is None:
         enabled = _compression_enabled
     if not enabled or not content:
@@ -229,14 +227,10 @@ def _compress_content(content: str, compressor: Any = None, enabled: bool | None
     comp = compressor or _compressor
     if comp is None:
         return content
-    try:
-        compressed = comp.compress_prompt(content, target_token=512)
-        result = compressed["compressed_prompt"] if isinstance(compressed, dict) else str(compressed)
-        logger.debug("Compressed %d -> %d chars", len(content), len(result))
-        return result
-    except Exception as e:
-        logger.warning("Compression failed: %s — returning uncompressed", e)
-        return content
+    msgs = [{"role": "user", "content": content}]
+    result = process_messages(msgs, comp, enabled, min_compress_chars=0)
+    return result[0]["content"] if result else content
+
 
 @app.get("/health")
 async def health_check() -> HealthResponse:

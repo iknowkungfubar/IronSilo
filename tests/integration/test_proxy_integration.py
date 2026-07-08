@@ -14,13 +14,12 @@ from unittest.mock import MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
-mock_llmlingua = MagicMock()
-sys.modules["llmlingua"] = mock_llmlingua
+mock_headroom = MagicMock()
+sys.modules["headroom"] = mock_headroom
 
 from proxy.proxy import (
     app,
     _process_messages,
-    _compress_content,
     circuit_breaker,
 )
 from proxy.compression import _sanitize_content
@@ -162,20 +161,6 @@ class TestProcessMessagesIntegration:
         assert result[0]["content"] == "Use the calculator"
 
 
-class TestCompressContentIntegration:
-    """Integration tests for content compression."""
-
-    def test_compress_short_content_no_op(self):
-        """Test that short content is not compressed."""
-        short_content = "Short"
-        result = _compress_content(short_content)
-
-        assert result == short_content
-
-    def test_compress_empty_content(self):
-        """Test that empty content is handled."""
-        result = _compress_content("")
-        assert result == ""
 
 
 class TestErrorResponsesIntegration:

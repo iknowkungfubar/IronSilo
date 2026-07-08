@@ -111,9 +111,7 @@ class TestCompressionLogic:
 
         try:
             mock_compressor = MagicMock()
-            mock_compressor.compress_prompt.return_value = {
-                "compressed_prompt": "compressed text",
-            }
+            mock_compressor.compress.return_value = "compressed text"
 
             proxy._compressor = mock_compressor
             proxy._compression_enabled = True
@@ -123,7 +121,7 @@ class TestCompressionLogic:
             result = _compress_content(long_content)
 
             # Verify compression was called
-            mock_compressor.compress_prompt.assert_called_once()
+            mock_compressor.compress.assert_called_once()
             assert result == "compressed text"
 
         finally:
@@ -141,7 +139,7 @@ class TestCompressionLogic:
 
         try:
             mock_compressor = MagicMock()
-            mock_compressor.compress_prompt.side_effect = Exception("Compression failed")
+            mock_compressor.compress.side_effect = Exception("Compression failed")
 
             proxy._compressor = mock_compressor
             proxy._compression_enabled = True
@@ -489,9 +487,8 @@ class TestLifespan:
         try:
             # Set compression enabled with mock
             mock_compressor = MagicMock()
-            mock_compressor.compress_prompt.return_value = {
-                "compressed_prompt": "compressed",
-            }
+            mock_compressor.compress.return_value = "compressed"
+
             proxy._compressor = mock_compressor
             proxy._compression_enabled = True
 
@@ -500,7 +497,7 @@ class TestLifespan:
             result = _compress_content(long_content)
 
             # Should have called compression
-            mock_compressor.compress_prompt.assert_called_once()
+            mock_compressor.compress.assert_called_once()
             assert result == "compressed"
 
         finally:
@@ -584,9 +581,8 @@ class TestLifespan:
         try:
             # Set compression enabled with mock
             mock_compressor = MagicMock()
-            mock_compressor.compress_prompt.return_value = {
-                "compressed_prompt": "compressed",
-            }
+            mock_compressor.compress.return_value = "compressed"
+
             proxy._compressor = mock_compressor
             proxy._compression_enabled = True
 
@@ -595,7 +591,7 @@ class TestLifespan:
             result = _compress_content(long_content)
 
             # Should have called compression
-            mock_compressor.compress_prompt.assert_called_once()
+            mock_compressor.compress.assert_called_once()
             assert result == "compressed"
 
         finally:
