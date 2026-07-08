@@ -13,9 +13,9 @@ docker compose ps
 
 ### Check specific service health
 ```bash
-docker compose exec traefik curl http://localhost:8080/api/ping
+docker compose exec caddy curl http://localhost:8080/api/ping
 docker compose exec llm-proxy curl http://localhost:8001/health
-docker compose exec genesys-memory curl http://localhost:8000/health
+docker compose exec memory curl http://localhost:8000/health
 docker compose exec swarm-service curl http://localhost:8095/health
 ```
 
@@ -37,14 +37,14 @@ docker compose restart llm-proxy
 
 ## 3. Memory Issues
 
-### Check genesys memory count
+### Check memory memory count
 ```bash
-curl http://localhost:8080/genesys/metrics | jq .memories_count
+curl http://localhost:8080/memory/metrics | jq .memories_count
 ```
 
 ### Clear all memories (if needed)
 ```bash
-curl -X DELETE http://localhost:8080/genesys/api/v1/memories/clear
+curl -X DELETE http://localhost:8080/memory/api/v1/memories/clear
 ```
 
 ---

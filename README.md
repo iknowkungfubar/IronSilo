@@ -25,7 +25,7 @@ Warning... this is a work in progress, needs more development and testing.
 
 **Turn your PC into a private, autonomous AI lab, without melting your GPU.**
 
-IronSilo is a completely local, cross-platform (Windows, macOS, Linux) AI development sandbox. It packages a state-of-the-art coding assistant, a wiki RAG engine, an autonomous browser swarm agent, and a context-compression proxy into a single, resource-capped environment powered by a **Traefik API Gateway**.
+IronSilo is a completely local, cross-platform (Windows, macOS, Linux) AI development sandbox. It packages a state-of-the-art coding assistant, a graph-enhanced RAG engine, an autonomous browser swarm agent, and a context-compression proxy into a single, resource-capped environment powered by a **Caddy API Gateway**.
 
 It runs on low-to-mid spec machines by strictly limiting background RAM to ~4GB, dedicating 100% of your GPU to your actual AI model.
 
@@ -35,13 +35,13 @@ It runs on low-to-mid spec machines by strictly limiting background RAM to ~4GB,
 
 ## 📦 What's in the Box?
 
-IronSilo uses a **True Silo** architecture: a single API Gateway (Traefik) on port 8080 that routes all traffic to internal services. No ports exposed to your network - everything stays private.
+IronSilo uses a **True Silo** architecture: a single API Gateway (Caddy) on port 8080 that routes all traffic to internal services with prefix stripping. No ports exposed to your network - everything stays private.
 
 **The Intelligence Layer (Locked in Docker Container):**
-* **Traefik API Gateway:** Single entry point on port 8080. Routes `/api/v1` to LLM Proxy, `/khoj` to Wiki, `/genesys` to Memory, `/search` to SearxNG, `/swarm` to Browser Swarm.
-* **Khoj:** Your private Wiki RAG engine. Drop in PDFs, markdown files, and notes, and ask your AI questions about them via its Web UI.
-* **Genesys & pgvector:** The Long-Term Memory (LTM) database. This utilizes an active causal graph, allowing autonomous agents to remember your preferences and causal reasoning across sessions.
-* **LLMLingua Proxy:** The central hub. It intercepts massive prompts and uses a tiny CPU model to compress the text by up to 40% before sending it to your GPU, saving your VRAM from crashing.
+* **Caddy API Gateway:** Single entry point on port 8080. Routes all traffic with automatic prefix stripping. Simple Caddyfile config replaces complex Traefik YAML.
+* **LightRAG:** Graph-enhanced private RAG engine (replaces Khoj). CPU-only, pip-installable, 34k⭐. Drop in documents and ask questions about them.
+* **Memory Service & sqlite-vec:** Persistent memory storage (replaces Genesys/pgvector). Zero infra — no separate Docker container needed.
+* **Headroom Proxy:** The central hub. Intercepts prompts and compresses them (CPU/ONNX) before sending to your GPU. Saves VRAM without accuracy loss. Replaces LLMLingua+torch.
 * **SearxNG:** Private, privacy-respecting web search. No Google/Bing tracking.
 * **Browser Swarm:** Autonomous web browsing via headless Chrome, controlled by AI.
 
@@ -125,7 +125,7 @@ pytest --cov=.
 
 ### Test Coverage
 
-- **Total Tests:** 933+ tests (933 passing, 4 skipped)
+- **Total Tests:** 870+ tests (870 passing, 4 skipped)
 - **Code Coverage:** 82%
 - **Test Types:**
   - Unit tests for all core modules
@@ -171,7 +171,8 @@ turintech-ironsilo-monitor
 Once the stack is running, access the monitoring dashboard:
 
 * **Health Dashboard:** http://localhost:8080/health
-* **Khoj Wiki:** http://localhost:8080/khoj
+* **RAG Search:** http://localhost:8080/rag/
+* **MCP Discover:** http://localhost:8080/mcp/rag/discover
 * **Prometheus Metrics:** http://localhost:8080/metrics
 
 ### Configuration

@@ -2,7 +2,7 @@
 
 ## Version: 2.1.1
 
-This document describes the API endpoints exposed through the Traefik API Gateway on port 8080.
+This document describes the API endpoints exposed through the Caddy API Gateway on port 8080.
 
 ## Base URL
 
@@ -22,7 +22,7 @@ X-API-Key: your-api-key
 
 ### LLM Proxy (`/api/v1`)
 
-The LLMLingua-based context compression proxy providing OpenAI-compatible API.
+The Headroom-based context compression proxy providing OpenAI-compatible API.
 
 #### POST `/api/v1/chat/completions`
 
@@ -109,11 +109,11 @@ Rotate the API key at runtime (requires `KEY_ROTATION_ENABLED=true`).
 
 ---
 
-### Genesys Memory (`/genesys`)
+### Memory Service Memory (`/memory`)
 
 Causal graph memory system with PostgreSQL persistence.
 
-#### POST `/genesys/memories`
+#### POST `/memory/memories`
 
 Create a new memory node.
 
@@ -140,7 +140,7 @@ Create a new memory node.
 }
 ```
 
-#### GET `/genesys/memories`
+#### GET `/memory/memories`
 
 List all memory nodes with optional filtering.
 
@@ -149,11 +149,11 @@ List all memory nodes with optional filtering.
 - `offset` (int, default 0) - Pagination offset
 - `memory_type` (string) - Filter by type
 
-#### GET `/genesys/memories/{id}`
+#### GET `/memory/memories/{id}`
 
 Get a specific memory node by ID.
 
-#### PUT `/genesys/memories/{id}`
+#### PUT `/memory/memories/{id}`
 
 Update a memory node.
 
@@ -165,11 +165,11 @@ Update a memory node.
 }
 ```
 
-#### DELETE `/genesys/memories/{id}`
+#### DELETE `/memory/memories/{id}`
 
 Delete a memory node.
 
-#### POST `/genesys/edges`
+#### POST `/memory/edges`
 
 Create a causal edge between two memory nodes.
 
@@ -183,15 +183,15 @@ Create a causal edge between two memory nodes.
 }
 ```
 
-#### GET `/genesys/edges`
+#### GET `/memory/edges`
 
 List all edges with optional filtering.
 
-#### GET `/genesys/sessions`
+#### GET `/memory/sessions`
 
 List all sessions.
 
-#### POST `/genesys/sessions`
+#### POST `/memory/sessions`
 
 Create a new session.
 
@@ -203,23 +203,23 @@ Create a new session.
 }
 ```
 
-#### GET `/genesys/metrics`
+#### GET `/memory/metrics`
 
 Prometheus metrics for the memory system.
 
 ---
 
-### Khoj Wiki (`/khoj`)
+### LightRAG Wiki (`/lightrag`)
 
 Private RAG wiki engine for document search and retrieval.
 
 #### Web UI
 
-Access Khoj at `http://localhost:8080/khoj` for the web interface.
+Access LightRAG at `http://localhost:8080/lightrag` for the web interface.
 
 #### API (Internal)
 
-Khoj provides internal API endpoints for:
+LightRAG provides internal API endpoints for:
 - Document upload
 - Semantic search
 - Index management
@@ -306,13 +306,13 @@ const ws = new WebSocket('ws://localhost:8080/ws/swarm');
 
 ### MCP Servers
 
-#### GET `/mcp/genesys/health`
+#### GET `/mcp/memory/health`
 
-Health check for Genesys MCP server.
+Health check for Memory Service MCP server.
 
-#### GET `/mcp/khoj/health`
+#### GET `/mcp/lightrag/health`
 
-Health check for Khoj MCP server.
+Health check for LightRAG MCP server.
 
 ---
 

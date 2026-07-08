@@ -41,13 +41,13 @@ Complete reference for all environment variables used in IronSilo.
 
 ---
 
-## Genesys Memory
+## Memory Service Memory
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `GENESYS_BACKEND` | `postgres` | Backend type: `postgres` or `memory` |
 | `GENESYS_EMBEDDER` | `local` | Embedding backend: `local` or `api` |
-| `GENESYS_URL` | `http://genesys-memory:8000` | Internal URL for Genesys service |
+| `GENESYS_URL` | `http://memory:8000` | Internal URL for Memory Service service |
 
 ---
 
@@ -57,7 +57,7 @@ Complete reference for all environment variables used in IronSilo.
 |----------|---------|-------------|
 | `CDP_URL` | `ws://browser-node:9222` | Chrome DevTools Protocol WebSocket URL |
 | `OPENAI_API_BASE` | `http://llm-proxy:8001/api/v1` | OpenAI-compatible API base URL |
-| `GENESYS_URL` | `http://genesys-memory:8000` | Genesys memory service URL |
+| `GENESYS_URL` | `http://memory:8000` | memory service URL |
 
 ---
 

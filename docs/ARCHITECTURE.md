@@ -6,19 +6,19 @@
 
 ## 1. Architecture Overview
 
-IronSilo is a private, local-first AI development sandbox using a **True Silo** architecture with a single entry point through a Traefik API Gateway.
+IronSilo is a private, local-first AI development sandbox using a **True Silo** architecture with a single entry point through a Caddy API Gateway.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                           HOST MACHINE                                       │
 │                                                                              │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
-│   │                     Traefik API Gateway (Port 8080)                 │   │
+│   │                     Caddy API Gateway (Port 8080)                 │   │
 │   │                                                                    │   │
 │   │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────┐  │   │
-│   │  │/api/v1   │  │/genesys   │  │/khoj     │  │/search   │  │/swarm│  │   │
+│   │  │/api/v1   │  │/memory   │  │/lightrag     │  │/search   │  │/swarm│  │   │
 │   │  │  ↓       │  │   ↓      │  │   ↓      │  │   ↓      │  │   ↓  │  │   │
-│   │  │LLM Proxy │  │Genesys   │  │  Khoj    │  │ SearxNG  │  │Swarm │  │   │
+│   │  │LLM Proxy │  │Memory Service   │  │  LightRAG    │  │ SearxNG  │  │Swarm │  │   │
 │   │  └──────────┘  └──────────┘  └──────────┘  └──────────┘  └──────┘  │   │
 │   │                                                                    │   │
 │   └─────────────────────────────────────────────────────────────────────┘   │
@@ -33,18 +33,18 @@ IronSilo is a private, local-first AI development sandbox using a **True Silo** 
 
 ### 1.1 True Silo Principles
 
-1. **Single Entry Point**: All traffic flows through port 8080 (Traefik)
+1. **Single Entry Point**: All traffic flows through port 8080 (Caddy)
 2. **No Direct Port Exposure**: Internal services are not directly accessible
-3. **X-Silo-Auth Header**: Middleware validates requests through Traefik
+3. **X-Silo-Auth Header**: Middleware validates requests through Caddy
 4. **Internal Network Isolation**: Docker `internal_bridge` network
 
 ---
 
 ## 2. Service Architecture
 
-### 2.1 Traefik API Gateway
+### 2.1 Caddy API Gateway
 
-**Container**: `traefik`
+**Container**: `caddy`
 **Port**: 8080 (HTTP), 8443 (HTTPS)
 
 **Responsibilities**:
@@ -54,7 +54,7 @@ IronSilo is a private, local-first AI development sandbox using a **True Silo** 
 - Load balancing
 
 **Configuration Files**:
-- `traefik.yml` - Static configuration
+- `caddy.yml` - Static configuration
 - `dynamic.yml` - Dynamic middleware configuration
 
 ### 2.2 LLM Proxy (`/api/v1`)
@@ -64,7 +64,7 @@ IronSilo is a private, local-first AI development sandbox using a **True Silo** 
 
 **Features**:
 - OpenAI-compatible chat completions API
-- LLMLingua-2 prompt compression (40% reduction)
+- Headroom-2 prompt compression (40% reduction)
 - Streaming response support
 - Circuit breaker pattern (5 failures → open)
 - Exponential backoff retry (3 attempts)
@@ -82,13 +82,13 @@ CIRCUIT_BREAKER_FAILURE_THRESHOLD: 5
 CIRCUIT_BREAKER_TIMEOUT: 30.0
 ```
 
-### 2.3 Genesys Memory (`/genesys`)
+### 2.3 Memory Service Memory (`/memory`)
 
-**Container**: `genesys-memory`
+**Container**: `memory`
 **Internal Port**: 8000
 
 **Architecture**:
-- **PostgreSQL** (pgvector) for persistent storage
+- **PostgreSQL** (sqlite-vec) for persistent storage
 - **In-memory fallback** when DB unavailable
 - **Connection pool** (min=1, max=10)
 
@@ -104,16 +104,16 @@ sessions (id, session_type, created_at, metadata)
 - `idx_edges_source` on `source_id`
 - `idx_edges_target` on `target_id`
 
-### 2.4 Khoj Wiki (`/khoj`)
+### 2.4 LightRAG Wiki (`/lightrag`)
 
-**Container**: `khoj`
+**Container**: `lightrag`
 **Internal Port**: 42110
 
 **Features**:
 - PDF/Markdown document ingestion
 - Semantic search
 - Anonymous mode (no auth required)
-- Web UI at `/khoj`
+- Web UI at `/lightrag`
 
 ### 2.5 SearxNG Search (`/search`)
 
@@ -176,16 +176,16 @@ sessions (id, session_type, created_at, metadata)
 ```
 Client → WebSocket → Orchestrator → HarnessWorker → CDP → browser-node
                      ↓
-              Genesys Memory
+              Memory Service Memory
               (result storage)
 ```
 
 ### 2.7 MCP Servers
 
-**Containers**: `mcp-genesys`, `mcp-khoj`
+**Containers**: `mcp-memory`, `mcp-lightrag`
 **Internal Port**: 8000 each
 
-**Purpose**: Expose Genesys memory and Khoj RAG as MCP (Model Context Protocol) tools for IronClaw.
+**Purpose**: Expose memory and LightRAG RAG as MCP (Model Context Protocol) tools for IronClaw.
 
 ---
 
@@ -205,15 +205,15 @@ networks:
 
 | Source | Destination | Protocol |
 |--------|-------------|----------|
-| Traefik | llm-proxy | HTTP |
-| Traefik | genesys-memory | HTTP |
-| Traefik | khoj | HTTP |
-| Traefik | searxng | HTTP |
-| Traefik | swarm-service | HTTP/WebSocket |
+| Caddy | llm-proxy | HTTP |
+| Caddy | memory | HTTP |
+| Caddy | lightrag | HTTP |
+| Caddy | searxng | HTTP |
+| Caddy | swarm-service | HTTP/WebSocket |
 | llm-proxy | host.docker.internal:8000 | HTTP |
 | swarm-service | browser-node:9222 | WebSocket |
-| mcp-genesys | genesys-memory:8000 | HTTP |
-| mcp-khoj | khoj:42110 | HTTP |
+| mcp-memory | memory:8000 | HTTP |
+| mcp-lightrag | lightrag:42110 | HTTP |
 
 ---
 
@@ -222,7 +222,7 @@ networks:
 ### 4.1 Authentication Flow
 
 ```
-Client Request → X-API-Key Header → Traefik Middleware → X-Silo-Auth → Service
+Client Request → X-API-Key Header → Caddy Middleware → X-Silo-Auth → Service
 ```
 
 **Middleware Chain**:
@@ -238,7 +238,7 @@ Client Request → X-API-Key Header → Traefik Middleware → X-Silo-Auth → S
 |---------|---------------|----------|
 | AES-256-GCM | cryptography library | `security/encryption.py` |
 | API Key Derivation | PBKDF2 (100k iterations) | `security/key_manager.py` |
-| SQL Injection Prevention | Parameterized queries | `genesys/app.py` |
+| SQL Injection Prevention | Parameterized queries | `memory/app.py` |
 | Input Sanitization | Control char removal | `proxy/proxy.py` |
 | Secret Scanning | gitleaks pre-commit hook | `.pre-commit-config.yaml` |
 | Request ID Tracking | X-Request-ID header | `security/middleware.py` |
@@ -251,7 +251,7 @@ Client Request → X-API-Key Header → Traefik Middleware → X-Silo-Auth → S
 
 ```
 1. Client → POST /api/v1/chat/completions
-2. Traefik → Route to llm-proxy:8001
+2. Caddy → Route to llm-proxy:8001
 3. llm-proxy:
    a. Validate API key
    b. Rate limit check
@@ -273,7 +273,7 @@ Client Request → X-API-Key Header → Traefik Middleware → X-Silo-Auth → S
    b. Submit task to orchestrator
    c. Orchestrator queues task
    d. HarnessWorker executes via CDP
-   e. Result stored in Genesys
+   e. Result stored in Memory Service
    f. Action broadcast to all clients
 3. Client receives real-time updates
 ```
@@ -284,13 +284,13 @@ Client Request → X-API-Key Header → Traefik Middleware → X-Silo-Auth → S
 
 | Service | CPU Limit | Memory Limit |
 |---------|-----------|--------------|
-| traefik | 0.5 | 128M |
+| caddy | 0.5 | 128M |
 | ironclaw-db | 1.0 | 512M |
-| genesys-memory | 1.0 | 512M |
-| khoj | 1.5 | 1G |
+| memory | 1.0 | 512M |
+| lightrag | 1.5 | 1G |
 | llm-proxy | 2.0 | 3G |
-| mcp-genesys | 0.5 | 256M |
-| mcp-khoj | 0.5 | 256M |
+| mcp-memory | 0.5 | 256M |
+| mcp-lightrag | 0.5 | 256M |
 | searxng | 0.5 | 256M |
 | browser-node | 1.0 | 1G |
 | swarm-service | 1.0 | 1G |
@@ -311,7 +311,7 @@ All services use structured logging with `structlog`:
 
 Prometheus metrics available at:
 - `/metrics` (llm-proxy)
-- `/metrics` (genesys-memory)
+- `/metrics` (memory)
 - `/metrics` (swarm-service)
 
 ### 7.3 Health Checks
@@ -328,8 +328,8 @@ All services have health checks configured in `docker-compose.yml`.
 # Backup PostgreSQL
 docker exec ironclaw-db pg_dump -U silo_admin ironsilo_vault > backup.sql
 
-# Backup Khoj data
-docker cp khoj:/root/.khoj ./khoj-backup
+# Backup LightRAG data
+docker cp lightrag:/root/.lightrag ./lightrag-backup
 ```
 
 ### 8.2 Recovery Procedures

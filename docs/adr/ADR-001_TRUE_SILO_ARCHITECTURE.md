@@ -1,4 +1,4 @@
-# ADR-001: True Silo Architecture with Traefik API Gateway
+# ADR-001: True Silo Architecture with Caddy API Gateway
 
 ## Status
 Accepted
@@ -19,13 +19,13 @@ We needed a solution that:
 4. Supported WebSocket connections for real-time features
 
 ## Decision
-We adopted a **True Silo Architecture** using Traefik as the API Gateway:
+We adopted a **True Silo Architecture** using Caddy as the API Gateway:
 
 ```
-Client → Traefik (port 8080) → Internal Services
+Client → Caddy (port 8080) → Internal Services
 ```
 
-All internal services are now hidden behind Traefik with:
+All internal services are now hidden behind Caddy with:
 - Single port exposure (8080)
 - X-Silo-Auth header middleware for authentication
 - Path-based routing to internal services
@@ -34,15 +34,15 @@ All internal services are now hidden behind Traefik with:
 
 ### Routing Configuration
 - `/api/v1` → LLM Proxy (port 8001)
-- `/khoj` → Khoj Wiki (port 42110)
-- `/genesys` → Genesys Memory (port 8000)
+- `/lightrag` → LightRAG Wiki (port 42110)
+- `/memory` → Memory Service Memory (port 8000)
 - `/mcp/*` → MCP Servers (port 8000)
 - `/search` → SearxNG (port 8080)
 - `/swarm` → Swarm Service (port 8095)
 - `/ws/swarm` → Swarm WebSocket (port 8095)
 
 ### Security
-- Traefik middleware validates `X-Silo-Auth` header
+- Caddy middleware validates `X-Silo-Auth` header
 - Internal services do not expose ports directly
 - CORS configured at gateway level
 
@@ -55,7 +55,7 @@ All internal services are now hidden behind Traefik with:
 - Simplified firewall rules
 
 **Cons:**
-- Traefik adds a potential single point of failure
+- Caddy adds a potential single point of failure
 - Additional latency (minimal, ~1ms)
 - More complex local development debugging
 
@@ -67,7 +67,7 @@ All internal services are now hidden behind Traefik with:
 - Easier to add new services behind the gateway
 
 ### Negative
-- Traefik configuration must be kept in sync with service changes
+- Caddy configuration must be kept in sync with service changes
 - Debugging requires tracing through the gateway
 
 ## Related Decisions

@@ -21,10 +21,10 @@ To support Windows, macOS, and Linux uniformly while maintaining security and pe
 ### 1. The Intelligence Sandbox (Docker Compose)
 The backend services (Memory, RAG, and Proxy) run inside strictly enforced Docker containers. This normalizes namespace mapping and network bridging across OS architectures while enforcing strict cgroup resource caps.
 * **Total Sandbox RAM Ceiling:** ~4.0 GB
-* **PostgreSQL (pgvector):** 512 MB
-* **Genesys Memory API:** 512 MB
-* **Khoj RAG Engine:** 1.0 GB
-* **LLMLingua Proxy:** 2.0 GB (CPU-Bound PyTorch)
+* **PostgreSQL (sqlite-vec):** 512 MB
+* **Memory Service Memory API:** 512 MB
+* **LightRAG RAG Engine:** 1.0 GB
+* **Headroom Proxy:** 2.0 GB (CPU-Bound PyTorch)
 
 ### 2. The Action Layer (Host & WASM)
 UI and file-editing tools are intentionally kept out of Docker to prevent workflow friction.
@@ -36,7 +36,7 @@ Running a local LLM on the host while the proxy resides in a container creates a
 **The Solution:** The Compose file injects `host.docker.internal:host-gateway`. This allows the FastAPI proxy to route optimized payloads to the host's port natively across all operating systems.
 
 ## The Context Optimization Proxy
-To support mid-range hardware (e.g., 8GB - 12GB VRAM GPUs), context window overflow is mitigated by a Python FastAPI proxy intercepting requests. It utilizes `microsoft/llmlingua-2-bert-base`. By restricting the `device_map` to `cpu`, we guarantee zero VRAM fragmentation, dedicating 100% of the GPU to the primary LLM inference server.
+To support mid-range hardware (e.g., 8GB - 12GB VRAM GPUs), context window overflow is mitigated by a Python FastAPI proxy intercepting requests. It utilizes `microsoft/headroom-2-bert-base`. By restricting the `device_map` to `cpu`, we guarantee zero VRAM fragmentation, dedicating 100% of the GPU to the primary LLM inference server.
 
 *Cache Persistence:* The proxy mounts a Docker volume `hf-cache`. This prevents the 1.1GB BERT model from redownloading upon container rebuilds.
 
@@ -47,6 +47,6 @@ IronClaw executes in a WebAssembly sandbox natively on the host to avoid nested 
   `curl --proto '=https' --tlsv1.2 -LsSf https://github.com/nearai/ironclaw/releases/latest/download/ironclaw-installer.sh | sh`
 
 ## Stateful Data & Teardown
-To avoid permission conflicts on Windows NTFS and macOS APFS, this architecture uses isolated Docker named volumes (`ironclaw-pg-data`, `khoj-data`). 
+To avoid permission conflicts on Windows NTFS and macOS APFS, this architecture uses isolated Docker named volumes (`ironclaw-pg-data`, `lightrag-data`). 
 * Safe shutdown: `docker compose down` (persists data)
 * Total wipe: `docker compose down -v` (destroys memory and databases)

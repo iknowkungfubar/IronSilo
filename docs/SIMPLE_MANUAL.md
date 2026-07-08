@@ -29,7 +29,7 @@ Your tools are now natively waiting for you:
   export OPENAI_API_KEY="local-sandbox"
   aider
   ```
-* **To Research (Khoj):** Open your web browser and go to `http://127.0.0.1:42110`. You can upload PDFs and chat with your private documents here.
+* **To Research (LightRAG):** Open your web browser and go to `http://127.0.0.1:42110`. You can upload PDFs and chat with your private documents here.
 * **To Automate (IronClaw):** Open your web browser and go to `http://127.0.0.1:8080`.
 
 ## Step 4: Shutting Down
