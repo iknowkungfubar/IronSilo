@@ -54,13 +54,13 @@ class TestMCPModelsContracts:
 
         request = MCPRequest(
             id="test-123",
-            tool="test_tool",
-            params={"key": "value"},
+            method="tools/call",
+            params={"name": "test_tool", "arguments": {"key": "value"}},
         )
 
         assert request.id == "test-123"
-        assert request.tool == "test_tool"
-        assert request.params == {"key": "value"}
+        assert request.method == "tools/call"
+        assert request.params == {"name": "test_tool", "arguments": {"key": "value"}}
 
     def test_mcp_response_model(self):
         """Test MCPResponse model with result."""

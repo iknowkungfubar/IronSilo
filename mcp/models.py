@@ -1,8 +1,13 @@
 """
 MCP (Model Context Protocol) models for IronSilo.
 
-This module defines the data models for MCP communication between
-IronClaw and various services (Genesys, Khoj, etc.).
+Updated for MCP 2026-07-28 RC stateless protocol:
+- _meta injection for every request/response
+- Tool annotations (readOnlyHint, idempotentHint, etc.)
+- ttlMs/cacheScope for list responses
+- MCP protocol version headers
+- W3C Trace Context support
+- JSON Schema 2020-12 (via Pydantic V2)
 """
 
 from __future__ import annotations
@@ -13,6 +18,9 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+# MCP Protocol Version
+MCP_PROTOCOL_VERSION = "2026-07-28"
 
 
 class MCPMessageType(str, Enum):
@@ -34,6 +42,31 @@ class MCPToolType(str, Enum):
     CUSTOM = "custom"
 
 
+class ToolAnnotation(BaseModel):
+    """MCP tool annotation hints (2025-06-18+).
+
+    Declares behaviour so clients can decide what to call
+    without prompting the user.
+    """
+
+    readOnlyHint: bool = False
+    idempotentHint: bool = False
+    destructiveHint: bool = False
+    openWorldHint: bool = True
+
+
+class ServerMeta(BaseModel):
+    """_meta payload injected into every MCP response.
+
+    Carries protocol version, server identity, and W3C Trace Context.
+    """
+
+    protocol_version: str = MCP_PROTOCOL_VERSION
+    server_name: str = ""
+    server_version: str = ""
+    traceparent: str = ""
+
+
 class MCPError(BaseModel):
     """MCP error model."""
 
@@ -53,18 +86,17 @@ class MCPError(BaseModel):
 
 
 class MCPRequest(BaseModel):
-    """MCP request model."""
+    """MCP request model with _meta support."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "type": "request",
-                "tool": "genesys",
-                "method": "create_memory_node",
+                "method": "tools/call",
                 "params": {
-                    "content": "User prefers Python for backend development",
-                    "metadata": {"category": "preference", "confidence": 0.9},
+                    "name": "create_memory_node",
+                    "arguments": {"content": "test"},
                 },
             }
         }
@@ -72,19 +104,20 @@ class MCPRequest(BaseModel):
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     type: MCPMessageType = MCPMessageType.REQUEST
-    tool: str
-    method: str = "call"
+    method: str = "tools/call"
     params: Dict[str, Any] = Field(default_factory=dict)
+    _meta: Optional[Dict[str, Any]] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class MCPResponse(BaseModel):
-    """MCP response model."""
+    """MCP response model with _meta support."""
 
     id: str
     type: MCPMessageType = MCPMessageType.RESPONSE
     result: Optional[Any] = None
     error: Optional[MCPError] = None
+    _meta: Optional[ServerMeta] = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @property
@@ -93,19 +126,29 @@ class MCPResponse(BaseModel):
 
 
 class MCPTool(BaseModel):
-    """MCP tool definition."""
+    """MCP tool definition with annotations and output schema."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
                 "name": "create_memory_node",
-                "description": "Create a new memory node in the causal graph",
+                "description": "Create a new memory node",
                 "tool_type": "memory",
-                "parameters": {
-                    "content": {"type": "string", "description": "Memory content"},
-                    "metadata": {"type": "object", "description": "Additional metadata"},
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "content": {"type": "string", "description": "Memory content"},
+                    },
                 },
-                "returns": {"type": "object", "properties": {"node_id": {"type": "string"}}},
+                "outputSchema": {
+                    "type": "object",
+                    "properties": {"node_id": {"type": "string"}},
+                },
+                "annotations": {
+                    "readOnlyHint": False,
+                    "idempotentHint": False,
+                    "destructiveHint": False,
+                },
             }
         }
     )
@@ -113,21 +156,25 @@ class MCPTool(BaseModel):
     name: str
     description: str
     tool_type: MCPToolType
-    parameters: Dict[str, Any] = Field(default_factory=dict)
-    returns: Dict[str, Any] = Field(default_factory=dict)
+    inputSchema: Dict[str, Any] = Field(default_factory=dict)
+    outputSchema: Dict[str, Any] = Field(default_factory=dict)
+    annotations: Optional[ToolAnnotation] = None
+    ttlMs: Optional[int] = None
+    cacheScope: Optional[str] = None
 
 
 class MCPServerInfo(BaseModel):
-    """MCP server information."""
+    """MCP server information for discovery endpoint."""
 
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
-                "name": "genesys-mcp",
-                "version": "1.0.0",
-                "description": "MCP server for Genesys memory system",
+                "name": "memory-mcp",
+                "version": "2.0.0",
+                "description": "MCP server for memory system",
                 "tools": [],
-                "capabilities": ["memory", "causal-graph", "session"],
+                "capabilities": ["memory", "search"],
+                "protocol_version": "2026-07-28",
             }
         }
     )
@@ -137,11 +184,24 @@ class MCPServerInfo(BaseModel):
     description: str
     tools: List[MCPTool] = Field(default_factory=list)
     capabilities: List[str] = Field(default_factory=list)
+    protocol_version: str = MCP_PROTOCOL_VERSION
+
+
+class ServerCard(BaseModel):
+    """MCP server card for /.well-known/mcp/server-card.json discovery."""
+
+    name: str
+    version: str = "1.0.0"
+    description: str = ""
+    transport: str = "http+sse"
+    endpoint_url: str = "/mcp"
+    capabilities: List[str] = Field(default_factory=list)
+    protocol_version: str = MCP_PROTOCOL_VERSION
 
 
 # Memory-specific MCP models
 class MemoryNode(BaseModel):
-    """Memory node for Genesys causal graph."""
+    """Memory node model."""
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     content: str
@@ -159,7 +219,7 @@ class MemoryNode(BaseModel):
 
 
 class MemoryEdge(BaseModel):
-    """Causal edge between memory nodes."""
+    """Edge between memory nodes."""
 
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     from_node_id: str
@@ -208,7 +268,7 @@ class Session(BaseModel):
 
 # Search-specific MCP models
 class SearchQuery(BaseModel):
-    """Search query for Khoj RAG."""
+    """Search query."""
 
     query: str
     max_results: int = Field(default=10, ge=1, le=50)
@@ -216,7 +276,7 @@ class SearchQuery(BaseModel):
 
 
 class SearchResult(BaseModel):
-    """Search result from Khoj."""
+    """Search result."""
 
     id: str
     title: str
@@ -239,6 +299,12 @@ class DocumentInfo(BaseModel):
 
 # Export all models
 __all__ = [
+    # Constants
+    "MCP_PROTOCOL_VERSION",
+    # Models
+    "ServerMeta",
+    "ServerCard",
+    "ToolAnnotation",
     # Enums
     "MCPMessageType",
     "MCPToolType",

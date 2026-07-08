@@ -463,19 +463,17 @@ class TestMCPModels:
     def test_mcp_request_model(self):
         """Test MCPRequest model."""
         request = MCPRequest(
-            tool="test_tool",
-            method="call",
-            params={"param": "value"},
+            method="tools/call",
+            params={"name": "test_tool", "arguments": {"param": "value"}},
         )
 
-        assert request.tool == "test_tool"
-        assert request.method == "call"
-        assert request.params == {"param": "value"}
+        assert request.method == "tools/call"
+        assert request.params == {"name": "test_tool", "arguments": {"param": "value"}}
         assert request.type == MCPMessageType.REQUEST
 
     def test_mcp_request_auto_id(self):
         """Test MCPRequest auto-generated ID."""
-        request = MCPRequest(tool="test")
+        request = MCPRequest(method="tools/list")
 
         assert request.id is not None
         assert len(request.id) > 0
