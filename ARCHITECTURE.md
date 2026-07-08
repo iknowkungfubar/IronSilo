@@ -2,292 +2,133 @@
 
 ## Overview
 
-IronSilo is a local-first, cross-platform AI development sandbox that provides a secure, resource-capped environment for AI-assisted coding. It combines multiple specialized tools into a cohesive workspace that runs entirely on your local machine.
+IronSilo is a local-first, cross-platform AI development sandbox that provides a secure, resource-capped environment for AI-assisted coding. It combines specialized tools into a cohesive workspace running entirely on your local machine.
 
-## System Architecture
+## System Architecture (July 2026)
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           HOST MACHINE                                       │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────────────────┐  │
-│  │   Aider CLI     │  │   IronClaw PAI  │  │   Local LLM (LM Studio/     │  │
-│  │   (The Hands)   │  │   (The Brain)   │  │   Ollama/Lemonade)          │  │
-│  └────────┬────────┘  └────────┬────────┘  └─────────────┬───────────────┘  │
-│           │                    │                          │                  │
-│           │                    │                          │ :8000            │
-│           ▼                    ▼                          ▼                  │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                     DOCKER CONTAINER LAYER                           │    │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌─────────┐  │    │
-│  │  │ LLMLingua    │  │   Khoj       │  │   Genesys    │  │  pgvector│  │    │
-│  │  │ Proxy        │  │   (RAG)      │  │   (LTM)      │  │  (DB)   │  │    │
-│  │  │ :8001        │  │   :42110     │  │   :8002      │  │  :5432  │  │    │
-│  │  └──────────────┘  └──────────────┘  └──────────────┘  └─────────┘  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-│  Resource Limits: ~4GB RAM total | CPU per service capped                    │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          HOST MACHINE                                     │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
+│  │  OpenCode / Aider │  │  Hermes Agent   │  │  LM Studio / Ollama   │  │
+│  │  (Coding Engine)  │  │  (Orchestrator) │  │  (Local LLM, :8000)  │  │
+│  └────────┬─────────┘  └────────┬─────────┘  └───────────┬────────────┘  │
+│           │                     │                         │               │
+│           │                     │                         │               │
+│           ▼                     ▼                         ▼               │
+│  ┌──────────────────────────────────────────────────────────────────────┐ │
+│  │                    CADDY API GATEWAY (:8080)                          │ │
+│  │  ┌──────────┐ ┌──────┐ ┌────────┐ ┌──────────┐ ┌──────┐ ┌────────┐  │ │
+│  │  │ Headroom │ │ RAG │ │ Memory │ │ SearxNG │ │ Swarm│ │ MCP   │  │ │
+│  │  │ Proxy    │ │RAG  │ │ Srv    │ │ (Search)│ │(Brws)│ │Srvrs  │  │ │
+│  │  │ :8001    │ │:8010│ │ :8020  │ │ :8080   │ │:8095 │ │:8000+ │  │ │
+│  │  └──────────┘ └──────┘ └────────┘ └──────────┘ └──────┘ └────────┘  │ │
+│  └──────────────────────────────────────────────────────────────────────┘ │
+│                                                                           │
+│  Resource Limits: ~4GB RAM total | CPU per service capped                 │
+└───────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Components
+## Component Overview
 
-### 1. Action Layer (Runs on Host)
+### 1. API Gateway: Caddy (`Caddyfile`)
 
-#### Aider CLI - "The Hands"
-- **Purpose**: Specialized coding engine with AST-based code editing
-- **Location**: Installed natively on host via `pip install aider-chat`
-- **Features**:
-  - Abstract Syntax Tree (AST) mapping for 4x token efficiency
-  - Direct file system access for reading/writing code
-  - Bash command execution for running tests, linters, builds
-  - Git integration for version control
+- **Port**: 8080
+- **Memory**: ~20MB (vs Traefik's ~50MB)
+- **Config**: Single `Caddyfile` with route + reverse_proxy directives
+- **Routing**: Prefix-based with automatic stripping (`/rag/*`, `/memory/*`, `/search/*`, etc.)
+- **Replaces**: Traefik (docker labels + 186-line traefik.yml + 28-line dynamic.yml)
 
-#### IronClaw PAI - "The Brain"
-- **Purpose**: Personal AI orchestrator for research and automation
-- **Location**: Runs in WebAssembly (WASM) sandbox
-- **Features**:
-  - Web research with privacy (via SearxNG)
-  - Schedule management and cron jobs
-  - Zero-trust execution environment
-  - API key isolation from host OS
+### 2. Headroom Proxy (`proxy/`)
 
-### 2. Intelligence Layer (Docker Containers)
-
-#### LLMLingua Proxy (`proxy/`)
 - **Port**: 8001
-- **Purpose**: Context compression and API proxy
-- **Technology**: FastAPI + LLMLingua-2-BERT
+- **Purpose**: Context compression — intercepts prompts, compresses them, forwards to LLM
+- **Technology**: FastAPI + Headroom (CPU/ONNX, 57.7k⭐)
+- **Key features**: CacheAligner, cross-agent memory, output reduction
+- **Compression ratio**: 47-92% with ±0.001 GSM8K accuracy delta
+- **Replaces**: LLMLingua + torch (2GB dependency, GPU-required)
+
+### 3. LightRAG RAG Engine (`rag/`)
+
+- **Port**: 8010
+- **Purpose**: Graph-enhanced RAG with CPU-only inference
+- **Technology**: FastAPI + LightRAG (34k⭐, MIT, pip-installable)
+- **Features**: Semantic search, hybrid retrieval, document indexing
+- **Replaces**: Khoj (Docker container, ~1GB, questionable maintenance)
+
+### 4. Memory Service (`memory/`)
+
+- **Port**: 8020
+- **Purpose**: Persistent agent memory with vector search
+- **Technology**: FastAPI + sqlite-vec (zero-infra embedding DB)
+- **Features**: Memory CRUD, session tracking, semantic search
+- **Replaces**: Genesys (custom Docker build, 471-line app.py, causal graph)
+
+### 5. MCP Servers (`mcp/`)
+
+- **Protocol**: MCP 2026-07-28 RC (stateless, JSON-RPC 2.0)
 - **Features**:
-  - Automatic prompt compression (up to 40% reduction)
-  - OpenAI-compatible API endpoint
-  - Streaming response support
-  - Semantic model routing via classifier
-  - Health check endpoint
-- **Key Files**:
-  - `proxy/proxy.py` - Main FastAPI application
-  - `proxy/models.py` - Pydantic request/response models
-  - `proxy/classifier.py` - Semantic routing classifier
+  - `_meta` injection on all responses (protocol version, server identity, trace context)
+  - `server/discover` endpoint with capability discovery
+  - W3C Trace Context via `traceparent` header
+  - Tool annotations (readOnlyHint, idempotentHint, destructiveHint)
+  - `ttlMs`/`cacheScope` on list responses
+- **Memory MCP** (`mcp/genesys_server.py`): MemoryMCPServer — CRUD + search
+- **RAG MCP** (`mcp/khoj_server.py`): RAGMCPServer — document search + indexing
 
-#### Khoj - Wiki RAG Engine
-- **Port**: 42110
-- **Purpose**: Private document search and Q&A
-- **Features**:
-  - PDF, Markdown, and text document ingestion
-  - Semantic search over personal knowledge base
-  - Web UI for interactive queries
-  - API for programmatic access
+### 6. SearxNG
 
-#### Genesys - Long-Term Memory
-- **Port**: 8002
-- **Purpose**: Causal graph memory system
-- **Features**:
-  - Persistent memory across sessions
-  - Causal relationship tracking
-  - Preference learning
-  - Reasoning chain storage
-- **Backend**: PostgreSQL with pgvector
+- **Port**: 8080 (internal)
+- **Purpose**: Private, privacy-respecting meta-search engine
+- **Replaces**: Direct Google/Bing API access
 
-#### pgvector - Vector Database
-- **Port**: 5432
-- **Purpose**: Vector storage for Genesys and semantic search
-- **Technology**: PostgreSQL 15 with pgvector extension
-- **Database**: `ironsilo_vault`
+### 7. Browser Swarm (`swarm/`)
 
-#### MCP Servers (`mcp/`)
-- **Genesys MCP** (port 8003): Exposes Genesys memory as MCP server
-- **Khoj MCP** (port 8004): Exposes Khoj RAG as MCP server
-- **Purpose**: Standardized interface for agent memory and knowledge access
+- **Port**: 8095
+- **Purpose**: Autonomous web browsing via headless Chrome
+- **Technology**: FastAPI + CDP (Chrome DevTools Protocol)
+- **Components**: HarnessWorker (CDP client), Manager (research orchestrator)
 
 ## Data Flow
 
-### Code Editing Flow
 ```
-User -> Aider CLI -> LLMLingua Proxy -> Local LLM
-         |              |
-         |              +-- Compress context
-         |              +-- Forward to LLM
-         |
-         +-- Apply diffs to files
-         +-- Run tests/linters
-         +-- Commit to Git
-```
-
-### Research Flow
-```
-User -> IronClaw -> SearxNG (private search)
-         |
-         +-- LLMLingua Proxy -> Local LLM
-         |
-         +-- Store findings in Genesys
-         +-- Query Khoj for related docs
+User Request
+    │
+    ▼
+Caddy Gateway (:8080)
+    │
+    ├── /api/v1/*    → Headroom Proxy (:8001) → Local LLM (:8000)
+    ├── /rag/*       → LightRAG (:8010)
+    ├── /memory/*    → Memory Service (:8020)
+    ├── /mcp/*       → MCP Servers (:8000+)
+    ├── /search/*    → SearxNG (:8080)
+    ├── /swarm/*     → Swarm Service (:8095)
+    └── /*           → Default response (health check)
 ```
 
-### Memory Flow
+### Agent Research Flow
+
 ```
-Agent Action -> Genesys API -> pgvector
-                |
-                +-- Store causal relationships
-                +-- Update preference model
-                +-- Index for retrieval
-```
-
-## Security Architecture
-
-### Resource Isolation
-- **Memory**: Docker containers limited to ~4GB total
-- **CPU**: Per-container CPU limits (0.5-2.0 cores)
-- **GPU**: 100% dedicated to host LLM (proxy runs on CPU only)
-
-### Network Isolation
-- **Internal**: Docker bridge network for inter-container communication
-- **External**: Only necessary ports exposed (8001, 42110, 8080)
-- **Sandbox**: IronClaw runs in WASM sandbox, no direct host access
-
-### Data Security
-- **Encryption at rest**: AES-256-GCM for sensitive data
-- **Key management**: Secure key rotation and storage
-- **No hardcoded secrets**: Environment-based configuration
-
-## Configuration
-
-### Environment Variables
-```bash
-# LLM Endpoint
-LLM_ENDPOINT=http://host.docker.internal:8000/v1/chat/completions
-
-# Compression Settings
-COMPRESSION_THRESHOLD=1000  # Characters before compression
-COMPRESSION_RATE=0.6        # Target compression ratio
-
-# Database
-POSTGRES_DB=ironsilo_vault
-POSTGRES_USER=silo_admin
-POSTGRES_PASSWORD=silo_password
+Agent → MCP/tools/call → RAG MCP → LightRAG → Search results
+     └→ Memory MCP → Memory Service → Historical context
+     └→ Swarm → Browser automation → Web data
 ```
 
-### Resource Limits
-```yaml
-# docker-compose.yml resource limits
-ironclaw-db:       1.0 CPU, 512MB RAM
-genesys-memory:    1.0 CPU, 512MB RAM
-khoj:              1.5 CPU, 1GB RAM
-llm-proxy:         2.0 CPU, 3GB RAM
-mcp-genesys:       0.5 CPU, 256MB RAM
-mcp-khoj:          0.5 CPU, 256MB RAM
-```
+## Key Design Decisions
 
-## Development
+| Decision | Before | After | Rationale |
+|----------|--------|-------|-----------|
+| Compression | LLMLingua+torch (2GB) | Headroom (200MB) | CPU/ONNX, no GPU needed |
+| Cache | Redis (Docker) | diskcache (in-process) | One fewer container |
+| RAG | Khoj (Docker, 1GB) | LightRAG (Python, ~300MB) | Graph-enhanced, active dev |
+| Memory | Genesys (causal graph) | sqlite-vec (embedded) | Zero infra, simpler |
+| MCP | Session-based | Stateless (2026-07-28) | Protocol compliance |
+| Gateway | Traefik (50MB) | Caddy (20MB) | Simpler config, lower memory |
+| Tracing | Custom tracing.py | W3C Trace Context | Standard compliance |
 
-### Project Structure
-```
-IronSilo/
-├── proxy/              # LLMLingua proxy service
-│   ├── proxy.py        # FastAPI application
-│   ├── models.py       # Pydantic models
-│   ├── classifier.py   # Semantic routing
-│   └── Dockerfile
-├── mcp/                # MCP server implementations
-│   ├── genesys_server.py
-│   ├── khoj_server.py
-│   └── framework.py
-├── genesys/            # Memory system
-│   └── Dockerfile
-├── security/           # Encryption modules
-│   ├── encryption.py
-│   └── key_manager.py
-├── tui/                # Terminal UI
-│   ├── app.py
-│   └── widgets/
-├── tests/              # Test suites
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-└── docs/               # Documentation
-```
+## Testing
 
-### Testing Strategy
-- **Unit Tests**: Test individual components in isolation
-- **Integration Tests**: Test component interactions
-- **E2E Tests**: Test full system workflows
-- **Coverage Target**: 80%+ (currently 81.6%)
-- **Test Status**: 664 tests passing, 0 failures
-
-### Build & Run
-```bash
-# Install dependencies
-pip install -e ".[dev]"
-
-# Run tests
-pytest tests/ -v
-
-# Start workspace
-./Start_Workspace.sh
-
-# Stop workspace
-./Stop_Workspace.sh
-```
-
-## API Reference
-
-### LLMLingua Proxy API
-
-#### POST /api/v1/chat/completions
-OpenAI-compatible chat completion endpoint.
-
-**Request:**
-```json
-{
-  "messages": [
-    {"role": "user", "content": "Hello, world!"}
-  ],
-  "model": "qwen2.5-coder",
-  "temperature": 0.7,
-  "stream": false
-}
-```
-
-**Response:**
-```json
-{
-  "id": "chatcmpl-abc123",
-  "object": "chat.completion",
-  "choices": [
-    {
-      "index": 0,
-      "message": {
-        "role": "assistant",
-        "content": "Hello! How can I help you?"
-      },
-      "finish_reason": "stop"
-    }
-  ],
-  "usage": {
-    "prompt_tokens": 10,
-    "completion_tokens": 8,
-    "total_tokens": 18
-  }
-}
-```
-
-#### GET /health
-Health check endpoint.
-
-**Response:**
-```json
-{
-  "status": "healthy",
-  "version": "2.1.1",
-  "compression_enabled": true,
-  "llm_endpoint": "http://host.docker.internal:8000/v1/chat/completions",
-  "uptime_seconds": 3600.5
-}
-```
-
-## Future Roadmap
-
-See [ROADMAP.md](./ROADMAP.md) for planned features including:
-- AES-256 encryption for all data at rest
-- Semantic model routing for optimal performance
-- Cross-session KV caching for faster responses
-- IronSilo Terminal Dashboard (TUI)
-- Desktop Command Center (GUI)
+- **874 tests** (870 passing, 4 skipped)
+- **Coverage**: ~82%
+- **Test types**: Unit, integration, e2e, fuzz, contract, load
+- **Run**: `pytest tests/ -v`
