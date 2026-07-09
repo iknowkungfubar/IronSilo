@@ -1,12 +1,8 @@
 """
-Memory MCP server for IronSilo.
+Memory MCP server core class.
 
-Replaces Genesys with IronSilo Memory Service (sqlite-vec backed).
-Provides memory operations, session management, and vector search
-with zero Docker infrastructure requirements.
-
-Integration path: Stash (single Go binary, MCP-native) can replace this
-when 8-stage consolidation pipeline is needed.
+Provides the MemoryMCPServer class that manages memory operations,
+session management, and vector search via the IronSilo Memory API.
 """
 
 from __future__ import annotations
@@ -16,8 +12,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 import structlog
 
-from .framework import MCPServerBase, MCPToolError, create_mcp_app
-from .models import (
+from ..framework import MCPServerBase, MCPToolError
+from ..models import (
     MCPToolType,
     MemoryEdge,
     MemoryNode,
@@ -680,21 +676,3 @@ class MemoryMCPServer(MCPServerBase):
 
         result = await handler(node_id=memory_id, max_depth=kwargs.get("max_depth", 5))
         return {"chain": result.get("chain", []), "edges": result.get("edges", []), **result}
-
-
-# Create FastAPI app
-def create_memory_mcp_app(
-    memory_api_url: str = "http://memory:8020",
-) -> Any:
-    """Create FastAPI app for Memory MCP server."""
-    server = MemoryMCPServer(memory_api_url=memory_api_url)
-    return create_mcp_app(server)
-
-
-# For uvicorn
-app = create_memory_mcp_app()
-
-
-# Backward-compatible alias
-GenesysMCPServer = MemoryMCPServer
-create_genesys_mcp_app = create_memory_mcp_app
