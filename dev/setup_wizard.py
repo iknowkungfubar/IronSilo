@@ -16,8 +16,8 @@ class SetupWizard:
 
     def __init__(self):
         self.config = {}
-        self._api_key = ""     # Never written to disk — use env var IRONSILO_API_KEY
-        self._password = ""    # Never written to disk — use env var IRONSILO_PASSWORD
+        self._api_key = ""  # Never written to disk — use env var IRONSILO_API_KEY
+        self._password = ""  # Never written to disk — use env var IRONSILO_PASSWORD
         self.config_file = Path.home() / ".config" / "ironsilo" / "config.env"
 
     def print_header(self):

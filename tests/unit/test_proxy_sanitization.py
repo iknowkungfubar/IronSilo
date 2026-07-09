@@ -9,18 +9,14 @@ class TestProxySanitization:
         with open("proxy/compression.py", "r") as f:
             content = f.read()
 
-        assert "_sanitize_content" in content, (
-            "Proxy should have a sanitize_content function in compression module"
-        )
+        assert "_sanitize_content" in content, "Proxy should have a sanitize_content function in compression module"
 
     def test_proxy_sanitizes_user_content(self):
         """Test that user content is sanitized before LLM call."""
         with open("proxy/proxy.py", "r") as f:
             content = f.read()
 
-        assert "_process_messages" in content, (
-            "Proxy should sanitize content in _process_messages or similar"
-        )
+        assert "_process_messages" in content, "Proxy should sanitize content in _process_messages or similar"
 
     def test_sanitize_removes_control_characters(self):
         """Test that sanitization removes control characters."""
@@ -36,6 +32,4 @@ class TestProxySanitization:
         with open("proxy/compression.py", "r") as f:
             content = f.read()
 
-        assert "\\x00" in content or "null" in content, (
-            "Sanitization should handle null bytes in compression module"
-        )
+        assert "\\x00" in content or "null" in content, "Sanitization should handle null bytes in compression module"

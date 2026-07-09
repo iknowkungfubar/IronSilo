@@ -161,8 +161,6 @@ class TestProcessMessagesIntegration:
         assert result[0]["content"] == "Use the calculator"
 
 
-
-
 class TestErrorResponsesIntegration:
     """Integration tests for error response handling."""
 

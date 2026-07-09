@@ -18,7 +18,6 @@ import structlog
 from .framework import MCPServerBase, MCPToolError, create_mcp_app
 from .models import (
     MCPToolType,
-    SearchQuery,
 )
 
 logger = structlog.get_logger(__name__)
@@ -237,7 +236,6 @@ def create_rag_mcp_app(
     rag_api_url: str = "http://rag:8010",
 ) -> Any:
     """Create FastAPI app for RAG MCP server."""
-    from .framework import create_mcp_app
     server = RAGMCPServer(rag_api_url=rag_api_url)
     return create_mcp_app(server)
 

@@ -24,6 +24,7 @@ _compressor: Any = None
 def _sanitize_content(content: str) -> str:
     """Sanitize content before compression. Strips control characters."""
     import re
+
     content = re.sub(r"[\x00-\x1f\x7f]", "", content)
     return content.strip()
 
@@ -35,6 +36,7 @@ def _get_compressor() -> Any:
         return _compressor
     try:
         from headroom import Compressor
+
         _compressor = Compressor()
         logger.info("Headroom compressor initialized (CPU/ONNX)")
     except ImportError:
@@ -66,12 +68,12 @@ def _compress_content(content: str, compressor: Any = None, enabled: bool = Fals
 
 def _get_role(msg):
     """Get role from a message (dict or object)."""
-    return msg.get("role") if isinstance(msg, dict) else msg.role.value if hasattr(msg.role, 'value') else msg.role
+    return msg.get("role") if isinstance(msg, dict) else msg.role.value if hasattr(msg.role, "value") else msg.role
 
 
 def _get_content(msg):
     """Get content from a message (dict or object)."""
-    return msg.get("content") if isinstance(msg, dict) else getattr(msg, 'content', "")
+    return msg.get("content") if isinstance(msg, dict) else getattr(msg, "content", "")
 
 
 def _normalize_msg(msg):

@@ -735,6 +735,7 @@ class TestKhojMCPExecuteTools:
     async def test_upload_document_validation_errors(self):
         """Test upload document validation errors."""
         from mcp.khoj_server import KhojMCPServer
+
         server = KhojMCPServer()
         tool_func = server._tools["upload_document"]
         with pytest.raises(MCPToolError) as exc_info:
@@ -745,6 +746,7 @@ class TestKhojMCPExecuteTools:
     async def test_upload_document_empty_content(self):
         """Test uploading document with empty content."""
         from mcp.khoj_server import KhojMCPServer
+
         server = KhojMCPServer()
         tool_func = server._tools["upload_document"]
         with pytest.raises(MCPToolError):
@@ -879,6 +881,7 @@ class TestKhojMCPExecuteTools:
 
         assert server._client is not None
         mock_client.get.assert_called_once_with("/health")
+
     @pytest.mark.asyncio
     async def test_initialize_connection_warning(self):
         """Test server initialization with connection warning."""

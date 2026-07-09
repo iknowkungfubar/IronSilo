@@ -4,11 +4,9 @@ Replaces old testes for genesys/app.py which was removed in Phase 2.
 Tests cover the sqlite-vec backed memory service.
 """
 
-import json
 import os
 import tempfile
 import shutil
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -17,6 +15,7 @@ import pytest
 def reset_memory_state():
     """Reset memory service state and use temp DB between tests."""
     import memory.main as mem
+
     mem._initialized = False
     tmpdir = tempfile.mkdtemp()
     os.environ["MEMORY_DB_PATH"] = os.path.join(tmpdir, "test.db")
@@ -51,6 +50,7 @@ class TestMemoryEndpoints:
     def test_health_endpoint(self):
         """Test health endpoint returns ok."""
         from memory.main import app
+
         assert app.title == "IronSilo Memory"
 
     @pytest.mark.asyncio

@@ -109,9 +109,7 @@ async def create_memory(req: MemoryCreate):
     conn.commit()
     return {
         "id": str(memory_id),
-        "created_at": conn.execute(
-            "SELECT created_at FROM memories WHERE id=?", (memory_id,)
-        ).fetchone()["created_at"],
+        "created_at": conn.execute("SELECT created_at FROM memories WHERE id=?", (memory_id,)).fetchone()["created_at"],
     }
 
 
@@ -181,6 +179,9 @@ async def create_session(req: SessionCreate):
         (session_id, req.user_id, json.dumps(req.metadata)),
     )
     conn.commit()
-    return {"id": session_id, "created_at": conn.execute(
-        "SELECT created_at FROM sessions WHERE id=?", (cur.lastrowid,)
-    ).fetchone()["created_at"]}
+    return {
+        "id": session_id,
+        "created_at": conn.execute("SELECT created_at FROM sessions WHERE id=?", (cur.lastrowid,)).fetchone()[
+            "created_at"
+        ],
+    }

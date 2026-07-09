@@ -22,7 +22,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from typing import Any, Callable, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import structlog
@@ -30,7 +30,6 @@ import structlog
 from .models import (
     MCPError,
     MCPMessageType,
-    MCPRequest,
     MCPResponse,
     MCP_PROTOCOL_VERSION,
     MCPTool,

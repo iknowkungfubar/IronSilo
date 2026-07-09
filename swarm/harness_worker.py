@@ -63,7 +63,7 @@ class HarnessWorker:
         logger.info("cwp_connected", url=self.cdp_url)
 
     async def disconnect(self) -> None:
-        if hasattr(self, '_receive_task') and self._receive_task:
+        if hasattr(self, "_receive_task") and self._receive_task:
             self._receive_task.cancel()
         if self.ws:
             await self.ws.close()

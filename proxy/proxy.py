@@ -33,6 +33,8 @@ import httpx
 import structlog
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse, StreamingResponse
+from proxy.circuit_breaker import CircuitBreaker
+from proxy.compression import process_messages
 
 # Import models - handle both package and standalone execution
 try:
@@ -126,12 +128,8 @@ HTTP_CLIENT_MAX_KEEPALIVE = int(os.getenv("HTTP_CLIENT_MAX_KEEPALIVE", "20"))
 HTTP_CLIENT_TIMEOUT = float(os.getenv("HTTP_CLIENT_TIMEOUT", "60.0"))
 
 
-
-from proxy.circuit_breaker import CircuitBreaker
-
 # Singleton circuit breaker instance
 circuit_breaker = CircuitBreaker()
-
 
 
 @asynccontextmanager
@@ -206,8 +204,6 @@ app = FastAPI(
 # Apply security middleware
 setup_security_middleware(app)
 
-
-from proxy.compression import process_messages, _sanitize_content
 
 _process_messages = process_messages
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -24,7 +23,7 @@ def get_rag():
     if _rag is not None:
         return _rag
     try:
-        from lightrag import LightRAG, QueryParam
+        from lightrag import LightRAG
         from lightrag.llm import gpt_4o_mini_complete
 
         working_dir = os.getenv("RAG_WORKING_DIR", "/data/rag")
@@ -70,7 +69,7 @@ async def search(req: SearchRequest):
             "results": [
                 {
                     "id": str(hash(str(result)[:100])),
-                    "title": f"Result {i+1}",
+                    "title": f"Result {i + 1}",
                     "content": str(result),
                     "score": 1.0 - (i * 0.1),
                     "source": "lightrag",

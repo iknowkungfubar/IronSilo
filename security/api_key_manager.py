@@ -28,7 +28,7 @@ def _is_rotation_enabled() -> bool:
 
 def _get_api_key_hash(key: str) -> str:
     """Get SHA256 hash of API key for comparison."""
-    return hashlib.pbkdf2_hmac('sha256', key.encode(), b'ironsilo_salt', 600_000).hex()
+    return hashlib.pbkdf2_hmac("sha256", key.encode(), b"ironsilo_salt", 600_000).hex()
 
 
 def _generate_api_key() -> str:

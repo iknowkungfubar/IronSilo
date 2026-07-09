@@ -28,7 +28,9 @@ class TestMemorySQLInjection:
         import re
 
         # Find all SQL strings - they should always have ? placeholders
-        sql_statements = re.findall(r'""".*?SELECT.*?"""|""".*?INSERT.*?"""|""".*?UPDATE.*?""".*?(?="""|;">)', content, re.DOTALL)
+        sql_statements = re.findall(
+            r'""".*?SELECT.*?"""|""".*?INSERT.*?"""|""".*?UPDATE.*?""".*?(?="""|;">)', content, re.DOTALL
+        )
 
         for stmt in sql_statements:
             assert "? " in stmt or "=?" in stmt or "?" in stmt.split("\n")[-1], (
@@ -48,6 +50,7 @@ class TestMemorySQLInjection:
             content = f.read()
 
         import re
+
         # Check for pattern like f"SELECT * FROM {table}" or "WHERE id = " + str(id)
         dangerous_pattern = r'f\s*""".*?SELECT|f\s*\'.*?SELECT|".*?"\s*\+.*?SELECT'
         matches = re.findall(dangerous_pattern, content)

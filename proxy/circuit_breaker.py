@@ -2,6 +2,7 @@
 
 Extracted from proxy.py for independent testability.
 """
+
 from __future__ import annotations
 
 import time
