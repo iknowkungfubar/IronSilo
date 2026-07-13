@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy only the mcp/ directory and its requirements
 COPY mcp/ /app/mcp/
-COPY mcp/requirements.txt /app/
+COPY requirements.txt /app/
 
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
