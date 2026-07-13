@@ -40,7 +40,7 @@ jobs:
       - name: Run linting
         run: |
           ruff check .
-          mypy proxy swarm genesys security mcp pipeline cache tui setup --ignore-missing-imports || true
+          mypy proxy swarm security mcp pipeline cache tui setup --ignore-missing-imports || true
 
       - name: Run tests with coverage
         run: |
