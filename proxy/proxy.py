@@ -205,8 +205,6 @@ app = FastAPI(
 setup_security_middleware(app)
 
 
-from proxy.compression import process_messages
-
 _process_messages = process_messages
 
 

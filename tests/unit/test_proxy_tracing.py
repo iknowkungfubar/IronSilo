@@ -10,9 +10,8 @@ Tests cover:
 - Context extraction from FastAPI requests
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 
 
 class TestNoOpSpan:
