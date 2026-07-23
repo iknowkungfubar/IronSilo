@@ -25,7 +25,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@b5d4b8a5d7a8f7b2c8e3e3d5d4b4f6a2c3d5e7f # v5
+        uses: astral-sh/setup-uv@v9.0.0 # v5
         with:
           enable-cache: true
 
@@ -66,7 +66,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install uv
-        uses: astral-sh/setup-uv@b5d4b8a5d7a8f7b2c8e3e3d5d4b4f6a2c3d5e7f # v5
+        uses: astral-sh/setup-uv@v9.0.0 # v5
         with:
           enable-cache: true
 
