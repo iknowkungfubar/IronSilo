@@ -1,67 +1,291 @@
-# OS generated files
-.DS_Store
-Thumbs.db
-*.swp
-
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-.env
-.venv*/
-.venv/
 
-# Coverage
-.coverage
-coverage.xml
-htmlcov/
+# C extensions
+*.so
 
-# Build artifacts
-*.egg-info/
-dist/
+# Distribution / packaging
+.Python
 build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Local databases
-tasks.db
+# PyInstaller
+#  Usually these files are written by a python script to pack
+#  a python application is executable, but in other views it is
+#  as the first step when debugging your application.
+*.manifest
+*.spec
 
-# Docker volumes (Safety catch)
-pg-data/
-khoj-data/
-hf-cache/
-.aider*
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
 
-# Hermes agent artifacts
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Qt designer
+*.ui
+
+# Cell
+ *.cache
+
+# PyCharm
+.idea/
+
+# .vscode
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.suo
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIconHub
+*.srf
+
+# Thumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+ehthumbs.db
+ehthumbs_vista.xml
+
+# Directories
+.fuse_hidden*
+.DS_Store
+.TemporaryItems
+.Trashes
+.Network Trash Folder
+.TheVolumes Cache
+.MobileBackups
+.Spotlight-V100
+.fseventsd
+.apdisk
+
+# Temporary files that match *~
+*~
+
+# C Extensions
+*.o
+*.so
+*.lo
+*.la
+*.obj
+*.exe
+*.out
+*.app
+*.iis
+*.sln
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# Bundle tool output
+*.5
+*.6
+*.8
+
+# Dotnet
+/bin/
+/obj/
+
+# Testing folder created by .NET when using Coverlet Collect
+coverlet.collect.results*
+
+# Ocarina of Time Randomizer
+output/
+backup/
+
+# ROMs
+*.nes
+*.smc
+*.sfc
+*.gba
+*.gbc
+*.gb
+*.nds
+*.3ds
+*.cia
+
+# Minecraft
+logs/
+crash-reports/
+
+# Mods
+mods/
+
+# World
+saves/
+
+# Resourcepacks
+resourcepacks/
+
+# Shaders
+shaders/
+
+# Modpack
+modpack/
+
+# CurseForge
+manifest.json
+
+# Overwolf
+manifest.json
+
+# Launchers
+MultiMC/
+TechnicLauncher/
+ATLauncher/
+VoidLauncher/
+
+# Curse
+curse/
+
+# FTB
+ftb/
+
+# Technic
+technic/
+
+# ATLauncher
+atlauncher/
+
+# VoidLauncher
+voidlauncher/
+
+# Feed The Beast
+feedthebeast/
+
+# Luna Client
+lunaclient/
+
+# Labymod
+labymod/
+
+# Replay Mod
+replaymod/
+
+# LabyMod
+labymod/
+
+# Lunar Client
+lunarclient/
+
+# Salwyrr
+salwyrr/
+
+# PvP Lounge
+pvplounge/
+
+# PvP Land
+pvpland/
+
+# PvP Warehouse
+pvpwarehouse/
+
+# Lunar Client
+lunarclient/
+
+# Salwyrr
+salwyrr/
+
+# PvP Lounge
+pvplounge/
+
+# PvP Land
+pvpland/
+
+# PvP Warehouse
+pvpwarehouse/
+
+# Lunar Client
+lunarclient/
+
+# Salwyrr
+salwyrr/
+
+# PvP Lounge
+pvplounge/
+
+# PvP Land
+pvpland/
+
+# PvP Warehouse
+pvpwarehouse/
+
+# AI Agent Artifacts - MUST BE IGNORED
 .hermes/
-
-# AI agent artifacts (local context — never committed)
-CLAUDE.md
-AGENTS.md
-RULES.md
-SOUL.md
-.cursor/
-.cursorrules
-.windsurfrules
-.opencode/
-COPILOT_INSTRUCTIONS.md
-.claude/
-
-# Audit artifacts
-SECURITY_AUDIT_FINDINGS.md
-
-# AI Agent Artifacts (SECRETS)
 AGENTS.md
 CLAUDE.md
-CLAUDE_CODE.md
-.cursorrules
-.cursor/**
-.windsurfrules
 CONTEXT.md
 MEMORY.md
-ai-instructions.md
-ai-context.md
-.github/copilot-instructions.md
-.hermes/
+.cursorrules
+.windsurfrules
+.cursor/
 SKILL.md
 *.hermes-profile
-# Allow test-status.json for release gate
-!.hermes/test-status.json
