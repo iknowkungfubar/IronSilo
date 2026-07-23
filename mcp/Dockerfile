@@ -8,9 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only the mcp/ directory and its requirements
-COPY mcp/ /app/mcp/
-COPY mcp/requirements.txt /app/
+# Copy MCP server code and requirements (build context is mcp/)
+COPY . /app/mcp/
+COPY requirements.txt /app/
 
 RUN pip install --no-cache-dir -r /app/requirements.txt
 

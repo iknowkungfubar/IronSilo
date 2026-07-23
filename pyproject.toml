@@ -74,7 +74,7 @@ branch = true
 exclude_lines = [ "pragma: no cover", "def __repr__", "raise AssertionError", "raise NotImplementedError", "if __name__ == .__main__.", "if TYPE_CHECKING:", "class .*\\bProtocol\\):", "@(abc\\.)?abstractmethod",]
 show_missing = true
 skip_covered = true
-fail_under = 30
+fail_under = 40
 
 [tool.coverage.html]
 directory = "htmlcov"

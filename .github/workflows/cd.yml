@@ -25,13 +25,13 @@ jobs:
         service: [proxy, genesys, mcp]
     
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
     
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
     
     - name: Log in to Container Registry
-      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+      uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -39,7 +39,7 @@ jobs:
     
     - name: Extract metadata
       id: meta
-      uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+      uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6
       with:
         images: ghcr.io/${{ github.repository }}-${{ matrix.service }}
         tags: |
@@ -50,7 +50,7 @@ jobs:
           type=sha
     
     - name: Build and push Docker image
-      uses: docker/build-push-action@ca052bb54ab0790a636c9b5f226502c73d547a25 # v5
+      uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
       with:
         context: ./${{ matrix.service }}
         push: true
@@ -65,7 +65,7 @@ jobs:
     permissions:
       contents: write
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
     
     - name: Update docker-compose.yml
       run: |
@@ -94,7 +94,7 @@ jobs:
       contents: write
     if: github.event_name == 'release'
     steps:
-    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
     
     - name: Generate changelog
       id: changelog
@@ -107,7 +107,7 @@ jobs:
         echo "EOF" >> $GITHUB_OUTPUT
     
     - name: Update release notes
-      uses: softprops/action-gh-release@26994186c0ac3ef5cae75ac16aa32e8153525f77 # v1
+      uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
       with:
         body: |
           ## IronSilo ${{ github.event.release.tag_name }}

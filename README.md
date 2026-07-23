@@ -21,6 +21,12 @@ Warning... this is a work in progress, needs more development and testing.
   <a href="https://github.com/iknowkungfubar/IronSilo/actions/workflows/ci.yml">
     <img src="https://img.shields.io/github/actions/workflow/status/iknowkungfubar/IronSilo/ci.yml?style=flat-square&label=CI" alt="CI">
   </a>
+  <a href="https://github.com/iknowkungfubar/IronSilo/actions/workflows/codeql.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/iknowkungfubar/IronSilo/codeql.yml?style=flat-square&label=CodeQL" alt="CodeQL">
+  </a>
+  <a href="https://github.com/iknowkungfubar/IronSilo/actions/workflows/cd.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/iknowkungfubar/IronSilo/cd.yml?style=flat-square&label=CD" alt="CD">
+  </a>
 </p>
 
 **Turn your PC into a private, autonomous AI lab, without melting your GPU.**
