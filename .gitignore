@@ -63,3 +63,5 @@ ai-context.md
 .hermes/
 SKILL.md
 *.hermes-profile
+# Allow test-status.json for release gate
+!.hermes/test-status.json
