@@ -83,12 +83,12 @@ class QueryRequest(BaseModel):
 
 
 @app.get("/health")
-async def health():
+async def health() -> dict:
     return {"status": "ok", "engine": "sqlite-vec"}
 
 
 @app.post("/api/v1/memories")
-async def create_memory(req: MemoryCreate):
+async def create_memory(req: MemoryCreate) -> dict:
     if not req.content.strip():
         raise HTTPException(status_code=422, detail="Content must not be empty")
     import json
@@ -114,7 +114,7 @@ async def create_memory(req: MemoryCreate):
 
 
 @app.post("/api/v1/memories/search")
-async def search_memories(req: QueryRequest):
+async def search_memories(req: QueryRequest) -> list:
     if not req.query.strip():
         raise HTTPException(status_code=422, detail="Query must not be empty")
 
@@ -139,7 +139,7 @@ async def search_memories(req: QueryRequest):
 
 
 @app.get("/api/v1/memories/{memory_id}")
-async def get_memory(memory_id: int):
+async def get_memory(memory_id: int) -> dict:
     conn = get_db()
     row = conn.execute(
         "SELECT id, content, metadata, created_at, updated_at FROM memories WHERE id=?",
@@ -151,7 +151,7 @@ async def get_memory(memory_id: int):
 
 
 @app.put("/api/v1/memories/{memory_id}")
-async def update_memory(memory_id: int, req: MemoryCreate):
+async def update_memory(memory_id: int, req: MemoryCreate) -> dict:
     import json
 
     conn = get_db()
@@ -168,7 +168,7 @@ async def update_memory(memory_id: int, req: MemoryCreate):
 
 
 @app.post("/api/v1/sessions")
-async def create_session(req: SessionCreate):
+async def create_session(req: SessionCreate) -> dict:
     import uuid
     import json
 

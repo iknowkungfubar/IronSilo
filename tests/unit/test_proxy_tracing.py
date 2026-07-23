@@ -13,7 +13,6 @@ Tests cover:
 from unittest.mock import MagicMock
 
 
-
 class TestNoOpSpan:
     """Test NoOpSpan - the safe fallback span implementation."""
 
