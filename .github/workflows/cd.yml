@@ -22,7 +22,7 @@ jobs:
     
     strategy:
       matrix:
-        service: [proxy, genesys, mcp]
+        service: [proxy, mcp]
     
     steps:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -76,7 +76,6 @@ jobs:
         
         # Update image tags in docker-compose.yml
         sed -i "s|image: ghcr.io/${{ github.repository }}-proxy:.*|image: ghcr.io/${{ github.repository }}-proxy:$VERSION|g" docker-compose.yml
-        sed -i "s|image: ghcr.io/${{ github.repository }}-genesys:.*|image: ghcr.io/${{ github.repository }}-genesys:$VERSION|g" docker-compose.yml
         sed -i "s|image: ghcr.io/${{ github.repository }}-mcp:.*|image: ghcr.io/${{ github.repository }}-mcp:$VERSION|g" docker-compose.yml
     
     - name: Commit updated docker-compose.yml
