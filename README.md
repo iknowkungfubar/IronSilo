@@ -91,13 +91,10 @@ python3 setup/wizard.py
 docker compose up -d
 
 # 5. Check status
-python3 -m ironsilo status
+ironsilo status
 ```
 
-**Power Tip:** Add this alias to your `~/.bashrc` or `~/.zshrc`:
-```bash
-alias ironsilo='python3 -m ironsilo'
-```
+The CLI is installed as the `ironsilo` command by `pip install -e .` (see `[project.scripts]` in `pyproject.toml`) — no alias needed.
 
 ---
 
