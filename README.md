@@ -91,13 +91,10 @@ python3 setup/wizard.py
 docker compose up -d
 
 # 5. Check status
-python3 -m ironsilo status
+ironsilo monitor
 ```
 
-**Power Tip:** Add this alias to your `~/.bashrc` or `~/.zshrc`:
-```bash
-alias ironsilo='python3 -m ironsilo'
-```
+The CLI is installed as the `ironsilo` command by `pip install -e .` (see `[project.scripts]` in `pyproject.toml`) — no alias needed.
 
 ---
 
@@ -143,32 +140,27 @@ pytest --cov=.
 
 ### Command Line Interface
 
-IronSilo provides a CLI for managing your AI development environment:
+IronSilo provides a terminal dashboard CLI (see `[project.scripts]` in `pyproject.toml`):
 
 ```bash
-# Show status of all services
-ironsilo status
+# Launch the terminal monitor dashboard (default command)
+ironsilo monitor
 
-# View real-time logs
-ironsilo logs
-
-# Access the web dashboard
+# Launch the terminal dashboard (alias of monitor)
 ironsilo dashboard
 
-# Run diagnostics
-ironsilo health
+# Show version and exit
+ironsilo --version
 ```
 
-All commands also have `turintech-` prefixed aliases for portfolio consistency:
+The same commands are also available with `turintech-` prefixed aliases for portfolio consistency:
 
 ```bash
 # Same commands with Turintech prefix
-turintech-ironsilo status
-turintech-ironsilo logs
+turintech-ironsilo monitor
 turintech-ironsilo dashboard
-turintech-ironsilo health
-turintech-ironsilo-setup
 turintech-ironsilo-monitor
+turintech-ironsilo-setup
 ```
 
 ### Web Dashboard

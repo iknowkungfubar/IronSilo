@@ -16,7 +16,7 @@ def main() -> None:
 
     Usage:
         ironsilo monitor
-        ironsilo-dashboard
+        ironsilo dashboard
     """
     parser = argparse.ArgumentParser(
         description="IronSilo Terminal Dashboard",
