@@ -91,7 +91,7 @@ python3 setup/wizard.py
 docker compose up -d
 
 # 5. Check status
-ironsilo status
+ironsilo monitor
 ```
 
 The CLI is installed as the `ironsilo` command by `pip install -e .` (see `[project.scripts]` in `pyproject.toml`) — no alias needed.
