@@ -140,32 +140,27 @@ pytest --cov=.
 
 ### Command Line Interface
 
-IronSilo provides a CLI for managing your AI development environment:
+IronSilo provides a terminal dashboard CLI (see `[project.scripts]` in `pyproject.toml`):
 
 ```bash
-# Show status of all services
-ironsilo status
+# Launch the terminal monitor dashboard (default command)
+ironsilo monitor
 
-# View real-time logs
-ironsilo logs
-
-# Access the web dashboard
+# Launch the terminal dashboard (alias of monitor)
 ironsilo dashboard
 
-# Run diagnostics
-ironsilo health
+# Show version and exit
+ironsilo --version
 ```
 
-All commands also have `turintech-` prefixed aliases for portfolio consistency:
+The same commands are also available with `turintech-` prefixed aliases for portfolio consistency:
 
 ```bash
 # Same commands with Turintech prefix
-turintech-ironsilo status
-turintech-ironsilo logs
+turintech-ironsilo monitor
 turintech-ironsilo dashboard
-turintech-ironsilo health
-turintech-ironsilo-setup
 turintech-ironsilo-monitor
+turintech-ironsilo-setup
 ```
 
 ### Web Dashboard
