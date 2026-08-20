@@ -42,7 +42,7 @@ mkdocstrings[python]==1.0.6
 
 # Development server
 watchdog==6.0.0
-python-dotenv==1.2.2
+python-dotenv==1.2.3
 
 # Pre-commit
 pre-commit==4.6.0
