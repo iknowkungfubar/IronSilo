@@ -289,3 +289,4 @@ MEMORY.md
 .cursor/
 SKILL.md
 *.hermes-profile
+.token-policy/
