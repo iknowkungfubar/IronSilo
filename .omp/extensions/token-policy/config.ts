@@ -268,9 +268,9 @@ function requireSeparator(_cwd: string): string {
 
 export async function loadConfig(cwd: string): Promise<{ config: PolicyConfig; path?: string }> {
 	const candidates = [
-		resolve(cwd, ".pi", "token-policy.yaml"),
-		resolve(cwd, ".pi", "token-policy.yml"),
-		resolve(cwd, ".pi", "token-efficiency.yaml"),
+		resolve(cwd, ".omp", "token-policy.yaml"),
+		resolve(cwd, ".omp", "token-policy.yml"),
+		resolve(cwd, ".omp", "token-efficiency.yaml"),
 	];
 	for (const path of candidates) {
 		try {

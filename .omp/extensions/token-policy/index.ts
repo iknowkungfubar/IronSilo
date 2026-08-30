@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { lstat, readFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { tmpdir } from "node:os";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { ArtifactStore, type ArtifactRecord } from "./artifacts.ts";
 import { loadConfig, resolveRuntimeRoot, type PolicyConfig } from "./config.ts";
 import { addModifiedFile, createLedger, ledgerFromBranch, loadLedger, LEDGER_ENTRY_TYPE, saveLedger, updateLedger, type ExecutionLedger } from "./ledger.ts";

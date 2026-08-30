@@ -38,7 +38,7 @@ describe("observe mode", () => {
 	it("leaves large tool output unchanged and records content-free baseline metrics", async () => {
 		const cwd = await mkdtemp(join(process.cwd(), ".token-policy-observe-"));
 		temporaryDirectories.push(cwd);
-		const configDirectory = join(cwd, ".pi");
+		const configDirectory = join(cwd, ".omp");
 		await mkdir(configDirectory, { recursive: true });
 		await writeFile(join(configDirectory, "token-policy.yaml"), "mode: observe\n");
 

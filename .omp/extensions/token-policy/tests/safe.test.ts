@@ -43,8 +43,8 @@ function context(cwd: string, signal?: AbortSignal) {
 async function safeProject(config = "mode: safe\n") {
 	const cwd = await mkdtemp(join(process.cwd(), ".token-policy-safe-"));
 	temporaryDirectories.push(cwd);
-	await mkdir(join(cwd, ".pi"), { recursive: true });
-	await writeFile(join(cwd, ".pi", "token-policy.yaml"), config);
+	await mkdir(join(cwd, ".omp"), { recursive: true });
+	await writeFile(join(cwd, ".omp", "token-policy.yaml"), config);
 	return cwd;
 }
 

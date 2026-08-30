@@ -1,11 +1,11 @@
-# Pi token-policy extension
+# OMP token-policy extension
 
 This adapter targets Pi `0.84.4` and uses only the public extension surface.
 
 ## Install
 
-Copy this `token-policy` directory to `<project-root>/.pi/extensions/token-policy/`.
-Copy `configs/token-efficiency.example.yaml` to `<project-root>/.pi/token-policy.yaml` when configuration is needed. The default with no config is `observe`.
+Copy this `token-policy` directory to `<project-root>/.omp/extensions/token-policy/`.
+Copy `configs/token-efficiency.example.yaml` to `<project-root>/.omp/token-policy.yaml` when configuration is needed. The default with no config is `observe`.
 
 Ensure the target repository ignores:
 
@@ -42,7 +42,7 @@ The concise ledger is written to `.token-policy/ledger.json` and checkpointed as
 From the kit root:
 
 ```bash
-bun test ./skeleton/pi/.pi/extensions/token-policy/tests
+bun test .omp/extensions/token-policy/tests
 tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --allowImportingTsExtensions --skipLibCheck <extension-sources>
 python scripts/public_repo_audit.py .
 ```
