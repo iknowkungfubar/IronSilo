@@ -12,7 +12,7 @@ psycopg2-binary>=2.9.12
 alembic>=1.19.1
 
 # MCP dependencies
-mcp>=2.0.0
+mcp>=2.1.1
 
 # Cache dependencies
 diskcache>=5.6.0
