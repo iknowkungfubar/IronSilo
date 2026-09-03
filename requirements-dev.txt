@@ -23,7 +23,7 @@ faker==40.37.0
 httpx>=0.26.0
 
 # Testing utilities
-coverage==7.15.4
+coverage==7.16.0
 pytest-html==4.2.0
 pytest-sugar==1.1.1
 pytest-benchmark==5.3.0
